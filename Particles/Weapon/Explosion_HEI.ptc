@@ -123,14 +123,14 @@ EffectDef {
    FlipU Random
    Velocity 2.2
    VelocityRND 0.4
-   AirResistance 2
+   AirResistance 2.0
    AirResistanceRND 1
    WindInfluence 0.35
-   GravityMultiply 0.02
-   GravityMultiplyRND 0.02
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 1
    AnimFPS 40
    RandomFrame 0
@@ -182,11 +182,11 @@ EffectDef {
    AirResistance 1.6
    AirResistanceRND 1
    WindInfluence 0.35
-   GravityMultiply 0.02
-   GravityMultiplyRND 0.02
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimFPS 40
    RandomFrame 0
    Lifetime 6.6

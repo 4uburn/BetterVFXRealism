@@ -103,8 +103,8 @@ Validation was performed with installed Arma Reforger/Workbench 1.8.0.13 on Wind
 | Check | Result / boundary |
 | --- | --- |
 | Workbench MCP ValidateScripts, configuration WORKBENCH | Passed, 14 existing base-game obsolete-API warnings; no addon errors. This includes Game and WorkbenchGame modules, not a live dedicated-server test. |
-| python tools/validate_vfx.py | Passed: 524 emitters, 183 resource GUIDs, 17 exact 0.33 size pairs, 60 surface-palette assets; local paths/GUIDs, numeric ranges, brace balance and dust classification checked. |
-| MCP particle inspection | Initial pass covered all 121 particle files. Follow-up inspected all 17 changed/new assets; the completion pass also inspected all 48 curve-corrected assets. Current total 124. Structural parsing only, not rendering or a native runtime build. |
+| python tools/validate_vfx.py | Passed: 525 emitters, 184 resource GUIDs, 17 exact 0.33 size pairs, 60 surface-palette assets; local paths/GUIDs, numeric ranges, brace balance and dust classification checked. |
+| MCP particle inspection | Initial pass covered all 121 particle files. Follow-up inspected all 17 changed/new assets; the completion pass also inspected all 48 curve-corrected assets. Current total 125; all 37 changed/new follow-up assets also passed structural inspection. Structural parsing only, not rendering or a native runtime build. |
 | Size-curve regression | Passed: 131 curves across 48 files preserve all control times and intended size/variation products within 1e-7 tolerance. Other particle fields are unchanged, apart from trailing newlines. Size/Alpha/Color curve values are now in 0–1. |
 | Native Particle Editor | Loaded the addon condensation resource and confirmed corrected size properties without new curve errors. This is a limited load check, not visual acceptance of all effects. |
 | Prefab-emitter regression comparison | 56 trigger/other prefab emitters retain preceding review travel/emission properties. Three supplemental solid emitters were intentionally retuned with the bounded debris model. |
@@ -127,5 +127,7 @@ Use identical camera, exposure, weather and weapons for baseline/candidate captu
 | Two neighbouring rooms and a corridor, exterior wind and rain, prolonged automatic fire | Dust builds near hits, fades after firing stops, does not accumulate without bound or merge through a solid wall; sheltered floors remain dry. Check sprite leakage and open-door ventilation appearance. |
 | Two shooters alternating weapons; sustained UGL reload/ejection; vehicle sand-to-water transition | Each shooter's volley works independently, callbacks stop on teardown, correct casing trail, water effects survive, no lingering dry wheel carryover. |
 | Dedicated server, two remote clients, late join, restart scenario, long firefight | No script errors, no new duplicate effects, acceptable CPU/GPU/particle counts, intended client visibility and smoke/AI behaviour. Local cosmetics and their budgets are not assumed replicated. |
+
+The [wall-impact, indoor transport and firing-gas follow-up](IMPACT-AND-INDOOR-FOLLOWUP.md) adds angle-sensitive wall spray, diffuse room births, stronger sustained smoke, fragment haze and native chamber/magazine-slot gases. Its decision record, equations, checks and direct tests describe the current candidate.
 
 The branch is ready for code and direct visual review. Exact terrain-pixel colour, renderer appearance, packaging and multiplayer acceptance are not represented as proven.

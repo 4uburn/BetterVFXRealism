@@ -95,6 +95,9 @@ EffectDef {
    }
   }
   EmitterDef ber_smoke_Smoke_Burst_02 {
+   EnableCollisions 1
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
    AnimOnce 0
    LocalTransform 0
    ShapeType Sphere
@@ -119,11 +122,11 @@ EffectDef {
    FlipV Random
    Velocity 2.5
    VelocityRND 0.5
-   AirResistance 3
+   AirResistance 3.0
    AirResistanceRND 0.5
    WindInfluence 0.35
-   GravityMultiply 0.02
-   GravityMultiplyRND 0.02
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    AnimFPS 0.001
    LifetimeByAnim 0
    RandomFrame 1

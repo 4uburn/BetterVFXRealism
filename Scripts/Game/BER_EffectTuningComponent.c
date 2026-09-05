@@ -60,17 +60,14 @@ class BER_EffectTuningComponent : ScriptComponent
 
 	protected static ref array<vector> s_aFogPos;
 	protected static ref array<float> s_aFogTime;
+	protected static ref array<float> s_aFogUpdate;
 	protected static ref array<float> s_aFogHits;   // accumulated impact weight
 	protected static ref array<int> s_aFogLayers;   // -1 = still accumulating, no fog spawned yet
 	protected const float FOG_DEDUP_RADIUS_SQ = 12.25; // 3.5 m
 	protected const float FOG_DEDUP_TIME = 40.0;
 	protected const float FOG_SPAWN_WEIGHT = 1.0;      // accumulated weight before the first fog appears
-	protected const float FOG_WEIGHT_PER_LAYER = 12.0; // further weight per extra fog layer
+	protected const float FOG_WEIGHT_PER_LAYER = 3.0; // further weight per extra fog layer
 	protected const int FOG_MAX_EXTRA_LAYERS = 3;
-
-	// TESTING: log the warhead-vs-impact-effect transform relationship so the deflection
-	// axis choice is verified with real numbers in a live test — flip to false before publish
-	protected const bool DIAG_DEFLECT = false;
 
 
 	protected const float FRAG_IMPACT_RANGE = 14.0;
@@ -88,6 +85,7 @@ class BER_EffectTuningComponent : ScriptComponent
 			s_aFogPos = {};
 			s_aFogTime = {};
 			s_aFogHits = {};
+			s_aFogUpdate = {};
 			s_aFogLayers = {};
 		}
 		s_fFogClock = now;
@@ -119,6 +117,9 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected float m_fBerImpactDensity = 1.0;  // scales the impact's own dust density by caliber
 	protected float m_fBerImpactSize = 1.0;     // scales the impact's particle size by caliber
 	protected string m_sBerStruckMat;
+	protected vector m_vBerHitPos;
+	protected vector m_vBerHitNormal;
+	protected bool m_bDirectionalImpactDone;
 	protected vector m_vBerShotDir;             // matched incoming shot direction (zero when unmatched)
 
 	protected vector m_vQueryCenter;
@@ -237,29 +238,22 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		vector roomCenter;
 		float roomHalf;
-		BER_SurfaceUtil.GetRoomGeometry(world, pos, owner, 9.0, roomCenter, roomHalf);
 
-		// the fog must APPEAR where the hit happened, not float in mid-room: spawn pulled
-		// back from the impact point into the room — along the incoming shot when known,
-		// toward the room's free center otherwise. Dedup stays keyed on the room center
-		// so hits on different walls of one room still merge into one buildup.
-		vector fogPos = pos;
-		if (m_vBerShotDir != vector.Zero)
+		// Start just outside the actual wall. Move a short checked distance into free space;
+		// a fixed 1.4 m pull could pass through the opposite wall of a confined space.
+		vector start = pos;
+		if (m_vBerHitNormal != vector.Zero)
+			start = m_vBerHitPos + m_vBerHitNormal * 0.08;
+		BER_SurfaceUtil.GetRoomGeometry(world, start - Vector(0, 0.6, 0), owner, 9.0, roomCenter, roomHalf);
+		roomCenter[1] = start[1];
+		vector desired = start;
+		vector toCenter = roomCenter - start;
+		if (toCenter.Length() > 0.01)
 		{
-			fogPos = pos - m_vBerShotDir * 1.4;
+			toCenter.Normalize();
+			desired = start + toCenter * 0.6;
 		}
-		else
-		{
-			vector toCenter = roomCenter - pos;
-			float len = toCenter.Length();
-			if (len > 0.3)
-			{
-				float pull = 1.4;
-				if (pull > len)
-					pull = len;
-				fogPos = pos + toCenter * (pull / len);
-			}
-		}
+		vector fogPos = BER_SurfaceUtil.ClipCloudPosition(world, start, desired, owner);
 
 		for (int i = s_aFogTime.Count() - 1; i >= 0; i--)
 		{
@@ -268,13 +262,16 @@ class BER_EffectTuningComponent : ScriptComponent
 				s_aFogTime.Remove(i);
 				s_aFogPos.Remove(i);
 				s_aFogHits.Remove(i);
+				s_aFogUpdate.Remove(i);
 				s_aFogLayers.Remove(i);
 				continue;
 			}
 			if (vector.DistanceSq(s_aFogPos[i], roomCenter) < FOG_DEDUP_RADIUS_SQ
 				&& BER_SurfaceUtil.HasClearPath(world, roomCenter, s_aFogPos[i], owner))
 			{
-				s_aFogHits[i] = s_aFogHits[i] + weight;
+				float dt = Math.Max(0, now - s_aFogUpdate[i]);
+				s_aFogHits[i] = s_aFogHits[i] * Math.Pow(2.718281828, -dt / 20.0) + weight;
+				s_aFogUpdate[i] = now;
 
 				// still accumulating toward the first fog
 				if (s_aFogLayers[i] < 0)
@@ -307,6 +304,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		s_aFogPos.Insert(roomCenter);
 		s_aFogTime.Insert(now);
 		s_aFogHits.Insert(weight);
+		s_aFogUpdate.Insert(now);
 		s_aFogLayers.Insert(layers);
 	}
 
@@ -349,18 +347,10 @@ class BER_EffectTuningComponent : ScriptComponent
 	//! surface can be resolved.
 	protected string GetStruckMaterial(IEntity owner, vector shotDir)
 	{
-		BaseWorld world = owner.GetWorld();
-
-		TraceParam tp = new TraceParam();
-		tp.Start = owner.GetOrigin() - shotDir * 0.5;
-		tp.End = owner.GetOrigin() + shotDir * 0.4;
-		tp.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
-		tp.Exclude = owner;
-
-		if (world.TraceMove(tp, null) >= 1.0 || !tp.SurfaceProps)
-			return "";
-
-		return tp.SurfaceProps.GetName();
+		string material;
+		IEntity hitRoot;
+		BER_SurfaceUtil.TraceImpact(owner.GetWorld(), owner.GetOrigin(), shotDir, owner, m_vBerHitPos, m_vBerHitNormal, material, hitRoot);
+		return material;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -429,15 +419,18 @@ class BER_EffectTuningComponent : ScriptComponent
 		Particles particles = pfx.GetParticles();
 		if (particles)
 		{
-			// Limit both average size and variation by clearance at the actual spawn point.
-			float clearance = BER_SurfaceUtil.GetMinWallDistance(GetGame().GetWorld(), center, null, roomHalf);
-			float roomSize = BER_SurfaceUtil.ClampF(clearance / 3.0, 0.02, 1.0);
-			float sizeMult = roomSize * BER_SurfaceUtil.ClampF(strength, 0.4, 1.0);
+			BaseWorld world = GetOwner().GetWorld();
+			vector extent = BER_SurfaceUtil.GetCloudExtent(world, center, GetOwner());
+			// Shape changes spread birth locations; strength changes amount, not cloud radius.
+			float clearance = BER_SurfaceUtil.GetMinWallDistance(world, center - Vector(0, 0.6, 0), GetOwner(), 1.5);
+			float sizeMult = BER_SurfaceUtil.ClampF(clearance / 0.8, 0.08, 1);
 			int emitterCount = particles.GetNumEmitters();
 			for (int i = 0; i < emitterCount; i++)
 			{
+				particles.SetParam(i, EmitterParam.SHAPE_SIZE, extent);
 				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
 				particles.MultParam(i, EmitterParam.SIZE_RND, sizeMult);
+				particles.MultParam(i, EmitterParam.BIRTH_RATE, BER_SurfaceUtil.ClampF(strength, 0.2, 1));
 			}
 		}
 
@@ -567,6 +560,8 @@ class BER_EffectTuningComponent : ScriptComponent
 		BaseWorld world = owner.GetWorld();
 		vector origin = owner.GetOrigin() + Vector(0, 0.18, 0);
 		int count = Math.ClampInt(m_iBerFragImpacts, 0, 64);
+		ComputeEnvironment(owner);
+		float fragmentDustWeight = 0;
 		for (int i = 0; i < count; i++)
 		{
 			vector dir = RandomSphereDir();
@@ -591,6 +586,11 @@ class BER_EffectTuningComponent : ScriptComponent
 				continue;
 			vector pos = origin + dir * distance;
 			vector normal = tp.TraceNorm;
+			if (normal.LengthSq() < 0.0001)
+				continue;
+			normal.Normalize();
+			if (vector.Dot(dir, normal) > 0)
+				normal = -normal;
 			// Accept either getter ordering; select resources by their actual extension.
 			ResourceName first = hit.GetParticleEffectValue();
 			ResourceName second = hit.GetDecalMaterialValue();
@@ -615,8 +615,9 @@ class BER_EffectTuningComponent : ScriptComponent
 			ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 			params.UseFrameEvent = true;
 			params.PlayOnSpawn = false;
-			if (normal != vector.Zero)
-				SCR_EntityHelper.OrientUpToVector(normal, params.Transform);
+			vector ejecta = BER_SurfaceUtil.GetImpactEjectaDirection(dir, normal);
+			if (ejecta != vector.Zero)
+				SCR_EntityHelper.OrientUpToVector(ejecta, params.Transform);
 			params.Transform[3] = pos + normal * 0.01;
 			ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(ResolveFragHitEffect(particle), params);
 			if (!pfx)
@@ -624,9 +625,17 @@ class BER_EffectTuningComponent : ScriptComponent
 			BER_OwnedEffects.MarkOwned(pfx);
 			Particles particles = pfx.GetParticles();
 			if (particles)
+			{
 				BER_SurfaceUtil.TuneDust(particles, dust, indoor, 1.0, 1.0);
+				BER_SurfaceUtil.TuneImpactCone(particles, ejecta, normal);
+			}
+			if (m_bIndoor && indoor && distance < 6
+				&& BER_SurfaceUtil.HasClearPath(world, origin, pos + normal * 0.08, owner))
+				fragmentDustWeight += dust * FogMaterialWeight(material) * 0.08;
 			pfx.Play();
 		}
+		if (fragmentDustWeight > 0)
+			SpawnRoomFog(owner, 0.7, Math.Min(fragmentDustWeight, 3), ROOM_FOG);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -761,64 +770,79 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		BER_OwnedEffects.MarkOwned(pfx);
 		ResolveImpactInfo(owner);
-		DeflectImpactSplash(pfx, owner);
+		ParticleEffectEntity originalImpact = pfx;
+		pfx = ReplaceDirectionalImpact(pfx, owner);
+		bool directional = pfx != originalImpact;
+		particles = pfx.GetParticles();
+		if (!particles)
+			return;
 		string struck = m_sBerStruckMat;
 		if (struck == "")
 			struck = m_sGroundMat;
 		float dust = BER_SurfaceUtil.GetDustAvailability(owner.GetWorld(), pfx.GetOrigin(), struck, m_bIndoor);
 		BER_SurfaceUtil.TuneDust(particles, dust * m_fBerImpactDensity, m_bIndoor, m_fBerImpactSize, 1.0);
+		if (directional)
+		{
+			vector direction = BER_SurfaceUtil.GetImpactEjectaDirection(m_vBerShotDir, m_vBerHitNormal);
+			BER_SurfaceUtil.TuneImpactCone(particles, direction, m_vBerHitNormal);
+		}
+		pfx.Play();
 		if (m_bIndoor && dust > 0)
 			SpawnRoomFog(owner, 0.7, dust * m_fBerCalWeight * FogMaterialWeight(struck), FogVariantFor(struck));
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Reorient a freshly adopted bullet-impact splash along the deflection of the shot:
-	//! R = D - 2(D.N)N off the surface plane, with a slight lift along the normal. Newly
-	//! born particles (the effect is caught inside its ~0.2 s emission window) then splash
-	//! away from the impact angle — the wall dust dragged along the ricochet — instead of
-	//! jetting straight out of the surface.
-	//! The shot direction comes from the muzzle hook's recent-shot rays (the impact point
-	//! is matched against the ray it lies on). The warhead entity's own transform proved
-	//! USELESS for this — 19th-pass diag logging showed its forward axis pointing straight
-	//! up or along the struck building's grid, never along the shot.
-	protected void DeflectImpactSplash(ParticleEffectEntity pfx, IEntity owner)
+	//! Replace the supported native wall hit while paused: rotating an emitting world-space
+	//! effect cannot redirect particles already born. Hole decals remain engine-owned.
+	protected ParticleEffectEntity ReplaceDirectionalImpact(ParticleEffectEntity original, IEntity owner)
 	{
-		if (pfx.GetParent())
-			return;
-
-		// only the splash born at the impact point itself — anything farther away is
-		// scattered secondary dust, not this hit's directional splash
-		if (vector.DistanceSq(pfx.GetOrigin(), owner.GetOrigin()) > 0.64)
-			return;
-
-		vector d;
-		if (!BER_MuzzleBlastDust.GetIncomingShotDir(owner.GetWorld(), owner.GetOrigin(), d))
+		if (m_vBerHitNormal == vector.Zero || m_bDirectionalImpactDone)
+			return original;
+		// This marker exists only in our six native wall-hit overrides.
+		// Nearby blast, fragment and other-mod effects keep their resource and lifecycle.
+		array<string> names = {};
+		original.GetParticles().GetEmitterNames(names);
+		if (names.Find("ber_dust_fines") == -1 || vector.DistanceSq(original.GetOrigin(), owner.GetOrigin()) > 0.64)
+			return original;
+		ResourceName resource = GetDirectionalImpactResource(m_sBerStruckMat);
+		if (resource == ResourceName.Empty)
+			return original;
+		vector direction = BER_SurfaceUtil.GetImpactEjectaDirection(m_vBerShotDir, m_vBerHitNormal);
+		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
+		params.UseFrameEvent = true;
+		params.PlayOnSpawn = false;
+		SCR_EntityHelper.OrientUpToVector(direction, params.Transform);
+		params.Transform[3] = m_vBerHitPos + m_vBerHitNormal * 0.025;
+		ParticleEffectEntity replacement = ParticleEffectEntity.SpawnParticleEffect(resource, params);
+		if (!replacement)
+			return original;
+		if (!replacement.GetParticles())
 		{
-			if (DIAG_DEFLECT)
-				Print("BER DIAG deflect: no shot ray matched this impact");
-			return;
+			replacement.Stop();
+			return original;
 		}
+		m_bDirectionalImpactDone = true;
+		BER_OwnedEffects.MarkOwned(replacement);
+		original.Stop();
+		return replacement;
+	}
 
-		vector pfxMat[4];
-		pfx.GetWorldTransform(pfxMat);
-		vector n = pfxMat[1]; // engine orients the splash's emission axis along the surface normal
-
-		float dot = vector.Dot(d, n);
-
-		if (DIAG_DEFLECT)
-			PrintFormat("BER DIAG deflect: pfxUp=%1 shotDir=%2 dot=%3", n, d, dot);
-
-		// the shot must actually point into the surface (a ray that merely passes nearby
-		// on its way somewhere else fails this) — leave the effect untouched otherwise
-		if (dot > -0.15)
-			return;
-
-		vector r = d - n * (2.0 * dot);
-		r = r + n * 0.12; // slight lift off the surface so a grazing splash doesn't hug the wall
-		r.Normalize();
-
-		SCR_EntityHelper.OrientUpToVector(r, pfxMat);
-		pfx.SetWorldTransform(pfxMat);
+	protected ResourceName GetDirectionalImpactResource(string material)
+	{
+		material.ToLower();
+		if (material.Contains("wood"))
+			return "{0A96BBE6A54CA14E}Particles/Enviroment/Hit_wood_enter_01.ptc";
+		if (material.Contains("brick"))
+			return "{A510ABAAA567CA34}Particles/Enviroment/Hit_brick_enter_01.ptc";
+		if (material.Contains("concrete") || material.Contains("plaster") || material.Contains("drywall") || material.Contains("cement"))
+			return "{5AF94EADA8B7BD2A}Particles/Enviroment/Hit_concrete_enter_01.ptc";
+		if (material.Contains("stone") || material.Contains("rock"))
+			return "{8B297E5BF3F7345D}Particles/Enviroment/Hit_stone_enter_01.ptc";
+		if (material.Contains("asphalt"))
+			return "{9439EC3E0681B089}Particles/Enviroment/Hit_asphalt_enter_01.ptc";
+		if (material == "default")
+			return "{F62C467C3B897254}Particles/Enviroment/Hit_default_enter_01.ptc";
+		return ResourceName.Empty; // unknown/other mods keep their selected material effect
 	}
 
 	//------------------------------------------------------------------------------------------------

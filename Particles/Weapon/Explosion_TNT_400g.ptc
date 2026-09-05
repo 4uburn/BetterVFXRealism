@@ -173,14 +173,14 @@ EffectDef {
    RandomAngle 1
    FlipU Random
    VelocityRND 0.55
-   AirResistance 2
+   AirResistance 2.0
    AirResistanceRND 0.5
    WindInfluence 0.35
-   GravityMultiply 0.05
-   GravityMultiplyRND -0.1
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimFPS 60
    Lifetime 4.8
    LifetimeRND 5.4
@@ -454,6 +454,8 @@ EffectDef {
    }
   }
   EmitterDef ber_smoke_Smoke_After_Air {
+   GravityMultiplyRND 0
+   GravityMultiply -0.008
    ShapeType Ellipse
    ShapeSize 2 1.6 2
    ConeAngle 360 0 55
@@ -481,8 +483,8 @@ EffectDef {
    WindInfluence 0.35
    ParentVelRelToAir 0.2
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 1
    AnimFPS 15
    RandomFrame 0
@@ -534,14 +536,14 @@ EffectDef {
    Velocity 0
    VelocityRND 0
    VelAffect 0
-   AirResistance 2
+   AirResistance 2.0
    AirResistanceRND 0.05
    WindInfluence 0.35
-   GravityMultiply -0.005
-   GravityMultiplyRND -0.01
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 0
    AnimFPS 0
    LifetimeByAnim 0

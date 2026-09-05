@@ -2,6 +2,9 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef ber_dust_whisp {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    WindInfluence 0.35
    LocalTransform 0
    ShapeType Point
@@ -53,6 +56,9 @@ EffectDef {
    }
   }
   EmitterDef ber_dust_whisp_side {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    LocalTransform 0
    ShapeType Sphere
    ShapeSize 0 0 0
@@ -101,6 +107,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_whisp_cloned {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
@@ -151,6 +160,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_dust_cone {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    WindInfluence 0.35
    LocalTransform 0
    ShapeType Sphere
@@ -200,6 +212,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_dust_big {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.2 0.2 0.2
@@ -248,6 +263,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_fines {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    ShapeType Point
    ConeAngle 360 0 60
    LocalTransform 0

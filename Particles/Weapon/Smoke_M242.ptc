@@ -120,6 +120,9 @@ EffectDef {
    }
   }
   EmitterDef ber_smoke_residual {
+   EnableCollisions 1
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
    ShapeType Point
    ConeAngle 360 0 35
    LocalTransform 0
@@ -128,9 +131,9 @@ EffectDef {
    Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
    BirthRateRND 0
    VelAffect 0.3
-   AirResistance 5
+   AirResistance 5.0
    WindInfluence 0.6
-   GravityMultiply 0
+   GravityMultiply -0.008
    GravityMultiplyRND 0
    AnimOnce 0
    AnimFPS 0.001

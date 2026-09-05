@@ -8,6 +8,8 @@ See [the review guide](docs/VFX-REVIEW.md) for the complete code audit, physics 
 
 The [video comparison and debris model](docs/VIDEO-REFERENCE-REVIEW.md) explains the supplied references, M242/AP/HE changes, bounded debris maths, and the distinction between enabled large-blast condensation and unimplemented heat distortion.
 
+The [wall-impact, smoke and firing-gas follow-up](docs/IMPACT-AND-INDOOR-FOLLOWUP.md) records the screenshot findings, directional impacts, buoyant smoke transport, dispersed room haze, fragment dust, action/magwell gases and the physical approximations behind them.
+
 Run the read-only data checks with Python 3:
 
 ```text

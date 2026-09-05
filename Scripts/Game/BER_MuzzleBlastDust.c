@@ -21,6 +21,10 @@
 
 modded class SCR_MuzzleEffectComponent
 {
+	[Attribute(defvalue: "1", desc: "Action gas amount; 0 disables this cosmetic source.", params: "0 3 0.1")]
+	protected float m_fBERActionGasScale;
+	[Attribute(defvalue: "2", desc: "Suppressed action-gas multiplier. Tune lower for low-backpressure designs.", params: "0 4 0.1")]
+	protected float m_fBERSuppressedGasScale;
 	override void OnFired(IEntity effectEntity, BaseMuzzleComponent muzzle, IEntity projectileEntity)
 	{
 		super.OnFired(effectEntity, muzzle, projectileEntity);
@@ -29,6 +33,7 @@ modded class SCR_MuzzleEffectComponent
 		if (muzzle)
 			weaponEntity = muzzle.GetOwner();
 		BER_MuzzleBlastDust.OnWeaponFired(weaponEntity, effectEntity, projectileEntity);
+		BER_ActionGas.OnFired(muzzle, m_fBERActionGasScale, m_fBERSuppressedGasScale);
 	}
 }
 

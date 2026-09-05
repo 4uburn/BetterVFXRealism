@@ -140,6 +140,50 @@ def main():
         if name in ('Explosion_Main', 'Explosion_Halo'):
             if value(b, 'LifetimeByAnim') != '0' or float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 0.25:
                 errors.append(f'HE bright phase must have an explicit brief lifetime: {name}')
+    # Follow-up: dispersed room haze and continuous, buoyant smoke sources.
+    for asset in ('BER_RoomFog', 'BER_RoomFog_Wood'):
+        blocks = list(emitters((ROOT / f'Particles/BER/{asset}.ptc').read_text(encoding='utf-8')))
+        if sum(float(value(b, 'MaxNum', '0')) for _, b, _, _ in blocks) > 12:
+            errors.append(f'Room haze exceeds 12 particles per layer: {asset}')
+        for name, b, _, _ in blocks:
+            if value(b, 'ShapeType') != 'Box' or min(map(float, value(b, 'ShapeSize').split())) <= 0:
+                errors.append(f'Room haze needs spatial emission: {asset}/{name}')
+            if not 0 < float(value(b, 'BirthRate')) <= 3 or float(value(b, 'EmittingTime')) < 3:
+                errors.append(f'Room haze must emit gradually: {asset}/{name}')
+            alpha = re.search(r'Alpha \{\s*([^}]+)', b)
+            if max(list(map(float, alpha.group(1).split()))[1::2]) > 0.06:
+                errors.append(f'Room haze opacity exceeds diffuse-layer budget: {asset}/{name}')
+            if float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 40:
+                errors.append(f'Room haze lifetime exceeds 40 seconds: {asset}/{name}')
+    grenade_paths = list((ROOT / 'Particles/Weapon').glob('Smoke_grenade_*.ptc'))
+    grenade_paths += list((ROOT / 'Particles/BER').glob('BER_SmokeIndoor_*.ptc'))
+    for ptc in grenade_paths:
+        indoor = ptc.name.startswith('BER_SmokeIndoor_')
+        for name, b, _, _ in emitters(ptc.read_text(encoding='utf-8')):
+            if not name.startswith('smoke_'):
+                continue
+            if value(b, 'EnableCollisions') != '1' or float(value(b, 'TagentialRestitution', '0')) < 0.9:
+                errors.append(f'Smoke must retain motion along obstacles: {ptc.name}/{name}')
+            if float(value(b, 'GravityMultiply', '0')) >= 0 or float(value(b, 'AirResistance', '0')) <= 0:
+                errors.append(f'Smoke requires buoyancy and drag: {ptc.name}/{name}')
+            if indoor and float(value(b, 'WindInfluence', '0')) != 0:
+                errors.append(f'Indoor smoke uses outdoor wind: {ptc.name}/{name}')
+            if 'initial' in name:
+                continue
+            curve = re.search(r'BRateMast \{\s*([^}]+)', b)
+            pairs = list(map(float, curve.group(1).split())) if curve else []
+            if len(pairs) < 4 or pairs[1] < 0.5 or pairs[2] > 0.01 or pairs[3] != 1:
+                errors.append(f'Smoke sustained source ramps too slowly: {ptc.name}/{name}')
+            if name == 'smoke_01' and float(value(b, 'Velocity', '0')) < 1:
+                errors.append(f'Near-source smoke discharge is too weak: {ptc.name}')
+    gas = list(emitters((ROOT / 'Particles/BER/BER_ActionGas.ptc').read_text(encoding='utf-8')))
+    if len(gas) != 1 or gas[0][0] != 'noscope_action_gas':
+        errors.append('Action gas must have one scope-suppressed emitter')
+    for _, b, _, _ in gas:
+        if float(value(b, 'MaxNum')) > 8 or float(value(b, 'EmittingTime')) > 0.15:
+            errors.append('Action gas exceeds its per-shot particle or emission budget')
+        if float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 1.2 + 1e-6:
+            errors.append('Action gas exceeds authored lifetime (runtime indoor maximum is 3x)')
     assert not errors, '\n'.join(errors)
     print(f'PASS: {total} emitters; {len(resources)} resource GUIDs; '
           f'{len(contract["fragment_wisps"])} exact 33% wisps; '

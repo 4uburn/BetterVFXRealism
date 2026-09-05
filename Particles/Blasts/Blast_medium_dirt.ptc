@@ -90,8 +90,8 @@ EffectDef {
    GravityMultiply 0.03
    GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 0
    AnimFPS 0.001
    LifetimeByAnim 0

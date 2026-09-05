@@ -2,6 +2,9 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef ber_dust_whisp {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    WindInfluence 0.35
    LocalTransform 0
    ShapeType Point
@@ -51,12 +54,16 @@ EffectDef {
    Repeat 0
   }
   EmitterDef debris {
+   WindInfluence 0
+   TagentialRestitution 0.65
+   NormalRestitution 0.2
+   EnableCollisions 1
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 90
-   MaxNum 20
-   BirthRate 600
-   BirthRateRND 0
+   MaxNum 24
+   BirthRate 100
+   BirthRateRND 20
    LodMin 0
    LodMax 1
    Material "{118F069016CE1546}Particles/_Materials/Solid/Stones_Base_01.emat"
@@ -73,7 +80,7 @@ EffectDef {
    AirResistance 1
    AirResistanceRND 1
    GravityMultiply 1
-   GravityMultiplyRND 1
+   GravityMultiplyRND 0
    AnimOnce 0
    AnimFPS 30
    LifetimeByAnim 0
@@ -96,6 +103,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_debris_cloud {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    AirResistance 2
    WindInfluence 0.35
    LocalTransform 0
@@ -141,6 +151,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_dust_big {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    BirthRateRND 0
    LocalTransform 0
    ShapeSize 0.2 0.2 0.2
@@ -182,6 +195,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_dust_medium {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    BirthRateRND 0
    WindInfluence 0.35
    LocalTransform 0
@@ -246,6 +262,9 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_fines {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    ShapeType Point
    ConeAngle 360 0 60
    LocalTransform 0

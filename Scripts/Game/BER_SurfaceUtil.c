@@ -352,6 +352,99 @@ class BER_SurfaceUtil
 		}
 	}
 
+
+	//! Resolve the wall at the impact, rather than assuming an effect transform is a normal.
+	static bool TraceImpact(BaseWorld world, vector pos, vector incoming, IEntity exclude, out vector hitPos, out vector normal, out string material, out IEntity hitRoot)
+	{
+		hitRoot = null;
+		normal = vector.Zero;
+		material = "";
+		if (!world || incoming.LengthSq() < 0.0001)
+			return false;
+		incoming.Normalize();
+		TraceParam trace = new TraceParam();
+		trace.Start = pos - incoming * 0.75;
+		trace.End = pos + incoming * 0.35;
+		trace.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
+		trace.Exclude = exclude;
+		float fraction = world.TraceMove(trace, null);
+		if (fraction >= 1)
+			return false;
+		hitPos = trace.Start + (trace.End - trace.Start) * fraction;
+		if (vector.DistanceSq(hitPos, pos) > 0.2025 || trace.TraceNorm.LengthSq() < 0.0001)
+			return false;
+		normal = trace.TraceNorm;
+		normal.Normalize();
+		if (vector.Dot(incoming, normal) > 0)
+			normal = -normal;
+		material = "";
+		if (trace.SurfaceProps)
+			material = trace.SurfaceProps.GetName();
+		if (trace.TraceEnt)
+			hitRoot = trace.TraceEnt.GetRootParent();
+		return true;
+	}
+
+	//! Direction-only art model: preserve tangential momentum and retain outward lift.
+	//! No grazing-angle cutoff, no damage or ricochet prediction.
+	static vector GetImpactEjectaDirection(vector incoming, vector normal)
+	{
+		if (normal.LengthSq() < 0.0001)
+			return vector.Up;
+		normal.Normalize();
+		if (incoming.LengthSq() < 0.0001)
+			return normal;
+		incoming.Normalize();
+		float dot = vector.Dot(incoming, normal);
+		if (dot > 0)
+		{
+			normal = -normal;
+			dot = -dot;
+		}
+		float incidence = ClampF(-dot, 0, 1);
+		vector tangent = incoming - normal * dot;
+		vector direction = tangent + normal * (0.2 + 0.8 * incidence);
+		direction.Normalize();
+		return direction;
+	}
+
+	//! Bound the directional cone to the outward hemisphere, including shallow shots.
+	static void TuneImpactCone(Particles particles, vector direction, vector normal)
+	{
+		float clearance = ClampF(vector.Dot(direction, normal), 0, 1);
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (int i, string name : names)
+		{
+			if (name == "ber_dust_fines")
+				continue;
+			if (name.IndexOf("ber_dust_") != 0 && name.IndexOf("sparks_") != 0 && name.IndexOf("debris") != 0)
+				continue; // never redirect light, fire, smoke or prefab contact triggers
+			particles.SetParam(i, EmitterParam.CONEANGLE, Vector(360, 0, 45 * clearance));
+		}
+	}
+
+	//! One swept center move. Stop short of a wall instead of placing haze through it.
+	static vector ClipCloudPosition(BaseWorld world, vector start, vector desired, IEntity exclude)
+	{
+		vector delta = desired - start;
+		float length = delta.Length();
+		if (length < 0.001)
+			return start;
+		float distance = WallRayDist(world, start, delta, exclude);
+		float travel = ClampF(distance - 0.08, 0, length);
+		return start + delta * (travel / length);
+	}
+
+	//! Conservative local emission box, not a room mesh or a ventilation solution.
+	static vector GetCloudExtent(BaseWorld world, vector center, IEntity exclude)
+	{
+		float x = Math.Min(WallRayDist(world, center, Vector(1.4, 0, 0), exclude), WallRayDist(world, center, Vector(-1.4, 0, 0), exclude));
+		float y = Math.Min(WallRayDist(world, center, Vector(0, 0.8, 0), exclude), WallRayDist(world, center, Vector(0, -0.8, 0), exclude));
+		float z = Math.Min(WallRayDist(world, center, Vector(0, 0, 1.4), exclude), WallRayDist(world, center, Vector(0, 0, -1.4), exclude));
+		return Vector(Math.Max(0, x - 0.12), Math.Max(0, y - 0.12), Math.Max(0, z - 0.12)) * 0.6;
+	}
+
 	static bool HasClearPath(BaseWorld world, vector start, vector end, IEntity exclude = null)
 	{
 		if (vector.DistanceSq(start, end) < 0.01)

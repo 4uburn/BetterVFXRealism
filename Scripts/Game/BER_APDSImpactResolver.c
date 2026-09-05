@@ -121,6 +121,21 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 			return;
 		}
 
+		// Prefer a matched incoming ray and its actual surface over axis probes at corners.
+		vector incoming, impactPos, impactNormal;
+		string impactMaterial;
+		IEntity impactRoot;
+		float shotScale;
+		bool directional = BER_MuzzleBlastDust.GetIncomingShotInfo(world, pos, incoming, shotScale)
+			&& BER_SurfaceUtil.TraceImpact(world, pos, incoming, owner, impactPos, impactNormal, impactMaterial, impactRoot);
+		if (directional)
+		{
+			pos = impactPos;
+			bestNorm = impactNormal;
+			bestMat = impactMaterial;
+			bestRoot = impactRoot;
+		}
+
 		// a 25mm AP slug slamming into a vehicle also shakes the dust off its hull
 		if (bestRoot)
 		{
@@ -138,9 +153,11 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 		spawnParams.PlayOnSpawn = false;
 
 		vector up = bestNorm;
+		if (directional)
+			up = BER_SurfaceUtil.GetImpactEjectaDirection(incoming, bestNorm);
 		if (up != vector.Zero)
 			SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
-		spawnParams.Transform[3] = pos;
+		spawnParams.Transform[3] = pos + bestNorm * 0.025;
 
 		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
 		if (!pfx)
@@ -154,6 +171,8 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 		{
 			float dust = BER_SurfaceUtil.GetDustAvailability(world, pos, bestMat, indoor);
 			BER_SurfaceUtil.TuneDust(particles, dust, indoor);
+			if (directional)
+				BER_SurfaceUtil.TuneImpactCone(particles, up, bestNorm);
 			// Keep hot impact aerosol/sparks on wet metal; only loose mineral dust is gated.
 			if (indoor)
 				particles.SetParam(-1, EmitterParam.WIND, false);
