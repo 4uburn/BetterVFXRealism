@@ -1,0 +1,118 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef Light {
+   ShapeType Sphere
+   ShapeSize 1 1 1
+   MaxNum 1
+   BirthRate 0
+   Offset 0 1.5 1.5
+   Angles 0 0 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{77ED367ABC13B69F}Particles/_Materials/Fire/FireBurn_anim_01_Strong_Blurred.emat"
+   SizeMultiplier 0.01
+   RandomRotDir 0
+   RandomAngle 1
+   Velocity 0
+   AnimOnce 0
+   AnimFPS 80
+   LifetimeByAnim 0
+   RandomFrame 1
+   Lifetime 0.5
+   LifetimeRND 0
+   Color {
+    0 1 1 1 1 1 1 1
+   }
+   Alpha {
+    0 0 0.045 0.5 0.703 0.321 1 0
+   }
+   Size {
+    0 0.311 1 1
+   }
+   EmittingTime 4.5
+   Repeat 0
+   EnableLight 1
+   MaxLV 7
+   RelativeLV 1
+   LightColorMast {
+    0.416 1 0.569 0.155
+   }
+   LightIntensityMast {
+    0 0 0 1 0.013 1 0.028 0 1 0
+   }
+   LightIntensityResponse 10
+  }
+  EmitterDef Explosion_Flame {
+   ShapeType Ellipse
+   ShapeSize 2 1 2
+   ConeAngle 360 10 50
+   ConeAngleMinDist 180
+   MaxNum 2
+   BirthRate 2000
+   Offset 0 0.3 0
+   Angles 0 0 0
+   LocalTransform 1
+   Material "{6E033C070B32B17C}Particles/_Materials/Fire/Explosion_Base_03.emat"
+   StretchMultiplier 1
+   StreakFullUV 0
+   SizeMultiplier 1.5
+   SizeRND 2
+   RotMultiplier 4
+   RotRND 2
+   RandomRotDir 1
+   RandomAngle 1
+   FlipU Random
+   Velocity 0
+   AirResistance 1.95
+   WindInfluence 0
+   GravityMultiply 0.05
+   GravityMultiplyRND -0.1
+   AnimFPS 300
+   Lifetime 0.01
+   LifetimeRND 0
+   Color {
+    0 1 0.509 0.223
+   }
+   Emissivity {
+    0 0.777
+   }
+   RotationSpeed {
+    0 1 1 0.624
+   }
+   EmittingTime 0.05
+   Repeat 0
+   AlphaMast {
+    0 1 0.619 0.707 1 0
+   }
+   VelocityMast {
+    0 1 0.488 0.959 1 0.803
+   }
+  }
+  EmitterDef trigger_Mortar {
+   ConeAngle 360 0 1
+   MaxNum 1
+   BirthRate 100
+   Offset 0 1 0
+   Angles 180 0 0
+   ParticleType Prefab
+   Prefab "{5286AE99BB2E936B}Prefabs/Particles/Blasts/Blast_Mortar_Invisible_Trigger.et"
+   Velocity 55
+   EnableCollisions 1
+   NormalRestitution 0
+   TagentialRestitution 0
+   Friction 0
+   Lifetime 0.2
+   LifetimeShortening 0
+   EmittingTime 0.1
+   Repeat 0
+  }
+ }
+ MinFPS 30
+ CollisionPreset "{5DC8DBF6E2ACBAF5}"
+ LightOffset 0 3 0
+ LightClipEV -16
+ LightRadius 30
+ CastShadow 1
+}

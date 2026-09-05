@@ -1,0 +1,65 @@
+TracerProjectile : "{AB7BB1272DA3F564}Prefabs/Weapons/Ammo/Ammo_25x137/Ammo_25x137_base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  CollisionTriggerComponent "{62B111F49DDC4331}" {
+   Enabled 0
+   PROJECTILE_EFFECTS {
+    SubmunitionEffect "{62B111F48E36EB03}" {
+     TriggerOnce 1
+     Prefab "{EDC9C1FB7F55A32D}Prefabs/Weapons/Ammo/Ammo_Grenade_HEDP_M433_Spall.et"
+     Count 3
+     Dispersion 15
+    }
+    SubmunitionEffect "{62B111F5A3192F67}" {
+     TriggerOnce 1
+     Prefab "{16F3F5C6467D43DE}Prefabs/Weapons/Core/Ammo_Spall_Base.et"
+     Count 6
+     Dispersion 60
+    }
+    SpawnParticleEffect "{62DEE9ECE5504CC7}" {
+     TriggerOnce 1
+     ParticleEffect "{36DB8CF2DAB471DD}Particles/Weapon/Explosion_APDS.ptc"
+    }
+   }
+   DELETE_ON_TRIGGER 0
+  }
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   DispersionMultiplier 1
+   ProjectileEffects {
+    HitSoundEffect "{2FC22748C7ABD466}" {
+     TriggerOnce 1
+     Filename "{B9C658F858BD06BC}Sounds/Weapons/_SharedData/BulletHits/Weapons_BulletHits_25x137_APDST.acp"
+    }
+    SubmunitionEffect "{64789DA39D1BCD30}" {
+     TriggerOnce 1
+     Prefab "{EDC9C1FB7F55A32D}Prefabs/Weapons/Ammo/Ammo_Grenade_HEDP_M433_Spall.et"
+     Count 3
+     Dispersion 15
+     InitSpeedCoef 1
+    }
+    SubmunitionEffect "{64789DA38D43C156}" {
+     TriggerOnce 1
+     Prefab "{16F3F5C6467D43DE}Prefabs/Weapons/Core/Ammo_Spall_Base.et"
+     Count 6
+     Dispersion 60
+     InitSpeedCoef 1
+    }
+    SpawnParticleEffect "{64CADCF4941076D7}" {
+     TriggerOnce 1
+     UseFrameEvent 1
+     ParticleEffect "{36DB8CF2DAB471DD}Particles/Weapon/Explosion_APDS.ptc"
+    }
+   }
+   BallisticTableConfig "{931C2F2EC89E986D}Configs/Weapons/AIBallisticTables/AIBT_25x137_APDST_M791.conf"
+   AirDrag 0.0000185
+   Diameter 14
+   DeflectionCriticalAngle 5
+   DeflectionDirDistribution 0.1
+   PenetrationDepth 60
+   PenetrationSpeed 1345
+   PenetrationDirDistribution 0.005
+  }
+ }
+ "Tracer Burn Start After" 0.02
+ "Tracer Burn Time" 1.65
+}

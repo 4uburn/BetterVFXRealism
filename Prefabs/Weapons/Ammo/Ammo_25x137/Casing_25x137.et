@@ -1,0 +1,16 @@
+GenericEntity : "{BE79A6E700CF746A}Prefabs/Particles/Bullet_Case/Bullet_Case_Base.et" {
+ ID "60A88C9332BF83AD"
+ components {
+  MeshObject "{5AC2D35718C1EEDD}" {
+   Object "{FB1A328FA0D58EC3}Assets/Weapons/Ammo/Bullets/25x137/Case_25x137.xob"
+  }
+  SCR_ParticleContactComponent "{5AD06B4611C6C9BD}" {
+   m_AudioSourceConfiguration SCR_AudioSourceConfiguration "{5C52D5B18B5BE9EC}" {
+    m_sSoundProject "{9C4AD39DDDE7EB09}Sounds/Weapons/_SharedData/Shells/Weapon_Shells_25mm.acp"
+   }
+  }
+  BER_CasingSmokeComponent "{BE20250902AC1001}" {
+   m_rTrailEffect "{BE20250902AC0018}Particles/BER/BER_CasingTrail.ptc"
+  }
+ }
+}

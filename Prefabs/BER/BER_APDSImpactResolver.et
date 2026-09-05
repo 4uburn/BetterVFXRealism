@@ -1,0 +1,10 @@
+GenericEntity {
+ ID "BE20250902AC1004"
+ components {
+  BER_APDSImpactResolverComponent "{BE20250902AC1005}" {
+   m_rSparkEffect "{BE20250902AC0005}Particles/BER/BER_APDS_Spark.ptc"
+   m_rDirtEffect "{BE20250902AC0006}Particles/BER/BER_APDS_Dirt.ptc"
+   m_rRockEffect "{BE20250902AC0007}Particles/BER/BER_APDS_Rock.ptc"
+  }
+ }
+}

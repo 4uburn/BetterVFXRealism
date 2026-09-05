@@ -1,0 +1,28 @@
+GenericEntity {
+ ID "9D9BE68EA2672F76"
+ components {
+  SignalsManagerComponent "{C572A75F88B55309}" {
+   Enabled 0
+  }
+  SoundComponent "{D092A75ECEFAE456}" {
+   Enabled 0
+   DistanceManagement 0
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   DELETE_ON_TRIGGER 0
+   TRIGGER_ALIVE 1
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   EnabledOnDedicatedServer 1
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+  }
+ }
+ Flags 0 0x3
+ editor EntityEditorProps "{66D8C5967E842C09}" {
+  Style icon
+  Color 1 0.4732 0 1
+  Icon "{DEEE748D7C3D8779}Prefabs/WorldEditor/EntityIcons/Misc/Warhead.et"
+  Billboard 0
+ }
+}

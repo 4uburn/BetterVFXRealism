@@ -1,0 +1,74 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef fine_dust_film {
+   ShapeType Box
+   ShapeSize 1.4 0.1 1.4
+   ConeAngle 360 80 100
+   MaxNum 160
+   BirthRate 420
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.15
+   SizeRND 0.08
+   RandomAngle 1
+   RandomRotDir 1
+   Velocity 0.12
+   VelocityRND 0.08
+   AirResistance 3
+   WindInfluence 0
+   GravityMultiply 0
+   AnimFPS 60
+   Lifetime 3.6
+   LifetimeRND 1.2
+   Color {
+    0 0.45 0.41 0.36 1 0.31 0.3 0.28
+   }
+   Alpha {
+    0 0 0.05 0.13 0.6 0.09 1 0
+   }
+   Size {
+    0 0.6 1 1.25
+   }
+   EmittingTime 0.35
+   Repeat 0
+  }
+  EmitterDef fine_dust_specks {
+   ShapeType Box
+   ShapeSize 1.3 0.08 1.3
+   ConeAngle 360 75 100
+   MaxNum 32
+   BirthRate 240
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.05
+   SizeRND 0.03
+   RandomAngle 1
+   RandomRotDir 1
+   Velocity 0.25
+   VelocityRND 0.15
+   AirResistance 2
+   WindInfluence 0
+   GravityMultiply 0.04
+   AnimFPS 60
+   Lifetime 1.8
+   LifetimeRND 0.7
+   Color {
+    0 0.42 0.38 0.33 1 0.3 0.29 0.27
+   }
+   Alpha {
+    0 0 0.04 0.16 0.55 0.1 1 0
+   }
+   Size {
+    0 0.6 1 1.15
+   }
+   EmittingTime 0.25
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

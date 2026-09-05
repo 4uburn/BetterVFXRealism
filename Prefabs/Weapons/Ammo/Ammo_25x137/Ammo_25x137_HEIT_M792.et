@@ -1,0 +1,29 @@
+TracerProjectile : "{AB7BB1272DA3F564}Prefabs/Weapons/Ammo/Ammo_25x137/Ammo_25x137_base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  CollisionTriggerComponent "{62B0F25E05EF1700}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{62B0F25E29D33FE3}" {
+     EffectPrefab "{627F225E34E4B5F1}Prefabs/Weapons/Warheads/Warhead_HEIT_M792.et"
+     ParticleEffect ""
+     SoundEvent "SOUND_EXPLOSION"
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+  }
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   InitSpeed 1100
+   DispersionMultiplier 1.2
+   Mass 0.185
+   TimeToLive 7
+   TriggerWhenTimeout 1
+   BallisticTableConfig "{438BE620D001C1D8}Configs/Weapons/AIBallisticTables/AIBT_25x137_HEIT_M792.conf"
+   AirDrag 0.000115
+   DeflectionCriticalAngle 0
+   PenetrationDepth 0.1
+  }
+ }
+ CartridgeModel "{A302B08CEAC1AD80}Assets/Weapons/Ammo/Bullets/25x137/Cartridge_25x137_M792.xob"
+ "Tracer Burn Start After" 0.02
+ "Tracer Burn Time" 2.15
+}

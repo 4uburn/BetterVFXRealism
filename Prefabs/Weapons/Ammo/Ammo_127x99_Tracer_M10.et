@@ -1,0 +1,25 @@
+TracerProjectile : "{A4E070505C87AD42}Prefabs/Weapons/Ammo/Ammo_127x99_Ball_M33.et" {
+ ID "476AE74C17425072"
+ components {
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   DispersionMultiplier 1.34
+   Mass 0.04011
+   ProjectileEffects {
+    ProjectileDamage "{549306E003C194D7}" {
+     DamageValue 1.5
+     DamageType Incendiary
+     DamageEffects {
+      SCR_IncendiaryBulletDamageEffect "{611E7400A6907376}" {
+      }
+     }
+    }
+   }
+   BallisticTableConfig "{031F00A9553720AE}Configs/Weapons/AIBallisticTables/AIBT_127x99_Tracer_M10.conf"
+  }
+ }
+ ProjectileVisibleTimeScale 2
+ ProjectileModel "{D807332FCA58B894}Assets/Weapons/Ammo/Tracers/Tracer_red.xob"
+ CartridgeModel "{0C9D3118E2015B17}Assets/Weapons/Ammo/Bullets/127x99/Cartridge_127x99_M10.xob"
+ "Tracer Burn Start After" 0.1
+ "Tracer Burn Time" 1.9
+}

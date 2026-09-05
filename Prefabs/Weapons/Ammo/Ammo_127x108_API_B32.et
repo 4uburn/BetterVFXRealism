@@ -1,0 +1,31 @@
+Projectile : "{67FED88E5085F63F}Prefabs/Weapons/Core/Ammo_Bullet_Base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  CollisionTriggerComponent "{62EAC20FFD251EF8}" : "{6CCC3AAFB5A64CE0}Prefabs/Weapons/Core/Components/CollisionTrigger_API.ct" {
+  }
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   InitSpeed 818
+   InitSpeedVariation 12
+   Mass 0.0483
+   ProjectileEffects {
+    ProjectileDamage "{5168BBF3DBD79134}" {
+     DamageValue 340
+    }
+    ExplosionEffect "{85DB664DDCA5D5B0}" {
+     EffectPrefab "{BE20250902AC0024}Prefabs/Weapons/Warheads/BER_Warhead_HMG.et"
+    }
+   }
+   BallisticTableConfig "{09447BF2CE7B5006}Configs/Weapons/AIBallisticTables/AIBT_127x108_API_B32.conf"
+   SonicCracks "{872291A99EEB61B0}Sounds/Weapons/_SharedData/BulletSonicCracks/HMG/Weapons_BulletSonicCracks_HMG.acp"
+   SubsonicFlybys "{E027A93DAFE3B0BB}Sounds/Weapons/_SharedData/BulletFlybys/HMG/Weapons_BulletFlybys_HMG.acp"
+   AirDrag 0.000027
+   Diameter 13
+   Length 63.5
+   TumblingDamageMultiplier 0.05
+   PenetrationDepth 20
+   PenetrationSpeed 774
+  }
+ }
+ ProjectileModel "{0828361DE8A8D149}Assets/Weapons/Ammo/Bullets/127x108/Bullet_127x108_BS.xob"
+ CartridgeModel "{7A5F641730B2357B}Assets/Weapons/Ammo/Bullets/127x108/Cartridge_127x108_API_BS.xob"
+}

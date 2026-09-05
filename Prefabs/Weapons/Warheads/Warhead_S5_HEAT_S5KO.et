@@ -1,0 +1,41 @@
+GenericEntity : "{8C3C62C58D2DBEDA}Prefabs/Weapons/Warheads/Warhead_HEAT.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  SoundComponent "{D092A75ECEFAE456}" {
+   Filenames {
+    "{07E0AF2D78A951FA}Sounds/Weapons/Ammo/HeliRockets/Weapons_Ammo_HeliRocket_HE.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{567CBC1D0F5B4AEA}" : "{D0C33EDF0621598B}Prefabs/Weapons/Core/Damage/ExplosionContainer_HEDP.conf" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" : "{9C98DE51B7C51300}Prefabs/Weapons/Core/Damage/FragmentationDamageEffect_HEDP.conf" {
+       DamageFragmentCount 220
+       GurneyConstant 2830
+       CaseWeight 3080
+       FragMassScale 15
+      }
+     }
+     ChargeWeight 330
+     TntEquivalent 1.6
+    }
+    SubmunitionEffect "{567CB8E002C26D97}" {
+     Prefab "{7C8D575F843FDEB4}Prefabs/Weapons/Ammo/Ammo_Rocket_S5KO_Penetrator.et"
+    }
+    SubmunitionEffect "{5D692C94EC533259}" {
+     Prefab "{E05D215E76BE8BE2}Prefabs/Weapons/Ammo/Ammo_Rocket_S5_HEDP_S5KO_Spall.et"
+    }
+   }
+   "Trigger Offset" 0 0 -0.3
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{636C188C0D4E6074}Particles/Weapon/Explosion_S5KO.ptc"
+   m_fDebrisScale 1.9
+   m_iBerFragImpacts 64
+  }
+ }
+}

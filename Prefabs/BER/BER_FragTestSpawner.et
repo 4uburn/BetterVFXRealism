@@ -1,0 +1,7 @@
+GenericEntity {
+ ID "BE20250904AC1038"
+ components {
+  BER_FragTestSpawner "{BE20250904AC1039}" {
+  }
+ }
+}

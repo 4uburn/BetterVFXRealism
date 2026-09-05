@@ -1,0 +1,58 @@
+GenericEntity : "{492CA9A2919ECA45}Prefabs/Weapons/Warheads/Warhead_Mine_HE.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{5A12D2D8ABE24913}" : "{8A81F4702F919838}Prefabs/Weapons/Core/Damage/ExplosionContainer_HE.conf" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" : "{4021B1E99D5BF2BF}Prefabs/Weapons/Core/Damage/FragmentationDamageEffect_ATMine.conf" {
+       DamageFragmentCount 270
+       GurneyConstant 2700
+       CaseWeight 3000
+      }
+     }
+     ChargeWeight 10300
+     TntEquivalent 1.333
+    }
+    SpawnDistanceParticleEffect "{5CE2D76C214B856F}" {
+     AttachToParent 1
+     ShouldReplicate 0
+     UseFrameEvent 1
+     SubEffects {
+      SCR_MineDistanceParticleEffect "{5CE2D7FB05A89D7F}" {
+       ParticleEffect "{6B8EFE20AD228A9B}Particles/Weapon/Explosion_M15_AT_Mine_LOD2.ptc"
+       SubEffects {
+        SubDistanceParticleEffect "{5CE2E9B5884ABD07}" {
+         ModuloSpawned 20
+         ParticleEffect "{8105B9A5EA395C54}Particles/Weapon/Explosion_M15_AT_Mine.ptc"
+        }
+        SubDistanceParticleEffect "{5CE2E9B588E94F52}" {
+         ModuloSpawned 10
+         ParticleEffect "{F29047B9B0C5BB0B}Particles/Weapon/Explosion_M15_AT_Mine_LOD1.ptc"
+        }
+       }
+      }
+      SCR_MineDistanceParticleEffect "{5CE2D7FB3BE6033E}" {
+       ParticleEffect "{F29047B9B0C5BB0B}Particles/Weapon/Explosion_M15_AT_Mine_LOD1.ptc"
+       MinDist 3
+       SubEffects {
+        SubDistanceParticleEffect "{5CE2E9B5B29D7EEB}" {
+         ModuloSpawned 6
+         ParticleEffect "{8105B9A5EA395C54}Particles/Weapon/Explosion_M15_AT_Mine.ptc"
+        }
+       }
+      }
+      SCR_MineDistanceParticleEffect "{5CE2D7FB383DAD81}" {
+       ParticleEffect "{8105B9A5EA395C54}Particles/Weapon/Explosion_M15_AT_Mine.ptc"
+       MinDist 5
+      }
+     }
+    }
+   }
+   "Trigger Offset" 0 0.11 0
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_iBerFragImpacts 64
+  }
+ }
+}

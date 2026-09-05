@@ -1,0 +1,34 @@
+GenericEntity : "{8C3C62C58D2DBEDA}Prefabs/Weapons/Warheads/Warhead_HEAT.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{567CBC1D0F5B4AEA}" : "{D81CF255115BB767}Prefabs/Weapons/Core/Damage/ExplosionContainer_HEAT.conf" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" : "{9264AB458027FBA7}Prefabs/Weapons/Core/Damage/FragmentationDamageEffect_AT.conf" {
+       DamageFragmentCount 130
+       GurneyConstant 2800
+       CaseWeight 1297
+      }
+     }
+     ChargeWeight 303
+     TntEquivalent 1.54
+    }
+    SubmunitionEffect "{567CB8E002C26D97}" {
+     Prefab "{2D86FDF6894069B3}Prefabs/Weapons/Ammo/Ammo_Rocket_M72A3_Penetrator.et"
+    }
+    SubmunitionEffect "{5D692C94EC533259}" {
+     Prefab "{B40479180A86C261}Prefabs/Weapons/Ammo/Ammo_Rocket_M72A3_Spall.et"
+    }
+   }
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{D3F38F8AA37B77E8}Particles/Weapon/Explosion_M72LAW.ptc"
+   m_fDebrisScale 1.5
+   m_iBerFragImpacts 64
+  }
+ }
+}

@@ -1,0 +1,8 @@
+GenericEntity : "{9B5FF7EECAD376FA}Prefabs/Weapons/Warheads/Warhead_Base.et" {
+ ID "BE20250902AC1001"
+ components {
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_fHullKickup 1.1
+  }
+ }
+}

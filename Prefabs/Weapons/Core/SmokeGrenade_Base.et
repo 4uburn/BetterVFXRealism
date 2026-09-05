@@ -1,0 +1,56 @@
+GenericEntity : "{D7EB24176E5CEAA6}Prefabs/Weapons/Core/Grenade_Base.et" {
+ ID "51FC8327BE43FED2"
+ components {
+  TimerTriggerComponent "{5934C8C5C9FDF999}" {
+   PROJECTILE_EFFECTS {
+    SpawnParticleEffect "{5CAADB9AD0C61F3F}" {
+     AttachToParent 1
+     UseFrameEvent 1
+     TriggerName "Trigger"
+     StopSoundWithParticles 1
+     SoundStopOffset 6000
+    }
+   }
+   DELETE_ON_TRIGGER 0
+  }
+  GrenadeMoveComponent "{1F80A73ADE35BFF1}" {
+   TimeToLive 150
+   TriggerWhenTimeout 0
+   BallisticTableConfig "{D7E82511D6A9544A}Configs/Weapons/AIBallisticTables/AIBT_SmokeGrenade_Base.conf"
+   IsDangerous 0
+  }
+  InventoryItemComponent "{51FAA3E3CF6F087A}" {
+   Attributes SCR_ItemAttributeCollection "{51FAA3E3C2D19BD4}" {
+    ItemPhysAttributes ItemPhysicalAttributes "{56CA88CA367A150F}" {
+     ItemDimensions 10 10 10
+    }
+    CustomAttributes {
+     PreviewRenderAttributes "{52D2D341931DB0B8}" {
+      CameraPreset Right
+      CameraOrbitAngles -25 25 0
+      CameraDistanceToItem 1
+      FOV 10
+     }
+    }
+   }
+  }
+  MeshObject "{51EC93F29BA5F234}" {
+   Object "{3D23DDD4A1D1DC30}Assets/Weapons/Grenades/M18/Smoke_M18.xob"
+  }
+  WeaponComponent "{6D23670EA18BF513}" {
+   WeaponType SmokeGrenade
+   UIInfo GrenadeUIInfo "{172367262E10E042}" {
+    Name "#AR-Weapon_SmokeGrenade_Name"
+    Description "#AR-Weapon_SmokeGrenade_Name"
+    m_eAmmoTypeFlags SMOKE
+   }
+   WeaponSlotType "throwable"
+  }
+  BER_EffectTuningComponent "{BE20250902000002}" {
+   m_bScaleBySurface 0
+   m_fWindRampTime 0
+   m_fScanDuration 200
+   m_bIndoorSmokeSwap 1
+  }
+ }
+}

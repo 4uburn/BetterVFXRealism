@@ -1,0 +1,142 @@
+EffectDef {
+ Version 1
+ Emitters {
+  EmitterDef L_1_smoke {
+   ShapeType Box
+   ShapeSize 0.3 0 0.3
+   ConeAngle 360 0 90
+   MaxNum 60
+   BirthRate 2.8
+   BirthRateVel 0.4
+   Offset 0 0 0
+   Angles 0 0 0
+   LodMin 0
+   LodMax 1
+   Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
+   SizeMultiplier 7.5
+   SizeRND 4.5
+   RotMultiplier 30
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 1
+   VelAffect 1
+   VelocityRND 1
+   AirResistance 0.5
+   AirResistanceRND 0.5
+   WindInfluence 0.2
+   GravityMultiply 0
+   GravityMultiplyRND 0.05
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   AnimOnce 1
+   AnimFPS 25
+   RandomFrame 0
+   Lifetime 13.713
+   LifetimeRND 3.375
+   LifetimeVelFactor 0.01
+   Color {
+    0 0.198 0.198 0.198 1 0.198 0.198 0.198
+   }
+   Alpha {
+    0 0.45 0.08 0.5 0.2 0.1 0.85 0.08 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.326 1 0.8125
+   }
+   EmittingTime 0.1
+  }
+  EmitterDef ber_housing_drag {
+   ShapeType Box
+   ShapeSize 0.5 0.35 0.85
+   ConeAngle 360 0 180
+   MaxNum 24
+   BirthRate 6
+   BirthRateRND 1.5
+   BirthRateVel 0.25
+   Offset 0 0.2 0
+   LodMin 0
+   LodMax 1
+   Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
+   SizeMultiplier 4.8
+   SizeRND 1.8
+   RotMultiplier 30
+   RandomRotDir 1
+   RandomAngle 1
+   RandomFrame 1
+   Velocity 0.3
+   VelocityRND 0.2
+   VelAffect 1
+   AirResistance 1.3
+   AirResistanceRND 0.4
+   WindInfluence 0.15
+   GravityMultiply 0
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   Lifetime 1.2
+   LifetimeRND 0.5
+   Color {
+    0 0.198 0.198 0.198 1 0.198 0.198 0.198
+   }
+   Alpha {
+    0 0.104 0.25 0.338 0.6 0.182 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.35 1 1.1
+   }
+   EmittingTime 0.1
+   Repeat 1
+  }
+  EmitterDef ber_roost {
+   ShapeType Box
+   ShapeSize 0.35 0 0.35
+   ConeAngle 360 0 30
+   MaxNum 45
+   BirthRate 0
+   BirthRateRND 0
+   BirthRateVel 0.35
+   LodMin 0
+   LodMax 1
+   Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
+   SizeMultiplier 3.9
+   SizeRND 1.5
+   RotMultiplier 45
+   RandomRotDir 1
+   RandomAngle 1
+   RandomFrame 1
+   Velocity 2
+   VelocityRND 1
+   VelAffect 0
+   AirResistance 0.8
+   AirResistanceRND 0.3
+   WindInfluence 0.25
+   GravityMultiply 0.05
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   Lifetime 2.4
+   LifetimeRND 1
+   Color {
+    0 0.198 0.198 0.198 1 0.198 0.198 0.198
+   }
+   Alpha {
+    0 0.078 0.25 0.364 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.4 1 2
+   }
+   EmittingTime 0.1
+   Repeat 1
+  }
+ }
+}

@@ -1,0 +1,96 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef mud_clods {
+   ShapeType Box
+   ShapeSize 0.4 0 0.4
+   ConeAngle 360 50 70
+   MaxNum 12
+   BirthRate 5
+   BirthRateRND 2
+   BirthRateVel 0.8
+   LocalTransform 0
+   LodMin 0
+   LodMax 0
+   Material "{118F069016CE1546}Particles/_Materials/Solid/Stones_Base_01.emat"
+   SizeMultiplier 0.075
+   SizeRND 0.06
+   ScaleX 1
+   RotMultiplier 720
+   RandomRotDir 1
+   RandomAngle 1
+   RandomFrame 1
+   Velocity 6
+   VelocityRND 5
+   VelAffect 0.25
+   AirResistance 5
+   AirResistanceRND 0.5
+   GravityMultiply 1.2
+   GravityMultiplyRND 1
+   EnableCollisions 1
+   NormalRestitution 0.05
+   TagentialRestitution 0.6
+   Lifetime 0.6
+   LifetimeRND 0.25
+   Color {
+    0 0.075 0.058 0.042 1 0.045 0.034 0.025
+   }
+   Alpha {
+    0 0 0.006 1 0.841 0.756 1 0
+   }
+   RotationSpeed {
+    0 1 1 1
+   }
+   Size {
+    0 1 1 0.209
+   }
+   EmittingTime 0.1
+  }
+  EmitterDef mud_specks {
+   ShapeType Box
+   ShapeSize 0.45 0 0.45
+   ConeAngle 360 45 75
+   MaxNum 20
+   BirthRate 12
+   BirthRateRND 4
+   BirthRateVel 1.2
+   LocalTransform 0
+   LodMin 0
+   LodMax 0
+   Material "{118F069016CE1546}Particles/_Materials/Solid/Stones_Base_01.emat"
+   SizeMultiplier 0.022
+   SizeRND 0.018
+   ScaleX 1
+   RotMultiplier 720
+   RandomRotDir 1
+   RandomAngle 1
+   RandomFrame 1
+   Velocity 5
+   VelocityRND 4
+   VelAffect 0.3
+   AirResistance 4
+   AirResistanceRND 0.5
+   GravityMultiply 1.3
+   GravityMultiplyRND 0.8
+   EnableCollisions 1
+   NormalRestitution 0.05
+   TagentialRestitution 0.6
+   Lifetime 0.5
+   LifetimeRND 0.2
+   Color {
+    0 0.07 0.054 0.04 1 0.042 0.032 0.024
+   }
+   Alpha {
+    0 0 0.006 1 0.841 0.756 1 0
+   }
+   RotationSpeed {
+    0 1 1 1
+   }
+   Size {
+    0 1 1 0.3
+   }
+   EmittingTime 0.1
+  }
+ }
+ MinFPS 30
+}

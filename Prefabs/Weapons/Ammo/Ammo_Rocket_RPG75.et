@@ -1,0 +1,93 @@
+Projectile : "{C0BDA86B5AA5648C}Prefabs/Weapons/Core/Ammo_Rocket_Base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  AICombatPropertiesComponent "{59C92CB0FD688D78}" {
+   UsedAgainst 0xe 0x10
+  }
+  CollisionTriggerComponent "{5EE8CDCE7517D4F2}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{5EE8CDCE7517D4EA}" {
+     EffectPrefab "{D62ACDDBB9B6787E}Prefabs/Weapons/Warheads/Warhead_HEAT_RPG75.et"
+     ParticleEffect "{D3F38F8AA37B77E8}Particles/Weapon/Explosion_M72LAW.ptc"
+     SoundEvent "SOUND_EXPLOSION"
+    }
+    AIExplosionEffect "{5EE8CDCE7517D4E7}" {
+    }
+    SCR_ExplosionAmmoEffect "{66A2E08FB34CF07F}" {
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+   SafetyDistance 10
+  }
+  InventoryItemComponent "{526E87778842822F}" {
+   Attributes SCR_ItemAttributeCollection "{526E87778ACB229F}" {
+    ItemDisplayName UIInfo "{526E8777859BAACF}" {
+     Name "#AR-Magazine_RPG75_Name"
+     Description "#AR-Magazine_RPG75_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{5EE8CDCE7517D41C}" {
+     Weight 0.8
+     SizeSetupStrategy Manual
+     ItemDimensions 15 15 15
+     ItemVolume 1000
+    }
+    CustomAttributes {
+     PreviewRenderAttributes "{52D6F6A5FB82EE10}" {
+      CameraDistanceToItem 1
+      CameraOffset 0 0 0
+     }
+    }
+    m_bDraggable 0
+    m_bStackable 0
+    m_bRefundable 0
+   }
+  }
+  MagazineComponent "{50F6614BB5D5B0A8}" {
+   UIInfo MagazineUIInfo "{560AE4EBFA0176D4}" {
+    m_sAmmoCaliber "#AR-AmmunitionID_68mm"
+    m_sAmmoType "#AR-AmmoType_RPG75"
+    m_eAmmoTypeFlags HEAT
+    m_MagIndicator SCR_MagazineIndicatorConfiguration "{5660B15AE87FF28E}" : "{650F378E6751CC17}Configs/WeaponInfo/MagazineIndicators/rocket_m72a3.conf" {
+    }
+   }
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{C9CEB818DA3D7F2E}Assets/Weapons/Magazines/RPG75/Rocket_RPG75.xob"
+  }
+  MissileMoveComponent "{0EF36690881261EF}" {
+   InitSpeed 189
+   Mass 0.82
+   TimeToLive 6
+   ProjectileEffects {
+    ProjectileDamage "{56829D01651CE9A7}" {
+    }
+    AIHitEffect "{5EE8CDCE7517D409}" {
+    }
+   }
+   BallisticTableConfig "{0F8BDCD713FA64C0}Configs/Weapons/AIBallisticTables/AIBT_Rocket_RPG75.conf"
+   ThrustInitTime 0.1
+   ThrustTime 0.1
+   ThrustForce 0
+   ForwardAirFriction 0.075
+   SideAirFriction 0.08
+   DistanceEnableGravitation 0.4
+  }
+  RigidBody "{529E88841E9EDFB4}" {
+   Mass 1.8
+  }
+  RocketTraceEffectComponent "{5EE8CDCE7517D403}" {
+   ParticleEffect ""
+  }
+  ActionsManagerComponent "{50F6614BA1D6E54A}" {
+   ActionContexts {
+    UserActionContext "{50F6614BAFD73316}" {
+     Position PointInfo "{50F6614B93EB8F69}" {
+      Offset 0 0 -0.0922
+     }
+    }
+   }
+  }
+ }
+ SpawnAsCartridge 0
+ ProjectileModel "{C9CEB818DA3D7F2E}Assets/Weapons/Magazines/RPG75/Rocket_RPG75.xob"
+}

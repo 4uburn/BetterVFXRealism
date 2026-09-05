@@ -1,0 +1,34 @@
+GenericEntity : "{8C3C62C58D2DBEDA}Prefabs/Weapons/Warheads/Warhead_HEAT.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{567CBC1D0F5B4AEA}" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" {
+       DamageFragmentCount 50
+       GurneyConstant 2830
+       CaseWeight 500
+      }
+     }
+     ChargeWeight 320
+     TntEquivalent 1.6
+    }
+    SubmunitionEffect "{567CB8E002C26D97}" {
+     Prefab "{C7BD0094290E1FBD}Prefabs/Weapons/Ammo/Ammo_Rocket_RPG75_Penetrator.et"
+    }
+    SubmunitionEffect "{5D692C94EC533259}" {
+     Prefab "{9BB49BA0F6A0DDDB}Prefabs/Weapons/Ammo/Ammo_Rocket_RPG75_Spall.et"
+    }
+   }
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{D3F38F8AA37B77E8}Particles/Weapon/Explosion_M72LAW.ptc"
+   m_fDebrisScale 1.5
+   m_iBerFragImpacts 52
+  }
+ }
+}

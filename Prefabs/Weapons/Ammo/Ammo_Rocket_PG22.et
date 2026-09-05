@@ -1,0 +1,86 @@
+Projectile : "{C0BDA86B5AA5648C}Prefabs/Weapons/Core/Ammo_Rocket_Base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  AICombatPropertiesComponent "{59C92CB0FD688D78}" {
+   UsedAgainst 0xe 0x10
+  }
+  CollisionTriggerComponent "{5EAE7D0566F20A24}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{5EAE7D0566F20A30}" {
+     EffectPrefab "{6474FEE360565390}Prefabs/Weapons/Warheads/Warhead_HEAT_PG22.et"
+     ParticleEffect "{B6275B6B9E29E9ED}Particles/Weapon/Explosion_RPG7V1.ptc"
+     SoundEvent "SOUND_EXPLOSION"
+    }
+    AIExplosionEffect "{61E688D78E9AC0EB}" {
+    }
+    SCR_ExplosionAmmoEffect "{66A2E08FD95497B3}" {
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+   SafetyDistance 10
+  }
+  InventoryItemComponent "{526E87778842822F}" {
+   Attributes SCR_ItemAttributeCollection "{526E87778ACB229F}" {
+    ItemDisplayName UIInfo "{526E8777859BAACF}" {
+     Name "#AR-Magazine_RPG22_Name"
+     Description "#AR-Magazine_RPG22_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{5EAE7D0566F20A38}" {
+     Weight 1.48
+     SizeSetupStrategy Manual
+     ItemDimensions 15 15 15
+     ItemVolume 1000
+     RestingAdditiveRotationLS 0 0 0
+     RestingAdditiveOffsetLS 0 0 0
+    }
+    CustomAttributes {
+     PreviewRenderAttributes "{52D6F6A5FB82EE10}" {
+      CameraPreset Top
+      CameraDistanceToItem 1
+      CameraOffset 0 0 0
+      FOV 20
+     }
+    }
+    m_bDraggable 0
+    m_bStackable 0
+    m_bRefundable 0
+   }
+  }
+  MagazineComponent "{50F6614BB5D5B0A8}" {
+   UIInfo MagazineUIInfo "{560AE4EBFA0176D4}" {
+    m_sAmmoCaliber "#AR-AmmunitionID_72_5mm"
+    m_sAmmoType "#AR-AmmoType_RPG22"
+    m_eAmmoTypeFlags HEAT
+   }
+   ItemModel "{B69D757738C96455}Assets/Weapons/Magazines/RPG22/Rocket_PG22_item.xob"
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{EB1C9502AE694B67}Assets/Weapons/Magazines/RPG22/Rocket_PG22.xob"
+  }
+  MissileMoveComponent "{0EF36690881261EF}" {
+   InitSpeed 133
+   Mass 1.48
+   TimeToLive 5
+   ProjectileEffects {
+    AIHitEffect "{5EAE7D0566F20A47}" {
+    }
+   }
+   BallisticTableConfig "{59BC391EBB0D0423}Configs/Weapons/AIBallisticTables/AIBT_Rocket_PG22.conf"
+   ThrustInitTime 0.1
+   ThrustTime 0.1
+   ThrustForce 0
+   ForwardAirFriction 0.03
+   SideAirFriction 0.05
+   AlignTorque 0.01
+   DistanceEnableGravitation 0.4
+  }
+  RigidBody "{529E88841E9EDFB4}" {
+   Mass 2.6
+  }
+  RocketTraceEffectComponent "{5EAE7D0566F20A4C}" {
+   ParticleEffect ""
+  }
+ }
+ ProjectileModel "{EB1C9502AE694B67}Assets/Weapons/Magazines/RPG22/Rocket_PG22.xob"
+ CartridgeModel "{B69D757738C96455}Assets/Weapons/Magazines/RPG22/Rocket_PG22_item.xob"
+}

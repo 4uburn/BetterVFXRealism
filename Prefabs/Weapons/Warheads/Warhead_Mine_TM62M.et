@@ -1,0 +1,59 @@
+GenericEntity : "{492CA9A2919ECA45}Prefabs/Weapons/Warheads/Warhead_Mine_HE.et" {
+ ID "59EC9891849E0D83"
+ components {
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{5A12D2D8ABE24913}" : "{8A81F4702F919838}Prefabs/Weapons/Core/Damage/ExplosionContainer_HE.conf" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" : "{4021B1E99D5BF2BF}Prefabs/Weapons/Core/Damage/FragmentationDamageEffect_ATMine.conf" {
+       DamageFragmentCount 270
+       CaseWeight 2000
+      }
+     }
+     ChargeWeight 7500
+    }
+    SpawnDistanceParticleEffect "{5CEC97C36DDB1EBF}" {
+     ShouldReplicate 0
+     UseFrameEvent 1
+     SubEffects {
+      SCR_MineDistanceParticleEffect "{5CEC97C3830C8238}" {
+       ParticleEffect "{AC7C3BFA1407D0C4}Particles/Weapon/Explosion_TM62M_AT_Mine_LOD2.ptc"
+       SubEffects {
+        SubDistanceParticleEffect "{5CFCE63ED9E41957}" {
+         ModuloSpawned 20
+         ParticleEffect "{DB460C99707F948E}Particles/Weapon/Explosion_TM62M_AT_Mine.ptc"
+        }
+        SubDistanceParticleEffect "{5CFCE63ED72DDAB1}" {
+         ModuloSpawned 10
+         ParticleEffect "{3562826309E0E154}Particles/Weapon/Explosion_TM62M_AT_Mine_LOD1.ptc"
+        }
+       }
+      }
+      SCR_MineDistanceParticleEffect "{5CFCE63EA9DB6713}" {
+       ParticleEffect "{3562826309E0E154}Particles/Weapon/Explosion_TM62M_AT_Mine_LOD1.ptc"
+       MinDist 3
+       SubEffects {
+        SubDistanceParticleEffect "{5CFCE63EFF44EAF9}" {
+         ModuloSpawned 6
+         ParticleEffect "{DB460C99707F948E}Particles/Weapon/Explosion_TM62M_AT_Mine.ptc"
+        }
+       }
+      }
+      SCR_MineDistanceParticleEffect "{5CFCE63EAA4ADD5B}" {
+       ParticleEffect "{DB460C99707F948E}Particles/Weapon/Explosion_TM62M_AT_Mine.ptc"
+       MinDist 5
+      }
+     }
+    }
+   }
+   DELETE_ON_TRIGGER 0
+   TRIGGER_ALIVE 1
+   "Trigger Offset" 0 0.085 0
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_iBerFragImpacts 64
+  }
+ }
+ Flags 0 0x3
+ coords 0 1 0
+}

@@ -1,0 +1,14 @@
+GameProject {
+ ID BetterEffectsRealism
+ GUID "4DA875471101785E"
+ TITLE BetterEffectsRealism
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+ Configurations {
+  GameProjectConfig PC {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}

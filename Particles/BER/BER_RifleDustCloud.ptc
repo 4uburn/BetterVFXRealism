@@ -1,0 +1,90 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef cloud_body {
+   ShapeType Box
+   ShapeSize 2.2 0.1 2.2
+   ConeAngle 360 0 25
+   MaxNum 16
+   BirthRate 16
+   BirthRateRND 4
+   Offset 0 0.08 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.5
+   SizeRND 0.15
+   RotMultiplier 12
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.35
+   VelocityRND 0.15
+   VelAffect 0.4
+   AirResistance 0.8
+   AirResistanceRND 0.3
+   WindInfluence 0
+   GravityMultiply -0.02
+   AnimFPS 60
+   Lifetime 4.5
+   LifetimeRND 1.2
+   Color {
+    0 0.48 0.4 0.31 1 0.42 0.36 0.28
+   }
+   Alpha {
+    0 0 0.15 0.32 0.75 0.28 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.55 1 1.45
+   }
+   EmittingTime 1.1
+   Repeat 0
+  }
+  EmitterDef cloud_haze {
+   ShapeType Box
+   ShapeSize 2.6 0.1 2.6
+   ConeAngle 360 0 20
+   MaxNum 8
+   BirthRate 7
+   BirthRateRND 2
+   Offset 0 0.1 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.85
+   SizeRND 0.2
+   RotMultiplier 8
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.22
+   VelocityRND 0.1
+   VelAffect 0.4
+   AirResistance 0.7
+   AirResistanceRND 0.3
+   WindInfluence 0
+   GravityMultiply -0.02
+   AnimFPS 60
+   Lifetime 6
+   LifetimeRND 1.5
+   Color {
+    0 0.47 0.4 0.31 1 0.42 0.37 0.29
+   }
+   Alpha {
+    0 0 0.2 0.18 0.78 0.16 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.65 1 1.5
+   }
+   EmittingTime 1.1
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

@@ -1,0 +1,68 @@
+Projectile : "{D40A105437369C1D}Prefabs/Weapons/Core/Ammo_GrenadeLauncher_Base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  CollisionTriggerComponent "{9024A6C4994B6581}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{5184D7805A3928AB}" {
+     EffectPrefab "{729D7EE679AD97E7}Prefabs/Weapons/Warheads/Warhead_Grenade_HE_VOG25.et"
+     ParticleEffect ""
+     SoundEvent "SOUND_EXPLOSION"
+    }
+    AIExplosionEffect "{5E8ADDDC2FA178BE}" {
+    }
+    SCR_ExplosionAmmoEffect "{66A2E08E53AFD1CB}" {
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+   ArmingTime 0
+   SafetyDistance 10
+  }
+  InventoryItemComponent "{52627A12350994B6}" {
+   Attributes SCR_ItemAttributeCollection "{52627A1234AD20A4}" {
+    ItemDisplayName UIInfo "{527AC1475FCFF143}" {
+     Name "#AR-Magazine_VOG25_Name"
+     Description "#AR-Magazine_VOG25_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes PhysicalAttributes {
+     Weight 0.25
+     SizeSetupStrategy Manual
+     ItemDimensions 5 5 5
+     ItemVolume 100
+    }
+    m_Size SLOT_1x1
+   }
+  }
+  MagazineComponent "{517A8369ED05D880}" {
+   MagazineWell MagazineWellRU_GP "{5188C16B549978CA}" {
+   }
+   UIInfo MagazineUIInfo "{5188C16B4F5B3FAD}" {
+    Name "#AR-AmmunitionID_40mm"
+    m_sAmmoCaliber "#AR-AmmunitionID_40mm"
+    m_sAmmoType "#AR-AmmoType_VOG25"
+    m_eAmmoTypeFlags FRAG
+    m_MagIndicator SCR_MagazineIndicatorConfiguration "{5874FAA7B6D57051}" : "{50A057521DC5C821}Configs/WeaponInfo/MagazineIndicators/ugl_vog25.conf" {
+    }
+   }
+   MaxAmmo 1
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{8B532B0C912902CE}Assets/Weapons/Ammo/Grenades/VOG25/VOG25.xob"
+  }
+  ShellMoveComponent "{20FB66C5FA209A29}" {
+   InitSpeed 77
+   InitSpeedVariation 0.77
+   Mass 0.25
+   TimeToLive 30
+   ProjectileEffects {
+    AIHitEffect "{5E8AE4AB155204EF}" {
+    }
+   }
+   BallisticTableConfig "{375D7FAFAD27A129}Configs/Weapons/AIBallisticTables/AIBT_Grenade_HE_VOG25.conf"
+  }
+  Hierarchy "{520E72A168442BD9}" {
+  }
+ }
+ ProjectileModel "{8B532B0C912902CE}Assets/Weapons/Ammo/Grenades/VOG25/VOG25.xob"
+ CartridgeModel "{8B532B0C912902CE}Assets/Weapons/Ammo/Grenades/VOG25/VOG25.xob"
+ CartridgeLayerPreset "ItemFireView"
+}

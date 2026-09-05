@@ -1,0 +1,40 @@
+GenericEntity : "{D584F2FFFDC7DE49}Prefabs/Weapons/Warheads/Warhead_Shell_HE.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  SignalsManagerComponent "{C572A75F88B55309}" {
+   Enabled 1
+  }
+  SoundComponent "{D092A75ECEFAE456}" {
+   Enabled 1
+   Filenames {
+    "{07E0AF2D78A951FA}Sounds/Weapons/Ammo/HeliRockets/Weapons_Ammo_HeliRocket_HE.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{5D38C8F8C6A477C7}" : "{0CE1927888BD98BA}Prefabs/Weapons/Core/Damage/ExplosionContainer_HEF.conf" {
+     ExplosionEffects {
+      ExplosionFragmentationEffect "{567CBC1D7AB652C7}" : "{D865ECB9F1A819E9}Prefabs/Weapons/Core/Damage/FragmentationDamageEffect.conf" {
+       DamageFragmentCount 360
+       GurneyShape CYLINDER
+       GurneyConstant 2700
+       CaseWeight 5100
+       FragMassScale 15
+      }
+     }
+     ChargeWeight 420
+     TntEquivalent 1.6
+    }
+   }
+   "Trigger Offset" 0 0 -0.3
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{636C188C0D4E6074}Particles/Weapon/Explosion_S5KO.ptc"
+   m_fDebrisScale 2
+   m_iBerFragImpacts 64
+  }
+ }
+}

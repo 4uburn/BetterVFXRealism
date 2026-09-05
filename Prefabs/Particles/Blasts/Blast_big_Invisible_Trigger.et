@@ -1,0 +1,23 @@
+GenericEntity {
+ ID "5CCC9D5AD7F99C32"
+ components {
+  MeshObject "{5CCC9D5AD7F99C34}" {
+   Enabled 0
+   Object "{FF35BE9795BA3797}system/wbdata/Gizmo3D/sphere.xob"
+   Materials {
+    MaterialAssignClass "{5DD4BC6AABD0A19D}" {
+     SourceMaterial "Glass_Shard"
+     AssignedMaterial ""
+    }
+   }
+  }
+  BER_OrientedContactComponent "{5CCC9D5AD7F99C4F}" {
+   m_bPlayParticle 1
+   m_iGameMaterialEffect BLAST
+   m_iEffectIndex 3
+   m_bFirstContactOnly 1
+   m_bParticleOriented 0
+  }
+ }
+ coords 267.246 5.268 266.649
+}

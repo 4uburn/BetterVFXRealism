@@ -1,0 +1,33 @@
+GenericEntity : "{9B5FF7EECAD376FA}Prefabs/Weapons/Warheads/Warhead_Base.et" {
+ ID "520EA1D2A9E0B759"
+ components {
+  SignalsManagerComponent "{C572A75F88B55309}" {
+   Enabled 1
+  }
+  SoundComponent "{D092A75ECEFAE456}" {
+   Enabled 1
+   Filenames {
+    "{7400F00B53115F5C}Sounds/Weapons/Grenades/Weapons_Grenade_Generic_NoShrapnell.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{567CBC1CFBB064A8}" : "{8A81F4702F919838}Prefabs/Weapons/Core/Damage/ExplosionContainer_HE.conf" {
+    }
+    SpawnDecalEffect "{5E24CB0430C17E4A}" {
+     Scale 1.5
+     Material "{9EC972F6E6DD4842}Assets/Decals/Logistics/Impact/Data/Decal_Logistics_Grenade_01.emat"
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{728768DE31C8D1DE}Particles/Weapon/Explosion_VOG25.ptc"
+   m_fDebrisScale 1.1
+   m_iBerFragImpacts 30
+  }
+ }
+}

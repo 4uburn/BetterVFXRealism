@@ -1,0 +1,72 @@
+Projectile : "{D40A105437369C1D}Prefabs/Weapons/Core/Ammo_GrenadeLauncher_Base.et" {
+ ID "50C6F965BA00F9FA"
+ components {
+  SCR_ShellSoundComponent "{60C2960A4FB4346A}" {
+   Filenames {
+    "{D745CE1C49A3CBA9}Sounds/_SharedData/Signals/Weapons/Flares/RSP30/Weapons_Flares_ProjectileTravelling_RSP30.acp"
+   }
+  }
+  TimerTriggerComponent "{62E676DDFA5E2E9B}" {
+   PROJECTILE_EFFECTS {
+    SubmunitionEffect "{62E676DDCC924E54}" {
+     Prefab "{A090D9A11955DF54}Prefabs/Weapons/Ammo/FlareEffect_30mm_RSP30_White.et"
+     SoundEvent "SOUND_DEPLOY"
+    }
+   }
+   TIMER 2
+  }
+  AICombatPropertiesComponent "{59C92CB12877478B}" {
+   Priority 0
+   PriorityAgainstVehicles 0
+   UsedAgainst 0 0x7
+   IndirectlyUsedAgainst 0 0x1
+   Traits 0x1 0
+  }
+  InventoryItemComponent "{52627A12350994B6}" {
+   Attributes SCR_ItemAttributeCollection "{52627A1234AD20A4}" {
+    ItemDisplayName UIInfo "{60F4A8D930FDD9BD}" {
+     Name "#AR-Item_RSP30_White_Name"
+     Description "#AR-Item_RSP30_White_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{60F4A8D930FDD9BA}" {
+     Weight 0.1
+     SizeSetupStrategy Manual
+     ItemDimensions 5 5 5
+     ItemVolume 100
+     DimensionScaler 1
+     RestingAdditiveRotationLS 0 0 0
+     RestingAdditiveOffsetLS 0 0 0
+    }
+    CustomAttributes {
+     PreviewRenderAttributes "{56E711941DDE376E}" {
+     }
+    }
+    m_Size SLOT_1x1
+   }
+  }
+  MagazineComponent "{62E676CFCCC95FA9}" {
+   UIInfo MagazineUIInfo "{62E676CE34DF7C0E}" {
+    Name "#AR-Item_Flare_Name"
+    m_sAmmoCaliber "#AR-AmmunitionID_30mm"
+    m_eAmmoTypeFlags ILLUMINATION
+    m_MagIndicator SCR_MagazineIndicatorConfiguration "{5660B15AE87FF28E}" {
+     m_sOutline "throwable-flare"
+     m_bProgressBar 0
+    }
+   }
+   MaxAmmo 1
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{C11256C05D9A7928}Assets/Weapons/Ammo/Grenades/Flare_RSP30/Flare_RSP30_projectile.xob"
+  }
+  RigidBody "{60D6E88A632CC06B}" {
+   Mass 0.1
+  }
+  RocketTraceEffectComponent "{62E676CFE6AA15D6}" {
+   ParticleEffect "{BE20250902AC0022}Particles/BER/BER_FlareTrail.ptc"
+  }
+ }
+ SpawnAsCartridge 0
+ ProjectileModel "{C11256C05D9A7928}Assets/Weapons/Ammo/Grenades/Flare_RSP30/Flare_RSP30_projectile.xob"
+ CartridgeModel "{C11256C05D9A7928}Assets/Weapons/Ammo/Grenades/Flare_RSP30/Flare_RSP30_projectile.xob"
+}

@@ -1,0 +1,29 @@
+TracerProjectile : "{6DEC9F287271AB24}Prefabs/Weapons/Ammo/Ammo_127x99_AP_M2.et" {
+ ID "476AE74C1F2F140D"
+ components {
+  CollisionTriggerComponent "{62EAC20094BDC6B6}" : "{6CCC3AAFB5A64CE0}Prefabs/Weapons/Core/Components/CollisionTrigger_API.ct" {
+  }
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   Mass 0.0401
+   ProjectileEffects {
+    ProjectileDamage "{5168BBF3DBD79134}" {
+     DamageValue 365
+    }
+    ProjectileDamage "{58D4052125762CBE}" {
+     DamageType Incendiary
+     DamageEffects {
+      SCR_IncendiaryBulletDamageEffect "{611E7400B8A8B1C6}" {
+      }
+     }
+    }
+   }
+   BallisticTableConfig "{9CB7C5D3DD2A3C2A}Configs/Weapons/AIBallisticTables/AIBT_127x99_APIT_M20.conf"
+   PenetrationDepth 19
+  }
+ }
+ ProjectileVisibleTimeScale 2
+ ProjectileModel "{D807332FCA58B894}Assets/Weapons/Ammo/Tracers/Tracer_red.xob"
+ CartridgeModel "{0C9D3118E2015B17}Assets/Weapons/Ammo/Bullets/127x99/Cartridge_127x99_M10.xob"
+ "Tracer Burn Start After" 0.1
+ "Tracer Burn Time" 1.9
+}

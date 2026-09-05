@@ -1,0 +1,28 @@
+TracerProjectile : "{AC29AE3D5ECD6390}Prefabs/Weapons/Ammo/Ammo_762x54r_Ball_57N323S.et" {
+ ID "5272FB639B197E8B"
+ components {
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   InitSpeed 800
+   InitSpeedVariation 15
+   DispersionMultiplier 1.67
+   Mass 0.00965
+   ProjectileEffects {
+    ProjectileDamage "{554B03F15D9DBDF8}" {
+     DamageType Incendiary
+     DamageEffects {
+      SCR_IncendiaryBulletDamageEffect "{611E7400973A03E5}" {
+      }
+     }
+    }
+   }
+   BallisticTableConfig "{18A55B529C1F6655}Configs/Weapons/AIBallisticTables/AIBT_762x54r_Tracer_7T2.conf"
+   Length 38
+   TumblingDamageMultiplier 0.05
+  }
+ }
+ ProjectileVisibleTimeScale 2
+ ProjectileModel "{D807332FCA58B894}Assets/Weapons/Ammo/Tracers/Tracer_red.xob"
+ CartridgeModel "{71F92160489B0A8E}Assets/Weapons/Ammo/Bullets/762x54/Cartridge_762x54_T46.xob"
+ "Tracer Burn Start After" 0.02
+ "Tracer Burn Time" 1.6
+}

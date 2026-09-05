@@ -1,0 +1,20 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef resolver {
+   ShapeType Point
+   MaxNum 1
+   BirthRate 1000
+   LodMin 0
+   LodMax 2
+   ParticleType Prefab
+   Prefab "{BE20250902AC0004}Prefabs/BER/BER_APDSImpactResolver.et"
+   Velocity 0
+   Lifetime 0.4
+   LifetimeRND 0
+   EmittingTime 0.05
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

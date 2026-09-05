@@ -1,0 +1,42 @@
+GenericEntity : "{492CA9A2919ECA45}Prefabs/Weapons/Warheads/Warhead_Mine_HE.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  SoundComponent "{D092A75ECEFAE456}" {
+   Filenames {
+    "{010EF953A358A4AF}Sounds/Weapons/Explosives/Mine_M14/Weapons_Explosives_M14.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{5A12D2D8ABE24913}" : "{04BC445FB74FDAA9}Prefabs/Weapons/Core/Damage/ExplosionContainer_Base.conf" {
+     ExplosionEffects {
+      BaseExplosionDamage "{5D8D1EB3EF9D02C6}" {
+       DamageDistance 5.2
+       DamageEffect {
+        SCR_CriticalExplosionDamageEffect "{611492CC3EF790B4}" {
+        }
+       }
+      }
+     }
+     ChargeWeight 30
+    }
+    SpawnDecalEffect "{5E24CB0404FD81A6}" {
+     Scale 1
+    }
+    SpawnParticleEffect "{64947337A84698B5}" {
+     UseFrameEvent 1
+     ParticleEffect ""
+    }
+   }
+   "Trigger Offset" 0 0.033 0
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   Enabled 1
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{818AF4ECD342182C}Particles/Weapon/Explosion_M14_AP_Mine.ptc"
+   m_fDebrisScale 1.2
+  }
+ }
+}

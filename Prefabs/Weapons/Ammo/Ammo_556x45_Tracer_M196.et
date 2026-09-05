@@ -1,0 +1,25 @@
+TracerProjectile : "{9CE4CC890A2A574F}Prefabs/Weapons/Ammo/Ammo_556x45_Ball_M193.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  ShellMoveComponent "{851AA4A2AE0A5691}" {
+   DispersionMultiplier 1.62
+   Mass 0.00335
+   ProjectileEffects {
+    ProjectileDamage "{61708295E212D700}" {
+     DamageValue 0.75
+     DamageType Incendiary
+     DamageEffects {
+      SCR_IncendiaryBulletDamageEffect "{611E7400B8A8B1C6}" {
+      }
+     }
+    }
+   }
+   BallisticTableConfig "{60DCB7F83A9E1FC2}Configs/Weapons/AIBallisticTables/AIBT_556x45_Ball_M196.conf"
+   Length 23.1
+  }
+ }
+ ProjectileModel "{D807332FCA58B894}Assets/Weapons/Ammo/Tracers/Tracer_red.xob"
+ CartridgeModel "{8B2E3371C90A7197}Assets/Weapons/Ammo/Bullets/556x45/Cartridge_556x45_M196.xob"
+ "Tracer Burn Start After" 0.01
+ "Tracer Burn Time" 0.55
+}

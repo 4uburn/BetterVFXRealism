@@ -1,0 +1,48 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef case_wisp {
+   ShapeType Sphere
+   ShapeSize 0.05 0.05 0.05
+   ConeAngle 360 0 55
+   MaxNum 45
+   BirthRate 34
+   BirthRateRND 0
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.09
+   SizeRND 0.04
+   RotMultiplier 35
+   RandomRotDir 1
+   RandomAngle 1
+   FlipU Random
+   Velocity 0.35
+   VelocityRND 0.2
+   AirResistance 1.8
+   AirResistanceRND 0.6
+   WindInfluence 0.05
+   GravityMultiply 0
+   AnimFPS 60
+   LifetimeByAnim 0
+   RandomFrame 1
+   Lifetime 1.3
+   LifetimeRND 0.5
+   Color {
+    0 0.462 0.462 0.462 1 0.4 0.4 0.4
+   }
+   Alpha {
+    0 0 0.12 0.3 0.6 0.18 1 0
+   }
+   RotationSpeed {
+    0 1 1 0.3
+   }
+   Size {
+    0 0.4 1 1.6
+   }
+   EmittingTime 1.1
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

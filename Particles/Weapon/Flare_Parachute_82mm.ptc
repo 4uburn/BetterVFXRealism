@@ -1,0 +1,446 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef stars {
+   ShapeType Sphere
+   ShapeSize 4 0 0
+   ConeAngle 120 0 120
+   ConeAngleMinDist 180
+   Occlusion 12
+   MaxNum 5
+   BirthRate 1000
+   BirthRateRND 1
+   BirthRateVel 1
+   Material "{91B425EA62ED7DF2}Particles/_Materials/Glow_Flare.emat"
+   StretchMultiplier 1
+   StreakFullUV 0
+   SizeMultiplier 0.1
+   RotMultiplier 0
+   RandomRotDir 1
+   BillboardingType Full
+   VelAngle 0
+   RandomAngle 1
+   FlipU Random
+   Velocity 35
+   VelocityRND 2
+   VelAffect 10
+   AirResistance 0.6
+   AirResistanceRND 0.615
+   WindInfluence 0.252
+   GravityMultiply 0.8
+   GravityMultiplyRND 0.03
+   EnableCollisions 1
+   RotDampBySliding 0
+   AnimOnce 0
+   AnimFPS 30
+   LifetimeByAnim 0
+   Lifetime 60
+   LifetimeRND 1.3
+   Color {
+    0.609 1 1 1 0.97 0.76 0.665 0.461
+   }
+   Alpha {
+    0.008 1
+   }
+   Emissivity {
+    0.008 1
+   }
+   RotationSpeed {
+    0.008 1
+   }
+   Size {
+    0 0 0.107 0.108 0.238 1 0.501 1 0.81 1 1 0
+   }
+   EmittingTime 60
+   Repeat 0
+   ColorMast {
+    0 1 1 1 0.431 1 1 1 1 1 1 1
+   }
+   AlphaMast {
+    0.008 1
+   }
+   RotationSpeedMast {
+    0.008 1
+   }
+   SizeMast {
+    0.008 1
+   }
+   BRateMast {
+    0.008 1 0.126 1 0.189 0
+   }
+   VelocityMast {
+    0.008 1
+   }
+   MaxLV 16
+   LightColorMast {
+    0.609 1 1 1 0.97 0.76 0.665 0.461
+   }
+   LightIntensityMast {
+    0 0 0.107 0.108 0.238 1 0.501 1 0.872 1 1 0
+   }
+  }
+  EmitterDef fire_3 {
+   ShapeType Point
+   ShapeSize 1 0 1
+   MaxNum 3
+   BirthRate 20
+   Offset 0 0 0
+   Angles 0 0 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 0
+   Material "{5C5033CB29205A1D}Particles/_Materials/Gas/Flame_Base_Pillar_01.emat"
+   StreakFullUV 0
+   SizeMultiplier 0.3
+   SizeRND 0.2
+   ScaleX 0.789
+   CenterY -0.946
+   RotMultiplier 0
+   RandomRotDir 1
+   VelAngle 1
+   RandomAngle 1
+   Velocity 0.3
+   VelocityRND 0
+   AirResistance 20
+   AirResistanceRND 0
+   GravityMultiply 0
+   GravityMultiplyRND 0
+   Lifetime 0.2
+   LifetimeRND 0.1
+   Color {
+    0 1 1 1 0.165 0.831 0.534 0.238 0.4 0.411 0.165 0.074 1 0.091 0.077 0.065
+   }
+   Alpha {
+    0 0 0.016 0.936 0.635 1 1 0
+   }
+   RotationSpeed {
+    0 1 0.29 0.872 0.621 0.192 1 0
+   }
+   Size {
+    0 0.222 1 1
+   }
+   EmittingTime 60
+   Repeat 0
+   AlphaMast {
+    0 0 0.005 1 0.735 0.896 1 0
+   }
+   SizeMast {
+    0 1
+   }
+   BRateMast {
+    0 0 0.007 1 0.603 0.896 0.88 0 1 0
+   }
+   MaxLV 11
+   LightColorMast {
+    0.609 1 1 1 0.97 0.76 0.665 0.461
+   }
+   LightIntensityMast {
+    0 0 0.073 0.123 0.167 1 0.501 1 0.961 1 1 0
+   }
+  }
+  EmitterDef halo_5 {
+   ShapeType Point
+   ShapeSize 1 0 1
+   ConeAngle 360 0 50
+   MaxNum 3
+   BirthRate 1000
+   Offset 0 0 0
+   Angles 0 0 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{91B425EA62ED7DF2}Particles/_Materials/Glow_Flare.emat"
+   StreakFullUV 0
+   SizeMultiplier 0.2
+   SizeRND 0
+   ScaleX 0.789
+   CenterY -0.946
+   RotMultiplier 0
+   RandomRotDir 1
+   VelAngle 1
+   RandomAngle 1
+   Velocity 0
+   VelocityRND 0
+   AirResistance 20
+   AirResistanceRND 0
+   GravityMultiply 0
+   GravityMultiplyRND 0
+   Lifetime 0.2
+   LifetimeRND 0.1
+   Alpha {
+    0 0 0.268 0.291 0.719 0.318 1 0
+   }
+   EmittingTime 60
+   Repeat 0
+   AlphaMast {
+    0 0 0.201 0.993 0.636 0.952 0.915 0
+   }
+   MaxLV 12
+   RelativeLV 1
+   LightColorMast {
+    0.067 0.253 0.61 0.249
+   }
+   LightIntensityMast {
+    0 0 0.024 0.797 0.075 1 0.771 0.818 1 0
+   }
+  }
+  EmitterDef fire_sparks_7 {
+   ShapeType Point
+   ShapeSize 1 0 1
+   ConeAngle 360 0 50
+   MaxNum 20
+   BirthRate 30
+   BirthRateRND 0
+   Offset 0 0 0
+   LodMin 0
+   LodMax 0
+   Material "{D9FC42124DBB8845}Particles/_Materials/Fire/Base_Sparks_06.emat"
+   StretchMultiplier 1.05
+   SizeMultiplier 0.02
+   SizeRND 0
+   ScaleX 0.267
+   ScaleY 0.788
+   VelAngle 1
+   Velocity 5
+   VelocityRND 4
+   AirResistance 8
+   AirResistanceRND 4
+   WindInfluence 0.05
+   GravityMultiply -0.1
+   GravityMultiplyRND 3
+   RandomFrame 1
+   Lifetime 0.2
+   LifetimeRND 0.5
+   Color {
+    0 1 0.969 0.608 0.125 0.691 0.274 0.04 0.252 0.737 0.075 0.012
+   }
+   Alpha {
+    0 0 0.045 0.984 0.439 0.119 1 0
+   }
+   Size {
+    0 0 0.035 0.984 0.734 0.92 1 0
+   }
+   EmittingTime 60
+   Repeat 0
+   AlphaMast {
+    0 0 0.018 1 0.942 1 0.999 0
+   }
+   BRateMast {
+    0 0 0.012 1 0.594 0.888 0.88 0 1 0
+   }
+   VelocityMast {
+    0 0.696 0.022 1 0.193 0.952 0.255 0.576 0.379 0.52 0.912 0.448 1 0
+   }
+  }
+  EmitterDef smoke_9 {
+   ShapeType Sphere
+   ShapeSize 0.2 0.2 0.2
+   ConeAngle 360 10 40
+   MaxNum 1000
+   BirthRate 7.5
+   BirthRateRND 0
+   BirthRateVel 3
+   Offset 0 0 0
+   LodMin 0
+   LodMax 2
+   Material "{31115101CCD19009}Particles/_Materials/Smoke_Flare_White.emat"
+   StretchMultiplier 0
+   SizeMultiplier 10
+   SizeRND 1
+   RotMultiplier 10
+   RotRND 30
+   RandomRotDir 1
+   BillboardingType Full
+   RandomAngle 1
+   FlipU Random
+   Velocity 4.5
+   VelocityRND 1
+   VelAffect 0.197
+   AirResistance 2
+   AirResistanceRND 1
+   WindInfluence 0.2
+   ParentVelRelToAir 2
+   GravityMultiply -0.2
+   GravityMultiplyRND -0.2
+   EnableCollisions 1
+   NormalRestitution 0
+   TagentialRestitution 0
+   Spring 0
+   AnimFPS 40
+   LifetimeByAnim 0
+   Lifetime 24
+   LifetimeRND 0
+   LifetimeVelFactor 0.2
+   Alpha {
+    0 0 0.221 0.574 0.643 0.182 1 0
+   }
+   RotationSpeed {
+    0 1 1 0.104
+   }
+   Size {
+    0 0 0.006 0.081 0.02 0.128 1 0.466
+   }
+   EmittingTime 60
+   Repeat 0
+   ColorMast {
+    0.857 1 1 1
+   }
+   AlphaMast {
+    0 0 0.043 0.28 0.622 0.293 1 0
+   }
+   RotationSpeedMast {
+    0 1 0.15 1 0.354 1 0.65 1 1 1
+   }
+   SizeMast {
+    0 1 0.736 0.973 1 0.851
+   }
+   BRateMast {
+    0 0 0.016 1 0.667 0.904 1 0
+   }
+   VelocityMast {
+    0 1 0.486 0.696 0.612 0.149 0.903 0
+   }
+  }
+  EmitterDef smoke_11 {
+   ShapeType Sphere
+   ShapeSize 0.2 0.2 0.2
+   ConeAngle 360 10 20
+   MaxNum 1000
+   BirthRate 2.5
+   BirthRateRND 0
+   BirthRateVel 0.1
+   Offset 0 0 0
+   LodMin 0
+   LodMax 2
+   Material "{31115101CCD19009}Particles/_Materials/Smoke_Flare_White.emat"
+   StretchMultiplier 0
+   SizeMultiplier 24
+   SizeRND 1
+   RotMultiplier 10
+   RotRND 20
+   RandomRotDir 1
+   BillboardingType Full
+   RandomAngle 1
+   FlipU Random
+   Velocity 4.5
+   VelocityRND 1
+   VelAffect 0.197
+   AirResistance 2
+   WindInfluence 0.2
+   ParentVelRelToAir 2
+   GravityMultiply -0.15
+   EnableCollisions 1
+   NormalRestitution 0
+   TagentialRestitution 0
+   Spring 0
+   AnimFPS 40
+   LifetimeByAnim 0
+   Lifetime 5
+   LifetimeRND 0
+   LifetimeVelFactor 0.2
+   Alpha {
+    0 0 0.221 0.574 0.643 0.182 1 0
+   }
+   RotationSpeed {
+    0 1 1 0.104
+   }
+   Size {
+    0 0 0.006 0.081 0.02 0.128 1 0.466
+   }
+   EmittingTime 60
+   Repeat 0
+   ColorMast {
+    0.857 1 1 1
+   }
+   AlphaMast {
+    0 0 0.052 0.376 0.628 0.416 1 0
+   }
+   RotationSpeedMast {
+    0 1 0.15 1 0.354 1 0.65 1 1 1
+   }
+   SizeMast {
+    0 1 0.736 0.973 1 0.851
+   }
+   BRateMast {
+    0 0 0.016 1 0.667 0.904 1 0
+   }
+   VelocityMast {
+    0 1 0.486 0.696 0.612 0.149 0.903 0
+   }
+  }
+  EmitterDef smoke_13 {
+   ShapeType Sphere
+   ShapeSize 0.2 0.2 0.2
+   ConeAngle 360 0 30
+   MaxNum 1000
+   BirthRate 7.5
+   BirthRateRND 0
+   BirthRateVel 2
+   Offset 0 0 0
+   LodMin 0
+   LodMax 2
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   StretchMultiplier 0
+   SizeMultiplier 6
+   SizeRND 4
+   RotMultiplier 10
+   RotRND 30
+   RandomRotDir 1
+   BillboardingType Full
+   RandomAngle 1
+   FlipU Random
+   Velocity 3
+   VelocityRND 1
+   VelAffect 0.197
+   AirResistance 2
+   AirResistanceRND 2.5
+   WindInfluence 0.25
+   ParentVelRelToAir 0
+   GravityMultiply -0.2
+   EnableCollisions 1
+   NormalRestitution 0
+   TagentialRestitution 0
+   Spring 0
+   AnimFPS 60
+   LifetimeByAnim 0
+   Lifetime 2
+   LifetimeRND 3.5
+   LifetimeVelFactor 0.2
+   Color {
+    0 1 0.965 0.965 0.272 0.571 0.571 0.571 1 0.262 0.262 0.262
+   }
+   Alpha {
+    0 0 0.188 0.635 0.684 0.533 1 0
+   }
+   RotationSpeed {
+    0 1 1 0.104
+   }
+   Size {
+    0 0.096 0.135 0.24 0.415 0.373 1 0.507
+   }
+   EmittingTime 60
+   Repeat 0
+   ColorMast {
+    0.857 1 1 1
+   }
+   AlphaMast {
+    0 0 0.052 0.376 0.628 0.416 1 0
+   }
+   RotationSpeedMast {
+    0 1 0.15 1 0.354 1 0.65 1 1 1
+   }
+   SizeMast {
+    0 1 0.736 0.973 1 0.851
+   }
+   BRateMast {
+    0 0 0.067 0.919 0.667 0.904 1 0
+   }
+   VelocityMast {
+    0 1 0.486 0.696 0.612 0.149 0.903 0
+   }
+  }
+ }
+ LightClipEV -8
+ LightRadius 300
+ CastShadow 1
+}

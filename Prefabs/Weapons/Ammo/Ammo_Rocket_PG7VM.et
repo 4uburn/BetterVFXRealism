@@ -1,0 +1,78 @@
+Projectile : "{C0BDA86B5AA5648C}Prefabs/Weapons/Core/Ammo_Rocket_Base.et" {
+ ID "DA5C6308000CDEF2"
+ components {
+  CollisionTriggerComponent "{529E88841E9ED863}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{529E88841E9ED86F}" {
+     EffectPrefab "{D649A52C2A1A29FF}Prefabs/Weapons/Warheads/Warhead_HEAT_PG7VM.et"
+     ParticleEffect "{B6275B6B9E29E9ED}Particles/Weapon/Explosion_RPG7V1.ptc"
+     SoundEvent "SOUND_EXPLOSION"
+    }
+    AIExplosionEffect "{5E8ADDDC0D8E4594}" {
+    }
+    SCR_ExplosionAmmoEffect "{66A2E08FED956127}" {
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+   SafetyDistance 10
+  }
+  InventoryItemComponent "{526E87778842822F}" {
+   Attributes SCR_ItemAttributeCollection "{526E87778ACB229F}" {
+    ItemDisplayName UIInfo "{526E8777859BAACF}" {
+     Name "#AR-Magazine_PG7VM_Name"
+     Description "#AR-Magazine_PG7VM_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes "{529E88841E9EDF98}" {
+     Weight 2
+     SizeSetupStrategy Manual
+     ItemDimensions 20 20 20
+     ItemVolume 1200
+    }
+    m_SlotType SLOT_BACKPACK
+   }
+  }
+  MagazineComponent "{50F6614BB5D5B0A8}" {
+   MagazineWell MagazineWellRPG7 "{529E88841E9EDF81}" {
+   }
+   UIInfo MagazineUIInfo "{560AE4EBFA0176D4}" {
+    Name "#AR-Magazine_PG7VM_Name"
+    Description "#AR-Magazine_PG7VM_Description"
+    m_sAmmoCaliber "#AR-AmmunitionID_70mm"
+    m_sAmmoType "#AR-AmmoType_PG7VM"
+    m_eAmmoTypeFlags HEAT
+   }
+   ItemModel "{CA305BDAD273478A}Assets/Weapons/Magazines/RPG7/Rocket_PG7VM_item.xob"
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{BB3F99FC7223DDC5}Assets/Weapons/Magazines/RPG7/Rocket_PG7VM.xob"
+  }
+  MissileMoveComponent "{0EF36690881261EF}" {
+   InitSpeed 140
+   Mass 1.6
+   TimeToLive 5
+   ProjectileEffects {
+    AIHitEffect "{529E88841E9EDFB1}" {
+    }
+   }
+   BallisticTableConfig "{04AC3D52618E810C}Configs/Weapons/AIBallisticTables/AIBT_Rocket_PG7VM.conf"
+   ThrustInitTime 0.1
+   ThrustTime 0.5
+   ThrustForce 540
+   ForwardAirFriction 0.11
+   SideAirFriction 0.6
+   AlignTorque 0.2
+   DistanceEnableGravitation 0.04
+  }
+  RigidBody "{529E88841E9EDFB4}" {
+   Mass 2.6
+   CenterOfMass 0 0 0.365
+  }
+  RocketTraceEffectComponent "{54A0E2DA2D342A38}" {
+   ParticleEffect "{BE20250902AC0003}Particles/BER/BER_Trail_PG7VM.ptc"
+  }
+ }
+ coords 2248.197 51 2168.524
+ ProjectileModel "{BB3F99FC7223DDC5}Assets/Weapons/Magazines/RPG7/Rocket_PG7VM.xob"
+ CartridgeModel "{CA305BDAD273478A}Assets/Weapons/Magazines/RPG7/Rocket_PG7VM_item.xob"
+ ProjectileWreckModel "{754FA70EAEABB187}Assets/Weapons/Magazines/RPG7/dst/Rocket_PG7VM_dst.xob"
+}

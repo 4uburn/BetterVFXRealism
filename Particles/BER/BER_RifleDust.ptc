@@ -1,0 +1,141 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef gas_wash {
+   ShapeType Box
+   ShapeSize 0.5 0.04 0.55
+   ConeAngle 360 55 85
+   MaxNum 5
+   BirthRate 1000
+   Offset 0 0.08 0
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.19
+   SizeRND 0.075
+   RotMultiplier 22
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.35
+   VelocityRND 0.15
+   VelAffect 0.5
+   AirResistance 0.9
+   AirResistanceRND 1
+   WindInfluence 0
+   GravityMultiply 0.08
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   AnimFPS 60
+   Lifetime 2.2
+   LifetimeRND 0.9
+   Color {
+    0 0.48 0.4 0.31 1 0.4 0.34 0.26
+   }
+   Alpha {
+    0 0.85 0.4 0.5 0.8 0.25 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.6 1 2
+   }
+   EmittingTime 0.1
+   Repeat 0
+  }
+  EmitterDef dust_core {
+   ShapeType Box
+   ShapeSize 0.42 0.05 0.46
+   ConeAngle 360 50 82
+   MaxNum 4
+   BirthRate 1000
+   Offset 0 0.08 0
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.14
+   SizeRND 0.06
+   RotMultiplier 25
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.5
+   VelocityRND 0.25
+   VelAffect 0.5
+   AirResistance 0.9
+   AirResistanceRND 1
+   WindInfluence 0
+   GravityMultiply 0.1
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   AnimFPS 60
+   Lifetime 1.8
+   LifetimeRND 0.6
+   Color {
+    0 0.48 0.4 0.31 1 0.4 0.34 0.26
+   }
+   Alpha {
+    0 1 0.4 0.55 0.8 0.3 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.55 1 1.8
+   }
+   EmittingTime 0.08
+   Repeat 0
+  }
+  EmitterDef dust_motes {
+   ShapeType Box
+   ShapeSize 0.46 0.05 0.5
+   ConeAngle 360 55 88
+   MaxNum 8
+   BirthRate 1000
+   Offset 0 0.08 0
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.065
+   SizeRND 0.04
+   RotMultiplier 35
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.9
+   VelocityRND 0.4
+   VelAffect 0.6
+   AirResistance 1
+   AirResistanceRND 1
+   WindInfluence 0
+   GravityMultiply 0.3
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   AnimFPS 60
+   Lifetime 0.5
+   LifetimeRND 0.2
+   Color {
+    0 0.47 0.39 0.3 1 0.4 0.33 0.25
+   }
+   Alpha {
+    0 1 0.55 0.4 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.7 1 1.2
+   }
+   EmittingTime 0.06
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

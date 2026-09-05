@@ -1,0 +1,53 @@
+EffectDef {
+ Version 1
+ Emitters {
+  EmitterDef L_1_smoke {
+   ShapeType Box
+   ShapeSize 0.3 0 0.3
+   ConeAngle 360 0 90
+   MaxNum 40
+   BirthRate 2
+   BirthRateVel 0.25
+   Offset 0 0 0
+   Angles 0 0 0
+   LodMin 0
+   LodMax 1
+   Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
+   SizeMultiplier 6
+   SizeRND 4.5
+   RotMultiplier 30
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 1
+   VelAffect 1
+   VelocityRND 1
+   AirResistance 0.5
+   AirResistanceRND 0.5
+   WindInfluence 0.2
+   GravityMultiply 0
+   GravityMultiplyRND 0.05
+   EnableCollisions 1
+   NormalRestitution 0.1
+   TagentialRestitution 1
+   AnimOnce 1
+   AnimFPS 25
+   RandomFrame 0
+   Lifetime 12.7
+   LifetimeRND 2.43
+   LifetimeVelFactor 0.01
+   Color {
+    0 0.451 0.451 0.451
+   }
+   Alpha {
+    0 0.0945 0.08 0.105 0.2 0.09 0.85 0.07 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.326 1 0.8006
+   }
+   EmittingTime 0.1
+  }
+ }
+}

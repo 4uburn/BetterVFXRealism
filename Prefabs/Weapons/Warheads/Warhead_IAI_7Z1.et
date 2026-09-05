@@ -1,0 +1,39 @@
+GenericEntity : "{D584F2FFFDC7DE49}Prefabs/Weapons/Warheads/Warhead_Shell_HE.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  SignalsManagerComponent "{C572A75F88B55309}" {
+   Enabled 1
+  }
+  SoundComponent "{D092A75ECEFAE456}" {
+   Enabled 1
+   Filenames {
+    "{282243D1BFB8BDCF}Sounds/Weapons/_SharedData/ProjectileExplode/Weapons_ProjectileExplode_25x137_HEIT.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{5D38C8F8C6A477C7}" : "{8A81F4702F919838}Prefabs/Weapons/Core/Damage/ExplosionContainer_HE.conf" {
+     ChargeWeight 14
+     TntEquivalent 1.6
+    }
+    SpawnDecalEffect "{5D5727F06F70F2E3}" {
+     Scale 0.15
+     Lifetime 40
+    }
+    SubmunitionEffect "{62DCD43FAE7085A3}" {
+     Prefab "{0BB4AC3EADE31C4E}Prefabs/Weapons/Ammo/Ammo_145x114_IAI_7Z1_Spall.et"
+     Count 5
+     Dispersion 120
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{F71756E5AF384112}Particles/Weapon/Explosion_IAI.ptc"
+   m_fDebrisScale 0.7
+  }
+ }
+}

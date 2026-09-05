@@ -1,0 +1,96 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef fog_body {
+   ShapeType Box
+   ShapeSize 2.6 1.8 2.6
+   ConeAngle 360 0 180
+   MaxNum 24
+   BirthRate 1000
+   BirthRateRND 0
+   Offset 0 0.9 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 1.7
+   SizeRND 0.5
+   RotMultiplier 5
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.28
+   VelocityRND 0.1
+   VelAffect 0.3
+   AirResistance 1.5
+   AirResistanceRND 0.5
+   WindInfluence 0
+   GravityMultiply 0
+   EnableCollisions 1
+   NormalRestitution 0.2
+   TagentialRestitution 1
+   AnimFPS 60
+   Lifetime 34
+   LifetimeRND 6
+   Color {
+    0 0.5 0.42 0.32 1 0.44 0.37 0.28
+   }
+   Alpha {
+    0 0 0.003 0.27 0.88 0.24 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.55 0.3 1 1 1.15
+   }
+   EmittingTime 1.2
+   Repeat 0
+  }
+  EmitterDef fog_low {
+   ShapeType Box
+   ShapeSize 2.8 1 2.8
+   ConeAngle 360 0 180
+   MaxNum 12
+   BirthRate 1000
+   BirthRateRND 0
+   Offset 0 0.5 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 1.4
+   SizeRND 0.4
+   RotMultiplier 4
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.2
+   VelocityRND 0.08
+   VelAffect 0.3
+   AirResistance 1.5
+   AirResistanceRND 0.5
+   WindInfluence 0
+   GravityMultiply 0.01
+   EnableCollisions 1
+   NormalRestitution 0.2
+   TagentialRestitution 1
+   AnimFPS 60
+   Lifetime 32
+   LifetimeRND 5
+   Color {
+    0 0.48 0.4 0.3 1 0.42 0.35 0.26
+   }
+   Alpha {
+    0 0 0.003 0.19 0.87 0.17 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.6 0.3 1 1 1.1
+   }
+   EmittingTime 1.2
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}

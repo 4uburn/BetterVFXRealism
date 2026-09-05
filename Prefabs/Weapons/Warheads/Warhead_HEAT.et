@@ -1,0 +1,41 @@
+GenericEntity : "{9B5FF7EECAD376FA}Prefabs/Weapons/Warheads/Warhead_Base.et" {
+ ID "9D9BE68EA2672F76"
+ components {
+  SignalsManagerComponent "{C572A75F88B55309}" {
+   Enabled 1
+  }
+  SoundComponent "{D092A75ECEFAE456}" {
+   Enabled 1
+   Filenames {
+    "{6FC67D2C9BF229AB}Sounds/Weapons/Ammo/RPG7/Explosion/Weapons_Ammo_Rocket_RPG7.acp"
+   }
+  }
+  BaseTriggerComponent "{55129E81CBAA1390}" {
+   PROJECTILE_EFFECTS {
+    ExplosionDamageContainer "{567CBC1D0F5B4AEA}" : "{D81CF255115BB767}Prefabs/Weapons/Core/Damage/ExplosionContainer_HEAT.conf" {
+    }
+    SubmunitionEffect "{567CB8E002C26D97}" {
+     Prefab "{165D6196250A1320}Prefabs/Weapons/Core/Ammo_Penetrator_Base.et"
+    }
+    SubmunitionEffect "{5D692C94EC533259}" {
+     Prefab "{16F3F5C6467D43DE}Prefabs/Weapons/Core/Ammo_Spall_Base.et"
+     Count 30
+     Dispersion 60
+    }
+    SpawnDecalEffect "{5E24CB0410DA8EC3}" {
+     Scale 2
+     Material "{2A3A7B73C1EF6936}Assets/Decals/Logistics/Impact/Data/Decal_Logistics_RPG_01.emat"
+    }
+   }
+   "Trigger Offset" 0 0 -0.1
+  }
+  HitEffectComponent "{9D9BE68D6F65A10F}" {
+   ParticleEffect ""
+  }
+  BER_EffectTuningComponent "{BE20250902000001}" {
+   m_rTakeoverEffect "{B6275B6B9E29E9ED}Particles/Weapon/Explosion_RPG7V1.ptc"
+   m_fDebrisScale 1.7
+   m_iBerFragImpacts 64
+  }
+ }
+}

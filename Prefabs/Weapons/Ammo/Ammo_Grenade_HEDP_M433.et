@@ -1,0 +1,65 @@
+Projectile : "{D40A105437369C1D}Prefabs/Weapons/Core/Ammo_GrenadeLauncher_Base.et" {
+ ID "50C6F965BA00FAAC"
+ components {
+  CollisionTriggerComponent "{52093EA2424A69CE}" {
+   PROJECTILE_EFFECTS {
+    ExplosionEffect "{52093EA2455AB307}" {
+     EffectPrefab "{7D969E6B3209529C}Prefabs/Weapons/Warheads/Warhead_Grenade_HEDP_M433.et"
+     ParticleEffect ""
+     SoundEvent "SOUND_EXPLOSION"
+    }
+    AIExplosionEffect "{5E8ADDDC2A955BDC}" {
+    }
+    SCR_ExplosionAmmoEffect "{66A2E08E4AD48813}" {
+    }
+   }
+   "Trigger Offset" 0 0 -0.05
+   SafetyDistance 15
+  }
+  InventoryItemComponent "{52627A12350994B6}" {
+   Attributes SCR_ItemAttributeCollection "{52627A1234AD20A4}" {
+    ItemDisplayName UIInfo "{527A967B5F5C52E3}" {
+     Name "#AR-Magazine_M433_Name"
+     Description "#AR-Magazine_M433_Description"
+    }
+    ItemPhysAttributes ItemPhysicalAttributes PhysicalAttributes {
+     Weight 0.23
+     SizeSetupStrategy Manual
+     ItemDimensions 5 5 5
+     ItemVolume 100
+    }
+    m_Size SLOT_1x1
+   }
+  }
+  MagazineComponent "{517A8369ED05D880}" {
+   MagazineWell MagazineWellUS_UGL "{52093EA332C5486D}" {
+   }
+   UIInfo MagazineUIInfo "{5494DCF48E8A216D}" {
+    m_sAmmoCaliber "#AR-AmmunitionID_40x46mm"
+    m_sAmmoType "#AR-AmmoType_M433"
+    m_bShowAmmoTypeText 1
+    m_eAmmoTypeFlags 24
+    m_MagIndicator SCR_MagazineIndicatorConfiguration "{5874FAA400FEDA3E}" : "{BE317699690AD7C3}Configs/WeaponInfo/MagazineIndicators/ugl_m406.conf" {
+    }
+   }
+   MaxAmmo 1
+  }
+  MeshObject "{851AA4A2AE0A56BF}" {
+   Object "{0B14D71F69360619}Assets/Weapons/Ammo/Grenades/M433/M433.xob"
+  }
+  ShellMoveComponent "{20FB66C5FA209A29}" {
+   InitSpeed 77
+   InitSpeedVariation 0.385
+   ProjectileEffects {
+    AIHitEffect "{5E8AE4AB6D19572E}" {
+    }
+   }
+   BallisticTableConfig "{E21489D6FC1E47B9}Configs/Weapons/AIBallisticTables/AIBT_Grenade_HEDP_M433.conf"
+   AirDrag 0.00031
+  }
+  Hierarchy "{520E72A15EAE1F13}" {
+  }
+ }
+ ProjectileModel "{D79EBB1BB388141E}Assets/Weapons/Ammo/Grenades/M433/M433_projectile.xob"
+ CartridgeModel "{0B14D71F69360619}Assets/Weapons/Ammo/Grenades/M433/M433.xob"
+}

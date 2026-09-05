@@ -1,0 +1,128 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef kick_puff {
+   ShapeType Box
+   ShapeSize 1.15 0.08 1.15
+   ConeAngle 360 0 30
+   MaxNum 12
+   BirthRate 1000
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 2
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.5
+   SizeRND 0.22
+   RotMultiplier 30
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.35
+   VelocityRND 0.2
+   VelAffect 0.5
+   AirResistance 3
+   AirResistanceRND 1
+   WindInfluence 0.04
+   GravityMultiply 0
+   AnimFPS 60
+   Lifetime 0.85
+   LifetimeRND 0.2
+   Color {
+    0 0.5 0.42 0.32 1 0.4 0.33 0.25
+   }
+   Alpha {
+    0 1 0.4 0.55 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.45 1 1
+   }
+   EmittingTime 0.05
+   Repeat 0
+  }
+  EmitterDef kick_specks {
+   ShapeType Box
+   ShapeSize 1.2 0.08 1.2
+   ConeAngle 360 0 30
+   MaxNum 20
+   BirthRate 1000
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.1
+   SizeRND 0.05
+   RotMultiplier 40
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.6
+   VelocityRND 0.25
+   VelAffect 0.6
+   AirResistance 2
+   AirResistanceRND 1
+   WindInfluence 0.05
+   GravityMultiply 0.05
+   AnimFPS 60
+   Lifetime 0.55
+   LifetimeRND 0.15
+   Color {
+    0 0.48 0.4 0.3 1 0.38 0.32 0.24
+   }
+   Alpha {
+    0 1 0.5 0.4 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.7 1 1
+   }
+   EmittingTime 0.05
+   Repeat 0
+  }
+  EmitterDef kick_linger {
+   ShapeType Box
+   ShapeSize 1.1 0.08 1.1
+   ConeAngle 360 0 30
+   MaxNum 6
+   BirthRate 1000
+   BirthRateRND 0
+   LocalTransform 1
+   LodMin 0
+   LodMax 1
+   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
+   SizeMultiplier 0.45
+   SizeRND 0.2
+   RotMultiplier 20
+   RandomRotDir 1
+   RandomAngle 1
+   Velocity 0.18
+   VelocityRND 0.1
+   VelAffect 0.4
+   AirResistance 3
+   WindInfluence 0.09
+   GravityMultiply 0
+   AnimFPS 60
+   Lifetime 1.8
+   LifetimeRND 0.35
+   Color {
+    0 0.49 0.41 0.31 1 0.4 0.33 0.25
+   }
+   Alpha {
+    0 0.35 0.45 0.18 1 0
+   }
+   RotationSpeed {
+    0 1 1 0
+   }
+   Size {
+    0 0.6 1 1.3
+   }
+   EmittingTime 0.08
+   Repeat 0
+  }
+ }
+ MinFPS 30
+}
