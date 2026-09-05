@@ -96,6 +96,40 @@ def main():
                 errors.append(f'GUID/path mismatch in {path.name}: {guid}/{ref_path}')
             if ref_path.startswith(('Particles/BER/', 'Prefabs/BER/')) and not (ROOT / ref_path).is_file():
                 errors.append(f'Missing local reference: {path.name} -> {ref_path}')
+    # Independent authored budgets: runtime tuning may reduce these, never enlarge them.
+    for asset in ('BER_Impact_DirtChunks', 'BER_Impact_RockChips'):
+        solids = [b for n, b, _, _ in emitters((ROOT / f'Particles/BER/{asset}.ptc').read_text(encoding='utf-8'))
+                  if not n.startswith('ber_dust_')]
+        if sum(float(value(b, 'MaxNum', '0')) for b in solids) > 48:
+            errors.append(f'Solid debris budget exceeds 48: {asset}')
+        for b in solids:
+            if value(b, 'GravityMultiply') != '1' or value(b, 'GravityMultiplyRND') != '0':
+                errors.append(f'Debris needs consistent gravity: {asset}')
+            if value(b, 'WindInfluence', '0') != '0' or value(b, 'EnableCollisions') != '1':
+                errors.append(f'Debris must collide without wind advection: {asset}')
+    smoke = list(emitters((ROOT / 'Particles/Weapon/Smoke_M242.ptc').read_text(encoding='utf-8')))
+    if sum(float(value(b, 'MaxNum', '0')) for _, b, _, _ in smoke) > 11:
+        errors.append('M242 smoke budget exceeds 11')
+    if len([n for n, _, _, _ in smoke if n.startswith('noscope_')]) != 3:
+        errors.append('M242 must retain three scope-suppressed close smoke emitters')
+    vapor = list(emitters((ROOT / 'Particles/BER/BER_BlastCondensation.ptc').read_text(encoding='utf-8')))
+    for _, b, _, _ in vapor:
+        if float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 0.4:
+            errors.append('Condensation must disappear within 0.4 seconds')
+    for ptc in (ROOT / 'Particles/Enviroment').glob('Hit_*_enter_01.ptc'):
+        for name, b, _, _ in emitters(ptc.read_text(encoding='utf-8')):
+            if name == 'ber_dust_fines' and float(value(b, 'MaxNum')) > 3:
+                errors.append(f'Wall-fines budget exceeds three: {ptc.name}')
+    for name, b, _, _ in emitters((ROOT / 'Particles/BER/BER_APDS_Spark.ptc').read_text(encoding='utf-8')):
+        if name.startswith('sparks_'):
+            if value(b, 'GravityMultiply') != '1' or value(b, 'WindInfluence') != '0':
+                errors.append(f'AP sparks must fall independently of smoke: {name}')
+        if name == 'Flash' and float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 0.1:
+            errors.append('AP flash exceeds 0.1 seconds')
+    for name, b, _, _ in emitters((ROOT / 'Particles/Weapon/Explosion_HEI.ptc').read_text(encoding='utf-8')):
+        if name in ('Explosion_Main', 'Explosion_Halo'):
+            if value(b, 'LifetimeByAnim') != '0' or float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 0.25:
+                errors.append(f'HE bright phase must have an explicit brief lifetime: {name}')
     assert not errors, '\n'.join(errors)
     print(f'PASS: {total} emitters; {len(resources)} resource GUIDs; '
           f'{len(contract["fragment_wisps"])} exact 33% wisps; '

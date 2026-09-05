@@ -18,7 +18,9 @@ EffectDef {
    }
   }
   EmitterDef Explosion_Main {
-   LocalTransform 1
+   LifetimeRND 0.04
+   LifetimeByAnim 0
+   LocalTransform 0
    ShapeType Ellipse
    ShapeSize 0.2 0.2 0.2
    ConeAngle 360 20 50
@@ -41,7 +43,7 @@ EffectDef {
    AirResistanceRND 1.5
    AnimOnce 1
    AnimFPS 100
-   Lifetime 4.5
+   Lifetime 0.18
    Alpha {
     0 1 0.21 0.946 0.437 0.622 0.715 0 1 0
    }
@@ -58,7 +60,9 @@ EffectDef {
    }
   }
   EmitterDef Explosion_Halo {
-   LocalTransform 1
+   LifetimeRND 0.02
+   LifetimeByAnim 0
+   LocalTransform 0
    ShapeType Ellipse
    ShapeSize 0.2 0.2 0.2
    ConeAngle 360 20 50
@@ -81,7 +85,7 @@ EffectDef {
    AirResistanceRND 1.5
    AnimFPS 40
    RandomFrame 1
-   Lifetime 0.6
+   Lifetime 0.08
    Color {
     0 1 0.852 0.515
    }

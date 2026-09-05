@@ -19,16 +19,23 @@ EffectDef {
    }
   }
   EmitterDef Flash {
+   LifetimeRND 0.025
+   LifetimeByAnim 0
+   SizeMultiplier 0.7
+   BirthRateRND 0
+   BirthRate 1000
+   MaxNum 1
+   LocalTransform 0
    Material "{DE170C6590E62CF7}Particles/_Materials/Fire_Loop_01.emat"
-   SizeRND 0.5
+   SizeRND 0.2
    RotRND 360
    Velocity 0
    RandomFrame 1
-   Lifetime 0.1
+   Lifetime 0.055
    Emissivity {
     0 0.5
    }
-   EmittingTime 0.1
+   EmittingTime 0.02
    Repeat 0
   }
   EmitterDef ber_smoke_Smoke_Burst {
@@ -88,6 +95,7 @@ EffectDef {
    }
   }
   EmitterDef ber_smoke_Smoke_Burst_02 {
+   AnimOnce 0
    LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
@@ -101,25 +109,25 @@ EffectDef {
    LodMin 0
    LodMax 2
    Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
-   SizeMultiplier 2
-   SizeRND 0.5
+   SizeMultiplier 1.2
+   SizeRND 0.3
    RotMultiplier 45
    RandomRotDir 1
    VelAngle 0
    RandomAngle 1
    FlipU Random
    FlipV Random
-   Velocity 6
+   Velocity 2.5
    VelocityRND 0.5
-   AirResistance 1.5
+   AirResistance 3
    AirResistanceRND 0.5
    WindInfluence 0.35
    GravityMultiply 0.02
    GravityMultiplyRND 0.02
-   AnimFPS 70
+   AnimFPS 0.001
    LifetimeByAnim 0
-   RandomFrame 0
-   Lifetime 0.7
+   RandomFrame 1
+   Lifetime 1.4
    LifetimeRND 0.6
    Color {
     0 0.797 0.815 0.815 1 0.352 0.357 0.361
@@ -133,7 +141,7 @@ EffectDef {
    Size {
     0 0.405 0.121 0.697 1 1
    }
-   EmittingTime 0.2
+   EmittingTime 0.08
    Repeat 0
    AlphaMast {
     0.004 0.8
@@ -143,6 +151,7 @@ EffectDef {
    }
   }
   EmitterDef sparks_close {
+   LocalTransform 0
    ConeAngle 360 0 50
    ConeAngleRndRange 50
    MaxNum 30
@@ -164,13 +173,13 @@ EffectDef {
    VelocityRND 12
    AirResistance 3
    AirResistanceRND 3.5
-   WindInfluence 0.07
-   GravityMultiply 0.25
-   GravityMultiplyRND 0.3
+   WindInfluence 0
+   GravityMultiply 1
+   GravityMultiplyRND 0
    EnableCollisions 1
    RandomFrame 1
-   Lifetime 0.8
-   LifetimeRND 1.3
+   Lifetime 0.45
+   LifetimeRND 0.65
    Color {
     0 1 1 1 1 1 1 1
    }
@@ -184,6 +193,7 @@ EffectDef {
    }
   }
   EmitterDef sparks_further {
+   LocalTransform 0
    ConeAngle 360 0 75
    ConeAngleRndRange 75
    MaxNum 30
@@ -205,13 +215,13 @@ EffectDef {
    VelocityRND 12
    AirResistance 3
    AirResistanceRND 3.5
-   WindInfluence 0.1
-   GravityMultiply 0.15
-   GravityMultiplyRND 0.25
+   WindInfluence 0
+   GravityMultiply 1
+   GravityMultiplyRND 0
    EnableCollisions 1
    RandomFrame 1
-   Lifetime 0.7
-   LifetimeRND 1.3
+   Lifetime 0.6
+   LifetimeRND 0.6
    Color {
     0 1 1 1 1 1 1 1
    }
@@ -225,6 +235,9 @@ EffectDef {
    }
   }
   EmitterDef sparks_cluster_0 {
+   EnableCollisions 1
+   GravityMultiplyRND 0
+   LocalTransform 0
    ShapeSize 1 1 1
    ConeAngle 360 0 60
    ConeAngleRndRange 60
@@ -250,8 +263,8 @@ EffectDef {
    VelocityRND 2
    AirResistance 2
    AirResistanceRND 0.5
-   WindInfluence 0.07
-   GravityMultiply 0.1
+   WindInfluence 0
+   GravityMultiply 1
    RandomFrame 1
    Lifetime 0.2
    LifetimeRND 0.4
@@ -271,6 +284,9 @@ EffectDef {
    }
   }
   EmitterDef sparks_cluster_1 {
+   EnableCollisions 1
+   GravityMultiplyRND 0
+   LocalTransform 0
    ShapeSize 1 1 1
    ConeAngle 360 0 30
    ConeAngleRndRange 30
@@ -293,8 +309,8 @@ EffectDef {
    VelocityRND 2
    AirResistance 2
    AirResistanceRND 0.5
-   WindInfluence 0.07
-   GravityMultiply 0.1
+   WindInfluence 0
+   GravityMultiply 1
    RandomFrame 1
    Lifetime 0.3
    LifetimeRND 0.3

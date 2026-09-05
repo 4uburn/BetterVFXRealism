@@ -6,7 +6,7 @@
 // override of that .ptc spawns THIS prefab instead (single invisible prefab-particle at the
 // impact point). The component probes for the nearest surface around itself and spawns the
 // appropriate reaction, oriented to the surface normal:
-//  - metal / armor / vehicle hulls  -> the full vanilla spark shower (copied 1:1)
+//  - metal / armor / vehicle hulls  -> brief flash, gravity-driven sparks and a short aerosol tail
 //  - rock / concrete / hard mineral -> stone chips + grey dust, NO sparks
 //  - soil / sand / vegetation / etc -> dirt thrown out by the round boring in, NO sparks
 //  - water                          -> nothing (vanilla splash already handles it)

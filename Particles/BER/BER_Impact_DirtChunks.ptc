@@ -2,10 +2,12 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef dirt_clumps {
+   LocalTransform 0
+   WindInfluence 0
    ShapeType Box
    ShapeSize 0.5 0.3 0.5
-   ConeAngle 360 60 100
-   MaxNum 30
+   ConeAngle 360 15 100
+   MaxNum 24
    BirthRate 60
    BirthRateRND 0
    Angles 0 0 0
@@ -23,12 +25,12 @@ EffectDef {
    RandomRotDir 1
    VelAngle 0
    RandomAngle 1
-   Velocity 12
-   VelocityRND 9
-   AirResistance 2
+   Velocity 5
+   VelocityRND 3
+   AirResistance 0.6
    AirResistanceRND 0
-   GravityMultiply 3
-   GravityMultiplyRND 2
+   GravityMultiply 1
+   GravityMultiplyRND 0
    EnableCollisions 1
    NormalRestitution 0.3
    TagentialRestitution 0.3
@@ -58,10 +60,12 @@ EffectDef {
    Repeat 0
   }
   EmitterDef dirt_chips {
+   LocalTransform 0
+   WindInfluence 0
    ShapeType Box
    ShapeSize 0.4 0.3 0.4
-   ConeAngle 360 40 100
-   MaxNum 40
+   ConeAngle 360 15 100
+   MaxNum 24
    BirthRate 80
    BirthRateRND 0
    Angles 0 0 0
@@ -76,12 +80,12 @@ EffectDef {
    RandomRotDir 1
    VelAngle 0
    RandomAngle 1
-   Velocity 13
-   VelocityRND 9
-   AirResistance 2
+   Velocity 6
+   VelocityRND 3
+   AirResistance 1.5
    AirResistanceRND 0
-   GravityMultiply 3
-   GravityMultiplyRND 2
+   GravityMultiply 1
+   GravityMultiplyRND 0
    EnableCollisions 1
    NormalRestitution 0.3
    TagentialRestitution 0.3

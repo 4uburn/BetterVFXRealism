@@ -2,10 +2,12 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef stone_chips {
+   LocalTransform 0
+   WindInfluence 0
    ShapeType Box
    ShapeSize 0.4 0.3 0.4
-   ConeAngle 360 40 100
-   MaxNum 40
+   ConeAngle 360 15 100
+   MaxNum 24
    BirthRate 100
    BirthRateRND 0
    Angles 0 0 0
@@ -20,12 +22,12 @@ EffectDef {
    RandomRotDir 1
    VelAngle 0
    RandomAngle 1
-   Velocity 14
-   VelocityRND 9
+   Velocity 6
+   VelocityRND 3
    AirResistance 1.5
    AirResistanceRND 0
-   GravityMultiply 3
-   GravityMultiplyRND 2
+   GravityMultiply 1
+   GravityMultiplyRND 0
    EnableCollisions 1
    NormalRestitution 0.4
    TagentialRestitution 0.4
@@ -103,10 +105,12 @@ EffectDef {
    Repeat 0
   }
   EmitterDef rock_chunks_01 {
+   EnableCollisions 1
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.25 0.3
-   ConeAngle 360 40 100
-   MaxNum 40
+   ConeAngle 360 15 100
+   MaxNum 12
    BirthRate 50
    BirthRateRND 0
    LodMin 0
@@ -121,13 +125,13 @@ EffectDef {
    RandomRotationSpace 1
    VelAngleCatchUp 0
    RandomAngle 1
-   Velocity 10
-   VelocityRND 7
-   AirResistance 0.5
-   AirResistanceRND 0.15
+   Velocity 5
+   VelocityRND 3
+   AirResistance 0.6
+   AirResistanceRND 0
    WindInfluence 0
-   GravityMultiply 2.5
-   GravityMultiplyRND 1
+   GravityMultiply 1
+   GravityMultiplyRND 0
    CollisionDistThresh 10
    NormalRestitution 0.3
    TagentialRestitution 0.3
@@ -145,10 +149,12 @@ EffectDef {
    Repeat 0
   }
   EmitterDef rock_chunks_02 {
+   EnableCollisions 1
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.25 0.3
-   ConeAngle 360 30 95
-   MaxNum 40
+   ConeAngle 360 15 100
+   MaxNum 12
    BirthRate 40
    BirthRateRND 0
    LodMin 0
@@ -163,13 +169,13 @@ EffectDef {
    RandomRotationSpace 1
    VelAngleCatchUp 0
    RandomAngle 1
-   Velocity 9
-   VelocityRND 6
-   AirResistance 0.5
-   AirResistanceRND 0.15
+   Velocity 5
+   VelocityRND 3
+   AirResistance 0.6
+   AirResistanceRND 0
    WindInfluence 0
-   GravityMultiply 2.5
-   GravityMultiplyRND 1
+   GravityMultiply 1
+   GravityMultiplyRND 0
    CollisionDistThresh 10
    NormalRestitution 0.3
    TagentialRestitution 0.3

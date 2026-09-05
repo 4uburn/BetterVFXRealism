@@ -341,6 +341,43 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
+  EmitterDef ber_dust_fines {
+   ShapeType Point
+   ConeAngle 360 0 60
+   LocalTransform 0
+   MaxNum 3
+   BirthRate 75
+   BirthRateRND 0
+   LodMin 0
+   LodMax 1
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   SizeMultiplier 0.45
+   SizeRND 0.15
+   Velocity 0.7
+   VelocityRND 0.3
+   AirResistance 5
+   WindInfluence 0.6
+   GravityMultiply 0.03
+   GravityMultiplyRND 0
+   AnimOnce 0
+   AnimFPS 0.001
+   RandomFrame 1
+   LifetimeByAnim 0
+   Lifetime 2.5
+   LifetimeRND 0.5
+   Color {
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
+   }
+   Alpha {
+    0 0 0.08 0.3 0.4 0.13 1 0
+   }
+   Size {
+    0 0.25 0.25 0.6 1 1
+   }
+   EmittingTime 0.04
+   Repeat 0
+  }
+
 
  }
  MinFPS 30

@@ -6,6 +6,8 @@ Open `BetterEffectsRealism.gproj` in Workbench. The existing addon ID, GUID and 
 
 See [the review guide](docs/VFX-REVIEW.md) for the complete code audit, physics sources, implementation decisions, validation evidence and live review matrix. This is a review candidate, not a tested Workshop release.
 
+The [video comparison and debris model](docs/VIDEO-REFERENCE-REVIEW.md) explains the supplied references, M242/AP/HE changes, bounded debris maths, and the distinction between optional condensation and unimplemented heat distortion.
+
 Run the read-only data checks with Python 3:
 
 ```text

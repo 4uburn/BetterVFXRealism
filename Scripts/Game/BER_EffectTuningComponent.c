@@ -12,6 +12,10 @@ class BER_EffectTuningComponent : ScriptComponent
 	[Attribute(defvalue: "", UIWidgets.ResourcePickerThumbnail, desc: "Explosion effect to spawn under BER control (vanilla reference must be blanked in the same prefab)", params: "ptc")]
 	protected ResourceName m_rTakeoverEffect;
 
+	[Attribute(defvalue: "0", desc: "Optional transient condensation for large outdoor blasts, 0 disables. Author only for suitably humid scenes; rain/wet soil is not humidity.", params: "0 1 0.05")]
+	protected float m_fCondensationStrength;
+	protected const ResourceName CONDENSATION = "{BA176BEE23D045AC}Particles/BER/BER_BlastCondensation.ptc";
+
 	[Attribute(defvalue: "1", desc: "Scale particle density/lifetime by surface dustiness at the detonation point")]
 	protected bool m_bScaleBySurface;
 
@@ -202,6 +206,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		pfx.Play();
 
 		// Dust and smoke drift per particle through native drag; debris stays ballistic.
+		SpawnCondensation(owner);
 
 		if (m_fDebrisScale > 0.01)
 			SpawnImpactDebris();
@@ -436,10 +441,9 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Physical ground debris (3D dirt clumps / stone chips) thrown by the detonation,
-	//! picked by the struck surface and scaled per warhead: count scales linearly with
-	//! m_fDebrisScale, chunk size sub-linearly (a rocket throws many more clods than a
-	//! 25mm hit, each somewhat bigger — not boulders).
+	//! Visual ground debris: surface availability and event scale determine a bounded
+	//! count. Native particles handle gravity/collision; the cleanup estimate is not
+	//! a damage or shrapnel-trajectory simulation.
 	protected void SpawnImpactDebris()
 	{
 		if (!m_bGroundFound)
@@ -448,8 +452,8 @@ class BER_EffectTuningComponent : ScriptComponent
 		string mat = m_sGroundMat;
 		mat.ToLower();
 
-		if (mat.Contains("water") || mat.Contains("seaweed") || mat.Contains("snow") || mat.Contains("ice")
-			|| mat.Contains("metal") || mat.Contains("armor") || mat.Contains("wood"))
+		float solidAvailability = BER_SurfaceUtil.GetSolidDebrisAvailability(mat);
+		if (solidAvailability <= 0)
 			return;
 
 		ResourceName res = DEBRIS_DIRT;
@@ -474,20 +478,65 @@ class BER_EffectTuningComponent : ScriptComponent
 		Particles particles = pfx.GetParticles();
 		if (particles)
 		{
-			float sizeMult = BER_SurfaceUtil.ClampF(0.75 + 0.25 * m_fDebrisScale, 0.6, 1.8);
-			int emitterCount = particles.GetNumEmitters();
-			for (int i = 0; i < emitterCount; i++)
+			float eventScale = BER_SurfaceUtil.ClampF(m_fDebrisScale, 0, 5);
+			float sizeMult = BER_SurfaceUtil.ClampF(0.75 + 0.25 * eventScale, 0.6, 1.8);
+			float speedMult = BER_SurfaceUtil.GetDebrisSpeedScale(eventScale);
+			array<string> names = {};
+			particles.GetEmitterNames(names);
+			float authoredCount;
+			foreach (int i, string name : names)
 			{
-				particles.MultParam(i, EmitterParam.BIRTH_RATE, m_fDebrisScale);
-				particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, m_fDebrisScale);
+				if (name.IndexOf("ber_dust_") == 0)
+					continue;
+				float rate, variation, duration;
+				particles.GetParamOrig(i, EmitterParam.BIRTH_RATE, rate);
+				particles.GetParamOrig(i, EmitterParam.BIRTH_RATE_RND, variation);
+				particles.GetParamOrig(i, EmitterParam.EMITTING_TIME, duration);
+				authoredCount += (rate + variation) * duration;
+			}
+			float countMult = eventScale * solidAvailability;
+			if (authoredCount > 0 && authoredCount * countMult > 48)
+				countMult = 48.0 / authoredCount;
+			foreach (int i, string name : names)
+			{
+				if (name.IndexOf("ber_dust_") == 0)
+					continue;
+				particles.MultParam(i, EmitterParam.BIRTH_RATE, countMult);
+				particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, countMult);
 				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
 				particles.MultParam(i, EmitterParam.SIZE_RND, sizeMult);
+				particles.MultParam(i, EmitterParam.VELOCITY, speedMult);
+				particles.MultParam(i, EmitterParam.VELOCITY_RND, speedMult);
+				float speed, speedRandom;
+				particles.GetParamOrig(i, EmitterParam.VELOCITY, speed);
+				particles.GetParamOrig(i, EmitterParam.VELOCITY_RND, speedRandom);
+				particles.SetParam(i, EmitterParam.LIFETIME, BER_SurfaceUtil.GetDebrisLifetime((speed + speedRandom) * speedMult));
+				particles.SetParam(i, EmitterParam.LIFETIME_RND, 0.2);
 			}
 			float dust = BER_SurfaceUtil.GetDustAvailability(GetOwner().GetWorld(), m_vGroundPos, m_sGroundMat, m_bIndoor);
 			BER_SurfaceUtil.TuneDust(particles, dust * m_fDebrisScale, m_bIndoor, sizeMult);
 		}
 
 		pfx.Play();
+	}
+
+	//! Fully wired author opt-in: no inference of atmospheric humidity from ground wetness.
+	protected void SpawnCondensation(IEntity owner)
+	{
+		if (m_fCondensationStrength <= 0 || m_fDebrisScale < 2.5 || m_bIndoor)
+			return;
+		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
+		params.UseFrameEvent = true;
+		params.PlayOnSpawn = false;
+		params.Transform[3] = owner.GetOrigin();
+		ParticleEffectEntity vapor = ParticleEffectEntity.SpawnParticleEffect(CONDENSATION, params);
+		if (!vapor)
+			return;
+		BER_OwnedEffects.MarkOwned(vapor);
+		Particles particles = vapor.GetParticles();
+		if (particles)
+			particles.MultParam(-1, EmitterParam.BIRTH_RATE, BER_SurfaceUtil.ClampF(m_fCondensationStrength, 0, 1));
+		vapor.Play();
 	}
 
 	protected vector RandomSphereDir()
@@ -679,11 +728,8 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Adopted effects near a takeover explosion are the scattered surface blast dust with
-	//! BER-overridden .ptc (wind-free, local-space) — drift-animating them gives the same
-	//! hold + wind acceleration. Drift is gated to takeover warheads ONLY: smoke grenades /
-	//! smoke shells attach their emitter to the device and moving it would detach the
-	//! smoke origin. Parented effects are never drifted for the same reason.
+	//! Adopt only nearby named impact dust. Native world-space particles provide drift;
+	//! smoke-device replacement follows its source while already emitted smoke stays behind.
 	protected void ProcessAdopted(ParticleEffectEntity pfx, IEntity owner)
 	{
 		if (BER_OwnedEffects.IsOwned(pfx))

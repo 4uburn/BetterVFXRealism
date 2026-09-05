@@ -56,18 +56,21 @@ EffectDef {
    Repeat 0
   }
   EmitterDef ber_dust_smoke_explosion_2 {
-   WindInfluence 0.35
+   RandomFrame 1
+   BirthRateRND 0
+   MaxNum 32
+   WindInfluence 0.6
    ShapeType Ellipse
-   ShapeSize 2.34 1.17 2.34
+   ShapeSize 1.1 0.35 1.1
    ConeAngle 360 80 180
    ConeAngleMinDist 80
-   BirthRate 2000
+   BirthRate 100
    Offset 0 0.5 0
    Angles 0 0 0
    LocalTransform 0
    LodMin 0
    LodMax 2
-   Material "{61247CAB58EF0D6D}Particles/_Materials/Gas/Smoke_Explosion_02.emat"
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
    StreakFullUV 0
    SizeMultiplier 1.781
    SizeRND 0.5623
@@ -80,25 +83,25 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 2.5025
-   VelocityRND 0.53625
-   AirResistance 3
-   AirResistanceRND 1
-   GravityMultiply 0
+   Velocity 1.5
+   VelocityRND 0.5
+   AirResistance 4
+   AirResistanceRND 0.5
+   GravityMultiply 0.03
    GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
+   NormalRestitution 0
    TagentialRestitution 1
-   AnimOnce 1
-   AnimFPS 25
-   LifetimeByAnim 1
-   Lifetime 1
-   LifetimeRND 0.2
+   AnimOnce 0
+   AnimFPS 0.001
+   LifetimeByAnim 0
+   Lifetime 7
+   LifetimeRND 3
    Color {
     0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
-    0 0 0.04 0.52 0.651 0.176 1 0
+    0 0 0.05 0.3 0.3 0.2 0.7 0.08 1 0
    }
    RotationSpeed {
     0 1 1 0
@@ -106,7 +109,7 @@ EffectDef {
    Size {
     0 0.904 1 1.5
    }
-   EmittingTime 0.2
+   EmittingTime 0.16
    Repeat 0
   }
   EmitterDef ber_dust_smoke_long {

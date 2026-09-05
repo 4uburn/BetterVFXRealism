@@ -131,6 +131,10 @@ class BER_SurfaceUtil
 		if (matName.Contains("grass") || matName.Contains("moss") || matName.Contains("foliage"))
 			return 0.85;
 
+		// Friable wall finishes powder more readily than bare structural masonry.
+		if (matName.Contains("plaster") || matName.Contains("gypsum") || matName.Contains("drywall"))
+			return 1.35;
+
 		// hard man-made surfaces — little loose dust
 		if (matName.Contains("asphalt") || matName.Contains("concrete") || matName.Contains("brick")
 			|| matName.Contains("cobblestone") || matName.Contains("stone") || matName.Contains("tiles"))
@@ -142,6 +146,33 @@ class BER_SurfaceUtil
 			return 0.8;
 
 		return 1.0;
+	}
+
+	//! Visual loose solid availability; wetness suppresses dust, not wet clods.
+	static float GetSolidDebrisAvailability(string material)
+	{
+		material.ToLower();
+		if (material.Contains("water") || material.Contains("seaweed") || material.Contains("snow")
+			|| material.Contains("metal") || material.Contains("armor") || material.Contains("armour")
+			|| material.Contains("wood") || material.Contains("glass") || material.Contains("ice"))
+			return 0;
+		if (material.Contains("rock") || material.Contains("stone") || material.Contains("concrete")
+			|| material.Contains("asphalt") || material.Contains("brick") || material.Contains("tiles")
+			|| material.Contains("cobble") || material.Contains("gravel") || material.Contains("pebbles"))
+			return 0.6;
+		return 1.0;
+	}
+
+	//! Artistic event scale, not explosive mass/energy. Native particles integrate flight.
+	static float GetDebrisSpeedScale(float eventScale)
+	{
+		return Math.Pow(ClampF(eventScale, 0.25, 3.24), 0.5);
+	}
+
+	//! No-drag upward-flight estimate plus a settling margin; bounded cleanup timer.
+	static float GetDebrisLifetime(float maximumLaunchSpeed)
+	{
+		return ClampF(2.0 * maximumLaunchSpeed / 9.81 + 0.6, 1.0, 6.0);
 	}
 
 	//------------------------------------------------------------------------------------------------
