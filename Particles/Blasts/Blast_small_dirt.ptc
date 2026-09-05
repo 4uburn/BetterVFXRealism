@@ -1,15 +1,15 @@
 EffectDef {
  Version 2
  Emitters {
-  EmitterDef smoke_explosion {
+  EmitterDef ber_dust_smoke_explosion {
    ShapeType Box
-   ShapeSize 1.2 0 1.2
+   ShapeSize 0.78 0 0.78
    ConeAngle 360 15 65
    ConeAngleMinDist 80
    BirthRate 2000
    Offset 0 0 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
    StreakFullUV 0
    SizeMultiplier 1.6498
@@ -23,11 +23,11 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 12
+   Velocity 7.8
    VelocityRND 0
    AirResistance 6
    AirResistanceRND 0
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply 0
    GravityMultiplyRND 0
    EnableCollisions 1
@@ -37,7 +37,7 @@ EffectDef {
    Lifetime 3
    LifetimeRND 0.2
    Color {
-    0 0.7976 0.7348 0.6528 1 0.2805 0.2557 0.2226
+    0 0.63042 0.58786 0.53998 1 0.63042 0.58786 0.53998
    }
    Alpha {
     0 0.585 0.098 1 0.54 0.364 1 0

@@ -1,0 +1,392 @@
+{
+  "colour_rule": "Reference RGB x 1.33, clamped; palette approximation, not live terrain pixel sampling.",
+  "fragment_wisps": {
+    "asphalt": {
+      "source": "Particles/Enviroment/Hit_asphalt_enter_01.ptc",
+      "SizeMultiplier": 0.2,
+      "SizeRND": 0.4
+    },
+    "brick": {
+      "source": "Particles/Enviroment/Hit_brick_enter_01.ptc",
+      "SizeMultiplier": 0.2,
+      "SizeRND": 0.4
+    },
+    "concrete": {
+      "source": "Particles/Enviroment/Hit_concrete_enter_01.ptc",
+      "SizeMultiplier": 0.2,
+      "SizeRND": 0.4
+    },
+    "default": {
+      "source": "Particles/Enviroment/Hit_default_enter_01.ptc",
+      "SizeMultiplier": 0.2,
+      "SizeRND": 0.4
+    },
+    "dirt": {
+      "source": "Particles/Enviroment/Hit_dirt_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "fabric": {
+      "source": "Particles/Enviroment/Hit_fabric_enter_01.ptc",
+      "SizeMultiplier": 0.1,
+      "SizeRND": 0.1
+    },
+    "glass": {
+      "source": "Particles/Enviroment/Hit_glass_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "grass": {
+      "source": "Particles/Enviroment/Hit_grass_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "gravel": {
+      "source": "Particles/Enviroment/Hit_gravel_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "metal": {
+      "source": "Particles/Enviroment/Hit_metal_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "plastic": {
+      "source": "Particles/Enviroment/Hit_plastic_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "rubber": {
+      "source": "Particles/Enviroment/Hit_rubber_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "sand": {
+      "source": "Particles/Enviroment/Hit_sand_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "snow": {
+      "source": "Particles/Enviroment/Hit_snow_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "soil": {
+      "source": "Particles/Enviroment/Hit_soil_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.2
+    },
+    "stone": {
+      "source": "Particles/Enviroment/Hit_stone_enter_01.ptc",
+      "SizeMultiplier": 1.0,
+      "SizeRND": 0.2
+    },
+    "wood": {
+      "source": "Particles/Enviroment/Hit_wood_enter_01.ptc",
+      "SizeMultiplier": 0.5,
+      "SizeRND": 0.4
+    }
+  },
+  "dust_colours": {
+    "Particles/BER/BER_FragHit_asphalt.ptc": [
+      0.347,
+      0.347,
+      0.347
+    ],
+    "Particles/BER/BER_FragHit_brick.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/BER/BER_FragHit_concrete.ptc": [
+      0.423,
+      0.423,
+      0.423
+    ],
+    "Particles/BER/BER_FragHit_default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/BER/BER_FragHit_dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/BER/BER_FragHit_fabric.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/BER/BER_FragHit_glass.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/BER/BER_FragHit_grass.ptc": [
+      0.44,
+      0.394,
+      0.338
+    ],
+    "Particles/BER/BER_FragHit_gravel.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/BER/BER_FragHit_metal.ptc": [
+      0.823,
+      0.815,
+      0.815
+    ],
+    "Particles/BER/BER_FragHit_plastic.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/BER/BER_FragHit_rubber.ptc": [
+      0.136,
+      0.136,
+      0.136
+    ],
+    "Particles/BER/BER_FragHit_sand.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/BER/BER_FragHit_snow.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/BER/BER_FragHit_soil.ptc": [
+      0.223,
+      0.169,
+      0.133
+    ],
+    "Particles/BER/BER_FragHit_stone.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/BER/BER_FragHit_wood.ptc": [
+      0.768,
+      0.691,
+      0.597
+    ],
+    "Particles/BER/BER_APDS_Dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/BER/BER_APDS_Rock.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_big_default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Blasts/Blast_big_dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/Blasts/Blast_big_grass.ptc": [
+      0.44,
+      0.394,
+      0.338
+    ],
+    "Particles/Blasts/Blast_big_sand.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_big_snow.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_big_solid.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_huge_default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Blasts/Blast_medium_default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Blasts/Blast_medium_dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/Blasts/Blast_medium_grass.ptc": [
+      0.44,
+      0.394,
+      0.338
+    ],
+    "Particles/Blasts/Blast_medium_sand.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_medium_snow.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_medium_solid.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_small_default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Blasts/Blast_small_dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/Blasts/Blast_small_grass.ptc": [
+      0.44,
+      0.394,
+      0.338
+    ],
+    "Particles/Blasts/Blast_small_sand.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_small_snow.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Blasts/Blast_small_solid.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Enviroment/Hit_asphalt_enter_01.ptc": [
+      0.347,
+      0.347,
+      0.347
+    ],
+    "Particles/Enviroment/Hit_brick_enter_01.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Enviroment/Hit_concrete_enter_01.ptc": [
+      0.423,
+      0.423,
+      0.423
+    ],
+    "Particles/Enviroment/Hit_default_enter_01.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Enviroment/Hit_stone_enter_01.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Enviroment/Hit_wood_enter_01.ptc": [
+      0.768,
+      0.691,
+      0.597
+    ],
+    "Particles/Weapon/Blast_Mortar_Default.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Blast_Mortar_Dirt.ptc": [
+      0.474,
+      0.442,
+      0.406
+    ],
+    "Particles/Weapon/Blast_Mortar_Sand.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Weapon/Blast_Mortar_Snow.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Weapon/Blast_Mortar_Solid.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ],
+    "Particles/Weapon/Explosion_M112.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_M14_AP_Mine.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_M15_AT_Mine.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_M15_AT_Mine_LOD1.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_M15_AT_Mine_LOD2.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_PMN4_AP_Mine.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_TM62M_AT_Mine.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_TM62M_AT_Mine_LOD1.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_TM62M_AT_Mine_LOD2.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/Weapon/Explosion_TNT_400g.ptc": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "Particles/BER/BER_Impact_RockChips.ptc": [
+      0.558,
+      0.558,
+      0.558
+    ]
+  }
+}

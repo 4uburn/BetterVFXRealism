@@ -1,7 +1,9 @@
 EffectDef {
  Version 2
  Emitters {
-  EmitterDef whisp {
+  EmitterDef ber_dust_whisp {
+   WindInfluence 0.35
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 20
@@ -33,7 +35,7 @@ EffectDef {
    Lifetime 0.5
    LifetimeRND 1.5
    Color {
-    0.029 1 1 1
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 1 0.267 0.196 0.561 0
@@ -50,7 +52,8 @@ EffectDef {
     0 1
    }
   }
-  EmitterDef whisp_side {
+  EmitterDef ber_dust_whisp_side {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0 0 0
    ConeAngle 360 170 180
@@ -74,7 +77,7 @@ EffectDef {
    VelocityRND 2
    AirResistance 20
    AirResistanceRND 3.176
-   WindInfluence 0.07
+   WindInfluence 0.35
    GravityMultiply 0
    GravityMultiplyRND 0
    AnimOnce 1
@@ -83,7 +86,7 @@ EffectDef {
    Lifetime 1
    LifetimeRND 0
    Color {
-    0 1 1 1 0.1 1 1 1 0.9 0.407 0.407 0.407
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 0.687 0.48 0.145 1 0
@@ -97,7 +100,8 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef whisp_cloned {
+  EmitterDef ber_dust_whisp_cloned {
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 20
@@ -122,7 +126,7 @@ EffectDef {
    VelocityRND 5
    AirResistance 5
    AirResistanceRND 1
-   WindInfluence 0.1
+   WindInfluence 0.35
    GravityMultiply 0
    GravityMultiplyRND 0
    AnimOnce 1
@@ -132,7 +136,7 @@ EffectDef {
    Lifetime 0.5
    LifetimeRND 0.7
    Color {
-    0.03 1 1 1 0.342 0.451 0.451 0.451
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 1 0.074 0.257 0.144 0.014
@@ -192,14 +196,16 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef dust_cone {
+  EmitterDef ber_dust_dust_cone {
+   WindInfluence 0.35
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.05 0.05 0.05
    ConeAngle 360 0 40
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    MaxNum 1
-   BirthRate 30
+   BirthRate 0
    BirthRateRND 0
    LodMin 0
    LodMax 1
@@ -214,7 +220,7 @@ EffectDef {
    RandomAngle 0
    Velocity 0.3
    VelocityRND 0
-   AirResistance 0
+   AirResistance 2
    AirResistanceRND 0
    GravityMultiply 0
    GravityMultiplyRND 0
@@ -225,7 +231,7 @@ EffectDef {
    Lifetime 0.4
    LifetimeRND 0.1
    Color {
-    0 0.156 0.156 0.156 1 0.156 0.156 0.156
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 0 0.064 0.689 0.333 0.257 0.718 0
@@ -239,14 +245,15 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef dust_big {
+  EmitterDef ber_dust_dust_big {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.2 0.2 0.2
    ConeAngle 360 10 60
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    MaxNum 2
-   BirthRate 30
+   BirthRate 0
    BirthRateRND 0
    Offset 0 -0.1 0.1
    LodMin 0
@@ -262,7 +269,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 4
    AirResistanceRND 1
-   WindInfluence 0.025
+   WindInfluence 0.35
    GravityMultiply 0.1
    GravityMultiplyRND 0.05
    AnimOnce 1
@@ -272,7 +279,7 @@ EffectDef {
    Lifetime 4
    LifetimeRND 0.2
    Color {
-    0.001 0.68 0.68 0.68
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 0 0.075 0.257 0.784 0
@@ -286,58 +293,7 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef ber_wisp_haze {
-   ShapeType Point
-   ShapeSize 0 0 0
-   ConeAngle 360 0 20
-   ConeAngleMinDist 30
-   ConeAngleRndRange 30
-   MaxNum 2
-   BirthRate 30
-   BirthRateRND 0
-   LodMin 0
-   LodMax 1
-   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
-   SizeMultiplier 10
-   SizeRND 0.4
-   ScaleX 0.989
-   CenterY 0
-   RotMultiplier 15
-   RandomRotDir 0
-   VelAngle 0
-   RandomAngle 1
-   FlipU Random
-   Velocity 3
-   VelocityRND 2
-   AirResistance 6
-   AirResistanceRND 1.5
-   WindInfluence 0
-   GravityMultiply 0.006
-   GravityMultiplyRND 0
-   EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 0.85
-   AnimOnce 0
-   AnimFPS 10
-   LifetimeByAnim 0
-   RandomFrame 1
-   Lifetime 30
-   LifetimeRND 10
-   Color {
-    0 1 1 1 1 1 1 1
-   }
-   Alpha {
-    0 0 0.015 0.25 0.5 0.15 1 0
-   }
-   RotationSpeed {
-    0 1 1 0
-   }
-   Size {
-    0 0.0345 0.1 1 1 1
-   }
-   EmittingTime 0.2
-   Repeat 0
-  }
+
  }
  MinFPS 30
 }

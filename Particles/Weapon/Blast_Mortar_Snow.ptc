@@ -249,7 +249,7 @@ EffectDef {
    }
   }
   EmitterDef debris_2D_small {
-   LocalTransform 1
+   LocalTransform 0
    ShapeType Box
    ConeAngle 360 15 30
    MaxNum 80
@@ -319,6 +319,7 @@ EffectDef {
    }
   }
   EmitterDef debris_3D_huge {
+   LocalTransform 0
    ShapeType Box
    ShapeSize 1 0 1
    ConeAngle 360 50 80
@@ -347,7 +348,7 @@ EffectDef {
    VelocityRND 6
    AirResistance 0.2
    AirResistanceRND 0
-   WindInfluence 0.3
+   WindInfluence 0
    GravityMultiply 3
    GravityMultiplyRND 1
    EnableCollisions 1
@@ -392,6 +393,7 @@ EffectDef {
    }
   }
   EmitterDef Explosion_Trigger_Tiny {
+   LocalTransform 0
    ConeAngle 360 10 50
    MaxNum 20
    BirthRate 150
@@ -413,6 +415,7 @@ EffectDef {
    Repeat 0
   }
   EmitterDef Explosion_Trigger_Small {
+   LocalTransform 0
    ConeAngle 360 50 150
    ConeAngleMinDist 180
    MaxNum 1
@@ -434,15 +437,15 @@ EffectDef {
    EmittingTime 0.05
    Repeat 0
   }
-  EmitterDef Smoke_Cloud {
+  EmitterDef ber_dust_Smoke_Cloud {
    ShapeType Box
-   ShapeSize 2 2 2
+   ShapeSize 1.3 1.3 1.3
    ConeAngle 360 50 80
    MaxNum 6
    BirthRate 100
    Offset 0 1 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{896ED2720AFADD2C}Particles/_Materials/Gas/Smoke_Cloud_Dark_02.emat"
@@ -454,10 +457,10 @@ EffectDef {
    RotRND 1
    VelAngle 1
    FlipU Random
-   Velocity 20
+   Velocity 13
    AirResistance 1
    AirResistanceRND 1.5
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply -0.2
    GravityMultiplyRND -0.05
    EnableCollisions 1
@@ -468,7 +471,7 @@ EffectDef {
    Lifetime 0.8
    LifetimeRND 1.5
    Color {
-    0 1 1 1 1 1 1 1
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.005 0.837 0.695 0.769 0.906 0.422 1 0
@@ -491,14 +494,14 @@ EffectDef {
     0.1 0.3 0.9 1
    }
   }
-  EmitterDef Smoke_Loop {
+  EmitterDef ber_dust_Smoke_Loop {
    ShapeType Ellipse
-   ShapeSize 10 0.5 10
+   ShapeSize 6.5 0.325 6.5
    ConeAngle 360 10 50
    ConeAngleMinDist 180
    BirthRate 180
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
@@ -511,10 +514,10 @@ EffectDef {
    RandomRotDir 1
    RandomAngle 1
    FlipU Random
-   VelocityRND 1
+   VelocityRND 0.65
    AirResistance 2
    AirResistanceRND 0.5
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply 0.05
    GravityMultiplyRND -0.1
    EnableCollisions 1
@@ -524,7 +527,7 @@ EffectDef {
    Lifetime 0.8
    LifetimeRND 1.6
    Color {
-    0 1 1 1 1 1 1 1
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.005 0.837 0.591 0.722 1 0
@@ -547,9 +550,9 @@ EffectDef {
     0 1 0.488 0.959 1 0.803
    }
   }
-  EmitterDef Smoke_After_Ground {
+  EmitterDef ber_dust_Smoke_After_Ground {
    ShapeType Ellipse
-   ShapeSize 12 1 12
+   ShapeSize 7.8 0.65 7.8
    ConeAngle 360 60.2 368.7
    MaxNum 10
    BirthRate 10
@@ -557,7 +560,7 @@ EffectDef {
    BirthRateVel 1
    Offset 0 0.5 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{61247CAB58EF0D6D}Particles/_Materials/Gas/Smoke_Explosion_02.emat"
@@ -575,9 +578,9 @@ EffectDef {
    Velocity 0
    VelocityRND 0
    VelAffect 0
-   AirResistance 0.1
+   AirResistance 2
    AirResistanceRND 0.05
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply -0.005
    GravityMultiplyRND -0.01
    EnableCollisions 1
@@ -591,7 +594,7 @@ EffectDef {
    LifetimeRND 18
    LifetimeVelFactor 0.15
    Color {
-    0 1 1 1 1 1 1 1
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.054 0.272 0.117 0.776 0.458 0.352 1 0
@@ -623,15 +626,15 @@ EffectDef {
     0 1 0.15 1 0.324 1 0.65 1 1 1
    }
   }
-  EmitterDef Smoke_ascending {
+  EmitterDef ber_dust_Smoke_ascending {
    ShapeType Box
-   ShapeSize 2 2 2
+   ShapeSize 1.3 1.3 1.3
    ConeAngle 360 10 50
    MaxNum 14
    BirthRate 100
    Offset 0 1 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{B6B47613FF3B9485}Particles/_Materials/Gas/Smoke_heavy_white_sheet.emat"
@@ -645,10 +648,10 @@ EffectDef {
    RandomAngle 1
    FlipU Random
    FlipV Random
-   Velocity 20
+   Velocity 13
    AirResistance 2
    AirResistanceRND 1.6
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply -0.2
    GravityMultiplyRND -0.05
    EnableCollisions 1
@@ -659,7 +662,7 @@ EffectDef {
    Lifetime 3.6
    LifetimeRND 4.8
    Color {
-    0 1 1 1 1 1 1 1
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.005 0.837 0.695 0.769 0.906 0.422 1 0
@@ -682,7 +685,7 @@ EffectDef {
     0.1 0.3 0.9 1
    }
   }
-  EmitterDef Smoke_After_tiny {
+  EmitterDef ber_dust_Smoke_After_tiny {
    ConeAngle 360 10 20
    ConeAngleMinDist 180
    MaxNum 160
@@ -690,7 +693,7 @@ EffectDef {
    BirthRateVel 1
    Offset 0 0.5 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
@@ -703,11 +706,11 @@ EffectDef {
    RandomRotDir 1
    RandomAngle 1
    FlipU Random
-   Velocity 1
+   Velocity 0.65
    VelAffect 0.1
-   AirResistance 0.2
+   AirResistance 2
    AirResistanceRND 0.2
-   WindInfluence 0
+   WindInfluence 0.35
    EnableCollisions 1
    NormalRestitution 0.2
    TagentialRestitution 1
@@ -715,7 +718,7 @@ EffectDef {
    Lifetime 6
    LifetimeRND 7.5
    Color {
-    0 0.8978 0.8978 0.8978 1 0.7647 0.7647 0.7647
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.097 0.213 0.214 0.809 0.693 0.643 1 0
@@ -741,9 +744,10 @@ EffectDef {
     0 1 0.488 0.959 1 0.803
    }
   }
-  EmitterDef dust_blast_short {
+  EmitterDef ber_dust_dust_blast_short {
+   WindInfluence 0.35
    ShapeType Box
-   ShapeSize 5 0 5
+   ShapeSize 3.25 0 3.25
    ConeAngle 360 80 180
    ConeAngleMinDist 30
    ConeAngleRndRange 30
@@ -751,7 +755,7 @@ EffectDef {
    BirthRate 2000
    Offset 0 0 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{106C63A94553E961}Particles/_Materials/Gas/Smoke_Exhaust_Anim.emat"
@@ -766,7 +770,7 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 10
+   Velocity 6.5
    VelocityRND 0
    AirResistance 2
    AirResistanceRND 0
@@ -781,7 +785,7 @@ EffectDef {
    Lifetime 1
    LifetimeRND 0.2
    Color {
-    0 1 1 1 1 1 1 1
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.175 1 0.65 1 1 0

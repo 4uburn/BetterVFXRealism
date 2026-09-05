@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — vehicle driving effects
+// Better VFX Realism — vehicle driving effects
 //
 // 1) Hard dust cutoff at 10 km/h — below it no dust renders at all; above it the buildup
 //    scales aggressively with speed: birth rate AND particle starting size grow with
@@ -22,7 +22,7 @@
 // 6) Wheel-cloud merge share: wheels whose dust clouds overlap (same effect, contact
 //    points close together — paired axles, tandem wheels in one track) stop emitting at
 //    full rate each; the group redistributes into fewer-but-larger particles with the
-//    total dust mass conserved, so the merged trail keeps the correct size and density
+//    approximate visual coverage maintained, so the merged trail keeps the correct size and density
 //    instead of stacking N identical overlapping clouds.
 // 7) Rain: light rain thins the dust cloud with intensity; past the mud threshold the
 //    wheels sling dark wet MUD clods instead (chunk size grows with speed), the tail
@@ -104,6 +104,11 @@ modded class SCR_VehicleDustPerWheel
 		}
 
 		bool isLiquid = m_Simulation.WheelGetContactLiquidState(wheelIdx) > 0;
+		if (isLiquid)
+		{
+			vehicleDust.m_iBerDustyUntil = 0;
+			vehicleDust.m_BerLastDustyRes = ResourceName.Empty;
+		}
 		GameMaterial newMaterial;
 		if (isLiquid)
 			newMaterial = m_Simulation.WheelGetContactLiquidMaterial(wheelIdx);
@@ -187,10 +192,11 @@ modded class SCR_VehicleDustPerWheel
 	//! size grows with speed too — at high speed the dust engulfs the whole wheelbase.
 	override protected void UpdateVehicleDustEffect(VehicleDust vehicleDust, float speed, int wheelIdx)
 	{
-		if (!vehicleDust.m_pParticleEffectEntity)
+		if (!vehicleDust.m_pParticleEffectEntity || !m_Simulation || !m_Simulation.IsValid())
 			return;
 
-		float endSpeed = m_ComponentData.m_fDustTopSpeed;
+		float endSpeed = Math.Max(m_ComponentData.m_fDustTopSpeed, 0.1);
+		bool isLiquid = m_Simulation.WheelGetContactLiquidState(wheelIdx) > 0;
 		float speedCoef = 0;
 		float birthCoef = 0;
 		float gravityCoef = 0;
@@ -222,7 +228,7 @@ modded class SCR_VehicleDustPerWheel
 		// wet ground generates NO dust: the cloud fades out linearly over the wetness
 		// range below the mud threshold and is fully gone exactly where the mud kick
 		// takes over. Mud and rock kicks are wet/solid effects and stay.
-		if (!isMud && !isRockKick && vehicleDust.m_bWheelHasContact)
+		if (!isLiquid && !isMud && !isRockKick && vehicleDust.m_bWheelHasContact)
 		{
 			BaseWorld dustWorld = GetOwner().GetWorld();
 			float dustWet = BER_SurfaceUtil.GetRainIntensity(dustWorld);
@@ -235,9 +241,9 @@ modded class SCR_VehicleDustPerWheel
 		// merge share: wheels shedding the SAME dust with contact points close enough
 		// that their clouds fully overlap (a side-by-side pair, tandem axles in one
 		// track) are one merged cloud — each member emits fewer particles (n^-0.5) but
-		// bigger ones (n^0.18, ~mass-conserving: count x size^3 stays put), so the
+		// bigger ones (n^0.18, a visual overlap heuristic; not a physical mass calculation), so the
 		// group reads as one correctly sized and dense trail instead of n stacked ones
-		if (vehicleDust.m_bWheelHasContact && vehicleDust.m_BerCurrentRes != ResourceName.Empty)
+		if (!isLiquid && !isMud && !isRockKick && vehicleDust.m_bWheelHasContact && vehicleDust.m_BerCurrentRes != ResourceName.Empty)
 		{
 			vector myContact = m_Simulation.WheelGetContactPosition(wheelIdx);
 			int group = 1;
@@ -273,7 +279,10 @@ modded class SCR_VehicleDustPerWheel
 		}
 
 		Particles particles = vehicleDust.m_pParticleEffectEntity.GetParticles();
+		if (!particles)
+			return;
 		particles.MultParam(-1, EmitterParam.BIRTH_RATE, birthCoef);
+		particles.MultParam(-1, EmitterParam.BIRTH_RATE_RND, birthCoef);
 		particles.MultParam(-1, EmitterParam.GRAVITY_SCALE_RND, gravityCoef);
 		particles.MultParam(-1, EmitterParam.VELOCITY, speedCoef);
 		particles.MultParam(-1, EmitterParam.VELOCITY_RND, speedCoef);
@@ -290,6 +299,12 @@ modded class SCR_VehicleDustPerWheel
 	//------------------------------------------------------------------------------------------------
 	//! Maintain the low-pressure tail wake: alive while the vehicle moves at speed over
 	//! dusty (non-paved) ground, stopped otherwise. Intensity follows speed.
+	void ~SCR_VehicleDustPerWheel()
+	{
+		if (m_BerTailWake)
+			m_BerTailWake.StopEmission();
+	}
+
 	protected void UpdateTailWake()
 	{
 		if (!m_Simulation || !m_Simulation.IsValid())
@@ -298,7 +313,7 @@ modded class SCR_VehicleDustPerWheel
 		float speed = m_Simulation.GetSpeedKmh();
 		bool want = false;
 
-		if (speed >= BER_WAKE_MIN_SPEED && m_Simulation.WheelHasContact(0))
+		if (speed >= BER_WAKE_MIN_SPEED && m_Simulation.WheelHasContact(0) && m_Simulation.WheelGetContactLiquidState(0) == 0)
 		{
 			GameMaterial mat = m_Simulation.WheelGetContactMaterial(0);
 			if (mat)
@@ -396,7 +411,9 @@ modded class SCR_MotorExhaustEffectGeneralComponent
 			int stage = Math.ClampInt(Math.Ceil(iMaxStage * m_fEngineLoad), 1, iMaxStage) - 1;
 			array<int> stageEmitterIDs = stageIndexes[stage];
 
-			for (int i; i < stageEmitterIDs.Count(); i++)
+			if (!stageEmitterIDs)
+				return;
+			for (int i = 0; i < stageEmitterIDs.Count(); i++)
 			{
 				particles.MultParam(stageEmitterIDs[i], EmitterParam.BIRTH_RATE, birthCoef);
 				particles.MultParam(stageEmitterIDs[i], EmitterParam.BIRTH_RATE_RND, birthCoef);
@@ -413,6 +430,7 @@ modded class SCR_MotorExhaustEffectGeneralComponent
 			// unstaged effects: vanilla multiplies LIFETIME by m_fLifetimeScale here, but that
 			// field is never assigned (0) — using the EGT coefficient alone instead
 			particles.MultParam(-1, EmitterParam.BIRTH_RATE, birthCoef);
+		particles.MultParam(-1, EmitterParam.BIRTH_RATE_RND, birthCoef);
 			particles.MultParam(-1, EmitterParam.BIRTH_RATE_RND, birthCoef);
 			particles.MultParam(-1, EmitterParam.LIFETIME, lifeCoef);
 			particles.MultParam(-1, EmitterParam.LIFETIME_RND, lifeCoef);

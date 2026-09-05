@@ -1,7 +1,8 @@
 EffectDef {
  Version 2
  Emitters {
-  EmitterDef Dust_Burst {
+  EmitterDef ber_dust_Dust_Burst {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
    ConeAngle 360 0 30
@@ -26,7 +27,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 2
    AirResistanceRND 1.5
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.02
    GravityMultiplyRND 0.02
    EnableCollisions 1
@@ -39,7 +40,7 @@ EffectDef {
    Lifetime 0.6
    LifetimeRND 0.25
    Color {
-    0 0.52 0.51 0.49 1 0.42 0.42 0.41
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.045 0.635 0.146 0.83 0.684 0.556 1 0
@@ -59,7 +60,8 @@ EffectDef {
     0 0 0.809 1
    }
   }
-  EmitterDef Dust_Burst_02 {
+  EmitterDef ber_dust_Dust_Burst_02 {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
    ConeAngle 360 0 30
@@ -84,7 +86,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 1.5
    AirResistanceRND 0.5
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.02
    GravityMultiplyRND 0.02
    EnableCollisions 1
@@ -96,7 +98,7 @@ EffectDef {
    Lifetime 0.8
    LifetimeRND 0.6
    Color {
-    0 0.62 0.62 0.6 1 0.42 0.42 0.41
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.029 0.577 0.099 0.753 0.466 0.614 0.761 0.091 1 0
@@ -168,7 +170,8 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef dust_spray {
+  EmitterDef ber_dust_dust_spray {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.2 0.2 0.2
    ConeAngle 360 20 95
@@ -190,7 +193,7 @@ EffectDef {
    VelocityRND 5
    AirResistance 2.5
    AirResistanceRND 1
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.1
    GravityMultiplyRND 0.05
    EnableCollisions 1
@@ -202,7 +205,7 @@ EffectDef {
    Lifetime 1.6
    LifetimeRND 0.8
    Color {
-    0 0.55 0.54 0.52 1 0.42 0.42 0.41
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.06 0.5 0.3 0.34 1 0

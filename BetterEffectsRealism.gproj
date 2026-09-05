@@ -1,7 +1,7 @@
 GameProject {
  ID BetterEffectsRealism
  GUID "4DA875471101785E"
- TITLE BetterEffectsRealism
+ TITLE "Better VFX Realism"
  Dependencies {
   "58D0FB3206B6F859"
  }

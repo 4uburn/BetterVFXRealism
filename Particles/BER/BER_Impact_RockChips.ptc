@@ -53,7 +53,7 @@ EffectDef {
    EmittingTime 0.12
    Repeat 0
   }
-  EmitterDef dust_spray {
+  EmitterDef ber_dust_spray {
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
    ConeAngle 360 20 95
@@ -73,9 +73,10 @@ EffectDef {
    FlipU Random
    Velocity 10
    VelocityRND 6
+   LocalTransform 0
    AirResistance 2.5
    AirResistanceRND 1
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.1
    GravityMultiplyRND 0.05
    EnableCollisions 1
@@ -87,7 +88,7 @@ EffectDef {
    Lifetime 1.6
    LifetimeRND 0.8
    Color {
-    0 0.55 0.54 0.52 1 0.42 0.42 0.41
+    0 0.74214 0.74214 0.74214 1 0.74214 0.74214 0.74214
    }
    Alpha {
     0 0 0.06 0.5 0.3 0.34 1 0
@@ -124,7 +125,7 @@ EffectDef {
    VelocityRND 7
    AirResistance 0.5
    AirResistanceRND 0.15
-   WindInfluence 0.05
+   WindInfluence 0
    GravityMultiply 2.5
    GravityMultiplyRND 1
    CollisionDistThresh 10
@@ -166,7 +167,7 @@ EffectDef {
    VelocityRND 6
    AirResistance 0.5
    AirResistanceRND 0.15
-   WindInfluence 0.05
+   WindInfluence 0
    GravityMultiply 2.5
    GravityMultiplyRND 1
    CollisionDistThresh 10

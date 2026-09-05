@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — surface-oriented particle contact component
+// Better VFX Realism — surface-oriented particle contact component
 //
 // Drop-in replacement for SCR_ParticleContactComponent on the invisible blast trigger
 // prefabs (same-GUID prefab overrides swap the component type). Behavior is identical to
@@ -47,15 +47,30 @@ class BER_OrientedContactComponent : SCR_ParticleContactComponent
 			{
 				ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 				spawnParams.UseFrameEvent = true;
+				spawnParams.PlayOnSpawn = false;
 
 				vector up = contact.Normal;
-				if (up[1] < 0)
-					up = up * -1.0; // dust erupts out of the surface, never into it
+				if (vector.Dot(up, owner.GetOrigin() - contact.Position) < 0)
+					up = -up; // face the incident side, including ceilings and walls
 				if (up != vector.Zero)
 					SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
 
 				spawnParams.Transform[3] = contact.Position;
-				ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+				ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+				if (pfx)
+				{
+					BER_OwnedEffects.MarkOwned(pfx);
+					string materialName;
+					if (material)
+						materialName = material.GetName();
+					BaseWorld world = owner.GetWorld();
+					bool indoor = BER_SurfaceUtil.IsRoofed(world, contact.Position + up * 0.15, owner, 25);
+					float dust = BER_SurfaceUtil.GetDustAvailability(world, contact.Position, materialName, indoor);
+					Particles particles = pfx.GetParticles();
+					if (particles)
+						BER_SurfaceUtil.TuneDust(particles, dust * 1.35, indoor, 0.7, 1.8);
+					pfx.Play();
+				}
 			}
 		}
 
@@ -81,7 +96,7 @@ class BER_OrientedContactComponent : SCR_ParticleContactComponent
 		if (prefabData.m_bSurfaceSignal)
 		{
 			GameMaterial material = contact.Material2;
-			if (material)
+			if (material && material.GetSoundInfo())
 				audioSource.SetSignalValue(SCR_AudioSource.SURFACE_SIGNAL_NAME, material.GetSoundInfo().GetSignalValue());
 		}
 

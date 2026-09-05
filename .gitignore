@@ -1,0 +1,4 @@
+# Local Workbench/MCP helpers are never part of the addon.
+Scripts/WorkbenchGame/EnfusionMCP/
+__pycache__/
+*.pyc

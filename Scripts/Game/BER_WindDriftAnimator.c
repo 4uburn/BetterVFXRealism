@@ -1,37 +1,13 @@
-//------------------------------------------------------------------------------------------------
-// Better Effects Realism — wind drift animator
-//
-// Emitter-level wind cannot be modulated after an effect exists, so BER-owned effects have
-// engine wind disabled, simulate in local space, and are drifted by MOVING THE EFFECT
-// ENTITY here instead:
-//  - HOLD phase: the blast pressure wave locally cancels the wind — the cloud stands
-//    still. hold = HOLD_MAX * (1 - windSpeed / WIND_OVERCOME_SPEED), clamped >= 0, so
-//    stronger wind overcomes the pressure wave sooner.
-//  - RAMP phase: drift velocity accelerates along the real wind direction with a
-//    smoothstep curve up to the actual wind speed over the ramp time.
-//  - After the ramp the cloud keeps drifting at wind speed until the effect dies.
-//  - CONCUSSION IMPULSE: AddImpulse gives an effect an instant shove that decays away
-//    within a fraction of a second — a fresh muzzle blast blowing the previous shots'
-//    dust outbound. Impulses apply even during the pressure-hold phase and work with no
-//    wind at all (an impulse-only entry is created on demand), and impulse-shoved
-//    effects use much shorter dissipation distances so the blown-away dust thins out
-//    at small-arms scale instead of explosion-cloud scale.
-//  - TRAVEL DISSIPATION: the further the cloud has drifted, the faster it thins out —
-//    replenishment (BIRTH_RATE) and the lifetime of newly born particles decay with the
-//    distance travelled, so a cloud standing still (indoors, becalmed, pressure hold)
-//    stays thick and long-lived while a wind-carried one falls apart on the way. Decay
-//    multiplies the caller's applied baseline (MultParam is absolute vs the authored
-//    original), so the surface/weather tuning stays intact. Particles already alive keep
-//    their alpha curves — the engine normalizes them over each particle's own lifetime.
-// Runs on a per-frame CallQueue tick (delay 0) with real elapsed world time, so the
-// drift is as smooth as the user's framerate; independent of the short-lived warhead
-// that registered it.
-//------------------------------------------------------------------------------------------------
+// Better VFX Realism: bounded advection of the local-space muzzle dust effects only.
+// Explosion/impact dust uses native world-space particle drag. A short visual response
+// delay is not a model of blast pressure cancelling ambient wind. Weather is refreshed
+// twice a second; concussion impulses decay and are blocked by intervening surfaces.
 
 class BER_WindDriftEntry
 {
 	ParticleEffectEntity m_Pfx;
 	float m_fAge;
+	bool m_bWindDriven;
 	float m_fHold;
 	float m_fRamp;
 	float m_fWindSpeed;
@@ -54,10 +30,12 @@ class BER_WindDriftAnimator
 	protected ref array<ref BER_WindDriftEntry> m_aEntries = {};
 	protected bool m_bTicking;
 	protected float m_fLastTickTime;
+	protected BaseWorld m_World;
+	protected float m_fWeatherIn;
 
 	protected const float MAX_DT = 0.25;                // clamp huge frame hitches so clouds don't teleport
-	protected const float HOLD_MAX = 3.0;               // seconds of standstill in calm air
-	protected const float WIND_OVERCOME_SPEED = 10.0;   // m/s of wind that fully overcomes the pressure wave
+	protected const float HOLD_MAX = 0.08;               // maximum visual onset delay (not a blast-pressure duration)
+	protected const float WIND_OVERCOME_SPEED = 10.0;   // m/s at which the visual onset delay reaches zero
 	protected const float MAX_LIFETIME = 120.0;         // hard cap so entries can never leak
 
 	protected const float DISSIPATE_BIRTH_DIST = 28.0;  // m of travel over which replenishment fades out
@@ -76,17 +54,25 @@ class BER_WindDriftAnimator
 	{
 		if (!s_Instance)
 			s_Instance = new BER_WindDriftAnimator();
+		BaseWorld world = GetGame().GetWorld();
+		if (s_Instance.m_World && (s_Instance.m_World != world
+			|| (world && world.GetWorldTime() < s_Instance.m_fLastTickTime)))
+		{
+			GetGame().GetCallqueue().Remove(s_Instance.Tick);
+			s_Instance.m_aEntries.Clear();
+			s_Instance.m_bTicking = false;
+			s_Instance.m_World = world;
+		}
 		return s_Instance;
 	}
 
 	//------------------------------------------------------------------------------------------------
 	//! birthBase/lifeBase: the BIRTH_RATE / LIFETIME multipliers (vs the authored original)
 	//! the caller has already applied, so travel decay can scale them down without undoing them.
-	//! holdScale scales the pressure-hold standstill: 1.0 for explosion clouds, near 0 for
-	//! light short-lived gas (rifle puffs) the wind should grab almost immediately.
+	//! holdScale scales the brief visual onset delay for lightweight muzzle dust.
 	void Register(ParticleEffectEntity pfx, float rampTime, float birthBase = 1.0, float lifeBase = 1.0, float holdScale = 1.0)
 	{
-		if (!pfx || rampTime < 0.05)
+		if (!pfx || pfx.GetParent() || rampTime < 0.05 || m_aEntries.Count() >= 256)
 			return;
 
 		foreach (BER_WindDriftEntry existing : m_aEntries)
@@ -97,12 +83,10 @@ class BER_WindDriftAnimator
 
 		BaseWorld world = pfx.GetWorld();
 		float wind = BER_SurfaceUtil.GetWindSpeed(world);
-		if (wind < 0.05)
-			return; // no wind, nothing to animate
+		// Keep calm-weather entries: a later gust must still pick them up.
 
 		vector dir = BER_SurfaceUtil.GetWindDirection(world, pfx.GetOrigin());
-		if (dir == vector.Zero)
-			return;
+
 
 		float holdFraction = 1.0 - wind / WIND_OVERCOME_SPEED;
 		if (holdFraction < 0)
@@ -111,8 +95,9 @@ class BER_WindDriftAnimator
 		BER_WindDriftEntry entry = new BER_WindDriftEntry();
 		entry.m_Pfx = pfx;
 		entry.m_fAge = 0;
+		entry.m_bWindDriven = true;
 		entry.m_fHold = HOLD_MAX * holdFraction * holdScale;
-		entry.m_fRamp = rampTime;
+		entry.m_fRamp = BER_SurfaceUtil.ClampF(rampTime, 0.1, 3.0);
 		entry.m_fWindSpeed = wind;
 		entry.m_vDir = dir;
 		entry.m_fBirthBase = birthBase;
@@ -130,12 +115,12 @@ class BER_WindDriftAnimator
 	//------------------------------------------------------------------------------------------------
 	//! An instant shove (world-space velocity) that decays away within a fraction of a
 	//! second — a muzzle concussion blowing existing dust outbound. Works during the
-	//! pressure-hold phase and with no wind at all; the shoved effect switches to the
+	//! visual onset delay and with no wind at all; the shoved effect switches to the
 	//! short small-puff dissipation distances so being blown away also thins it out.
 	//! birthBase/lifeBase: as in Register, only used when a new entry must be created.
 	void AddImpulse(ParticleEffectEntity pfx, vector vel, float birthBase = 1.0, float lifeBase = 1.0)
 	{
-		if (!pfx || vel == vector.Zero)
+		if (!pfx || pfx.GetParent() || vel == vector.Zero)
 			return;
 
 		foreach (BER_WindDriftEntry existing : m_aEntries)
@@ -150,7 +135,7 @@ class BER_WindDriftAnimator
 		}
 
 		BaseWorld world = pfx.GetWorld();
-		if (!world)
+		if (!world || m_aEntries.Count() >= 256)
 			return;
 
 		// no wind entry exists (indoors or calm air) — impulse-only entry, never wind-driven
@@ -173,113 +158,14 @@ class BER_WindDriftAnimator
 		StartTicking(world);
 	}
 
-	//------------------------------------------------------------------------------------------------
-	//! Like AddImpulse, but for the cloud field's separation shoves: it must NOT switch the
-	//! effect to the short small-puff dissipation distances — two big clouds shouldering
-	//! each other apart keep dissipating at their own scale. A new entry (indoor / calm air)
-	//! gets the default long distances for the same reason.
-	void AddSeparationImpulse(ParticleEffectEntity pfx, vector vel, float birthBase = 1.0, float lifeBase = 1.0)
-	{
-		if (!pfx || vel == vector.Zero)
-			return;
 
-		foreach (BER_WindDriftEntry existing : m_aEntries)
-		{
-			if (existing.m_Pfx == pfx)
-			{
-				existing.m_vImpulse = existing.m_vImpulse + vel;
-				return;
-			}
-		}
-
-		BaseWorld world = pfx.GetWorld();
-		if (!world)
-			return;
-
-		BER_WindDriftEntry entry = new BER_WindDriftEntry();
-		entry.m_Pfx = pfx;
-		entry.m_fAge = 0;
-		entry.m_fHold = MAX_LIFETIME;
-		entry.m_fRamp = 1.0;
-		entry.m_fWindSpeed = 0;
-		entry.m_vDir = vector.Zero;
-		entry.m_fBirthBase = birthBase;
-		entry.m_fLifeBase = lifeBase;
-		entry.m_fTraveled = 0;
-		entry.m_fAppliedFactor = 1.0;
-		entry.m_vImpulse = vel;
-		entry.m_fBirthDist = DISSIPATE_BIRTH_DIST;
-		entry.m_fLifeDist = DISSIPATE_LIFE_DIST;
-		m_aEntries.Insert(entry);
-
-		StartTicking(world);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! The cloud field's merge boosts must compose with the travel dissipation instead of
-	//! being overwritten by its next BIRTH_RATE write: when an entry exists for pfx, its
-	//! birth baseline is replaced with the new total and reapplied immediately at the
-	//! current travel factor. Returns false when this animator does not own the effect —
-	//! the caller applies its boost directly then.
-	bool SetBirthBase(ParticleEffectEntity pfx, float birthBase)
-	{
-		foreach (BER_WindDriftEntry entry : m_aEntries)
-		{
-			if (entry.m_Pfx != pfx)
-				continue;
-
-			entry.m_fBirthBase = birthBase;
-
-			float birthFactor = 1.0 - entry.m_fTraveled / entry.m_fBirthDist;
-			if (birthFactor < DISSIPATE_BIRTH_FLOOR)
-				birthFactor = DISSIPATE_BIRTH_FLOOR;
-
-			Particles particles = pfx.GetParticles();
-			if (particles)
-			{
-				int emitterCount = particles.GetNumEmitters();
-				for (int i = 0; i < emitterCount; i++)
-					particles.MultParam(i, EmitterParam.BIRTH_RATE, birthBase * birthFactor);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! An explosion's pressure wave shoving every animated cloud within reach radially away
-	//! from the detonation, strongest up close. Unlike AddImpulse this leaves the entries'
-	//! dissipation distances alone — a swept explosion cloud keeps its own thinning scale.
-	void ImpulseSweep(vector center, float radius, float speed)
-	{
-		foreach (BER_WindDriftEntry entry : m_aEntries)
-		{
-			if (!entry.m_Pfx)
-				continue;
-
-			vector pos = entry.m_Pfx.GetOrigin();
-			vector away = Vector(pos[0] - center[0], 0, pos[2] - center[2]);
-			float dist = away.Length();
-			if (dist > radius)
-				continue;
-
-			if (dist < 0.2)
-				continue; // the detonation's own cloud at the epicenter — nowhere to push it
-
-			away = away * (1.0 / dist);
-			float shove = speed * (1.0 - dist / radius);
-			if (shove < 0.3)
-				shove = 0.3;
-
-			entry.m_vImpulse = entry.m_vImpulse + away * shove;
-		}
-	}
 
 	//------------------------------------------------------------------------------------------------
 	protected void StartTicking(BaseWorld world)
 	{
 		if (m_bTicking)
 			return;
+		m_World = world;
 		m_fLastTickTime = world.GetWorldTime();
 		GetGame().GetCallqueue().CallLater(Tick, 0, true); // delay 0 + repeat = every frame
 		m_bTicking = true;
@@ -289,8 +175,13 @@ class BER_WindDriftAnimator
 	protected void Tick()
 	{
 		BaseWorld world = GetGame().GetWorld();
-		if (!world)
+		if (!world || world != m_World || world.GetWorldTime() < m_fLastTickTime)
+		{
+			m_aEntries.Clear();
+			GetGame().GetCallqueue().Remove(Tick);
+			m_bTicking = false;
 			return;
+		}
 
 		float now = world.GetWorldTime();
 		float dt = (now - m_fLastTickTime) * 0.001;
@@ -300,6 +191,16 @@ class BER_WindDriftAnimator
 		if (dt > MAX_DT)
 			dt = MAX_DT;
 
+		m_fWeatherIn -= dt;
+		bool refreshWeather = m_fWeatherIn <= 0;
+		float wind;
+		vector windDirection;
+		if (refreshWeather)
+		{
+			m_fWeatherIn = 0.5;
+			wind = BER_SurfaceUtil.GetWindSpeed(world);
+			windDirection = BER_SurfaceUtil.GetWindDirection(world, vector.Zero);
+		}
 		for (int i = m_aEntries.Count() - 1; i >= 0; i--)
 		{
 			BER_WindDriftEntry entry = m_aEntries[i];
@@ -310,11 +211,20 @@ class BER_WindDriftAnimator
 			}
 
 			entry.m_fAge += dt;
+			if (refreshWeather && entry.m_bWindDriven)
+			{
+				entry.m_fWindSpeed = wind;
+				entry.m_vDir = windDirection;
+				entry.m_fBlockCheckIn = 0;
+			}
+			float impulseSpeed = entry.m_vImpulse.Length();
+			if (impulseSpeed > 5.0)
+				entry.m_vImpulse *= 5.0 / impulseSpeed;
 
 			vector move = vector.Zero;
 			float stepLen = 0;
 
-			// concussion impulse: applies immediately (even during the pressure hold),
+			// concussion impulse: applies immediately (even during the visual onset delay),
 			// decaying exponentially so a shove travels a short, sharp distance
 			if (entry.m_vImpulse != vector.Zero)
 			{
@@ -328,7 +238,7 @@ class BER_WindDriftAnimator
 					entry.m_vImpulse = vector.Zero;
 			}
 
-			// wind drift once the pressure wave no longer dominates
+			// wind response after the short visual onset delay
 			if (entry.m_fWindSpeed > 0 && entry.m_fAge > entry.m_fHold)
 			{
 				float t = (entry.m_fAge - entry.m_fHold) / entry.m_fRamp;
@@ -344,7 +254,7 @@ class BER_WindDriftAnimator
 				continue;
 
 			// the wind cannot push a cloud through a building: probe ahead of the drift
-			// (throttled — one short ray every 0.4 s per moving entry) and, when a wall
+			// (throttled — one short ray every 0.2 s per moving entry) and, when a wall
 			// blocks the path, strip the movement component INTO it so the cloud slides
 			// along the facade instead of the entity passing through while its collided
 			// particles pile up and stick to the exterior wall
@@ -352,8 +262,8 @@ class BER_WindDriftAnimator
 			entry.m_fBlockCheckIn -= dt;
 			if (entry.m_fBlockCheckIn <= 0)
 			{
-				entry.m_fBlockCheckIn = 0.4;
-				entry.m_vBlockNormal = ProbeObstruction(world, pos, move);
+				entry.m_fBlockCheckIn = 0.2;
+				entry.m_vBlockNormal = ProbeObstruction(world, pos, move, 1.5 + (entry.m_fWindSpeed + 5.0) * 0.2);
 			}
 			if (entry.m_vBlockNormal != vector.Zero)
 			{
@@ -366,7 +276,7 @@ class BER_WindDriftAnimator
 			}
 
 			entry.m_Pfx.SetOrigin(pos + move);
-			entry.m_fTraveled += stepLen;
+			entry.m_fTraveled += move.Length();
 
 			ApplyTravelDissipation(entry);
 		}
@@ -381,7 +291,7 @@ class BER_WindDriftAnimator
 	//------------------------------------------------------------------------------------------------
 	//! Short look-ahead ray along the current drift direction: returns the blocking
 	//! surface's normal (oriented against the movement), or zero when the path is clear.
-	protected vector ProbeObstruction(BaseWorld world, vector pos, vector move)
+	protected vector ProbeObstruction(BaseWorld world, vector pos, vector move, float lookAhead)
 	{
 		float moveLen = move.Length();
 		if (moveLen < 0.0001)
@@ -391,7 +301,7 @@ class BER_WindDriftAnimator
 
 		TraceParam tp = new TraceParam();
 		tp.Start = pos + Vector(0, 0.5, 0);
-		tp.End = tp.Start + dir * 1.5; // roughly the cloud's leading edge
+		tp.End = tp.Start + dir * lookAhead; // covers travel until the next probe, even in strong wind
 		tp.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
 
 		if (world.TraceMove(tp, null) >= 1.0)
@@ -426,7 +336,9 @@ class BER_WindDriftAnimator
 		for (int i = 0; i < emitterCount; i++)
 		{
 			particles.MultParam(i, EmitterParam.BIRTH_RATE, entry.m_fBirthBase * birthFactor);
+			particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, entry.m_fBirthBase * birthFactor);
 			particles.MultParam(i, EmitterParam.LIFETIME, entry.m_fLifeBase * lifeFactor);
+			particles.MultParam(i, EmitterParam.LIFETIME_RND, entry.m_fLifeBase * lifeFactor);
 		}
 	}
 }

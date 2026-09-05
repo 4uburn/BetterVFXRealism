@@ -31,7 +31,8 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef Smoke_Burst {
+  EmitterDef ber_smoke_Smoke_Burst {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
    ConeAngle 360 0 30
@@ -56,7 +57,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 2
    AirResistanceRND 1.5
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.02
    GravityMultiplyRND 0.02
    AnimOnce 1
@@ -86,7 +87,8 @@ EffectDef {
     0 0 0.809 1
    }
   }
-  EmitterDef Smoke_Burst_02 {
+  EmitterDef ber_smoke_Smoke_Burst_02 {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.3 0.3 0.3
    ConeAngle 360 0 30
@@ -111,7 +113,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 1.5
    AirResistanceRND 0.5
-   WindInfluence 0.05
+   WindInfluence 0.35
    GravityMultiply 0.02
    GravityMultiplyRND 0.02
    AnimFPS 70

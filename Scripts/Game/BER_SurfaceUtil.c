@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — shared surface/weather classification
+// Better VFX Realism — shared surface/weather classification
 //
 // One classifier used by every BER feature (explosion tuning, muzzle overpressure dust)
 // so all effects are driven through the same logic.
@@ -101,17 +101,19 @@ class BER_SurfaceUtil
 
 		// wet / water-adjacent first
 		if (matName.Contains("water") || matName.Contains("seaweed"))
-			return 0.25;
-		if (matName.Contains("snow") || matName.Contains("ice"))
-			return 0.45;
+			return 0;
+		if (matName.Contains("ice"))
+			return 0;
+		if (matName.Contains("snow"))
+			return 0.45; // loose snow can be entrained; ice cannot
 
-		// beach sand near sea level is damp; inland sand is drier
+		// Altitude alone does not establish wetness: dry sand can occur at sea level.
+		if (matName.Contains("mud_dry") || matName.Contains("dried_mud"))
+			return 1.6;
+		if (matName.Contains("wet") || matName.Contains("mud"))
+			return 0;
 		if (matName.Contains("sand"))
-		{
-			if (posY < 3.0)
-				return 0.45;
-			return 0.95;
-		}
+			return 1.6;
 
 		// dry unpaved surfaces — lots of dried mud and dust
 		if (matName.Contains("dirt_road"))
@@ -189,7 +191,7 @@ class BER_SurfaceUtil
 		float now = world.GetWorldTime() * 0.001;
 		float rain = GetRainIntensity(world);
 
-		if (s_fWetness < 0)
+		if (s_fWetness < 0 || now < s_fWetnessLastTime)
 		{
 			s_fWetness = rain;
 			s_fWetnessLastTime = now;
@@ -253,10 +255,88 @@ class BER_SurfaceUtil
 
 		if (wet < 0.01)
 			return 1.0;
-		float factor = 1.0 - wet;
+		float factor = 1.0 - wet / 0.25; // same mud threshold as wheel dust
 		if (factor < 0)
 			factor = 0;
 		return factor;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Loose surface dust, not combustion smoke. Full dustiness is fine dry soil/sand.
+	//! A roof shelters the impact from rain; explicitly wet materials remain dustless.
+	static float GetDustAvailability(BaseWorld world, vector pos, string material, bool indoor)
+	{
+		float dust = ClampF(GetDustFactor(material, pos[1]) / 1.6, 0, 1);
+		material.ToLower();
+		if (material.Contains("metal") || material.Contains("armor") || material.Contains("glass")
+			|| material.Contains("plastic") || material.Contains("rubber") || material.Contains("fabric")
+			|| material.Contains("flesh") || material.Contains("aramid"))
+			return 0;
+		if (!indoor)
+			dust *= GetRainFactor(world);
+		return dust;
+	}
+
+	static bool HasDustEmitters(Particles particles)
+	{
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (string name : names)
+		{
+			if (name.IndexOf("ber_dust_") == 0)
+				return true;
+		}
+		return false;
+	}
+
+	//! Explicit authored names replace lifetime guesses: debris can live longer than dust.
+	//! Called while paused whenever we own the spawn, before even the first particle.
+	static void TuneDust(Particles particles, float density, bool indoor, float size = 1.0, float lifetime = 1.0)
+	{
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (int i, string name : names)
+		{
+			if (name.IndexOf("ber_dust_") != 0)
+				continue;
+			particles.MultParam(i, EmitterParam.BIRTH_RATE, density);
+			particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, density);
+			particles.MultParam(i, EmitterParam.SIZE, size);
+			particles.MultParam(i, EmitterParam.SIZE_RND, size);
+			particles.SetParam(i, EmitterParam.WIND, !indoor);
+			float life = lifetime;
+			if (indoor)
+			{
+				life *= 1.5;
+				particles.MultParam(i, EmitterParam.VELOCITY, 0.65);
+				particles.MultParam(i, EmitterParam.VELOCITY_RND, 0.65);
+			}
+			float original, random;
+			particles.GetParamOrig(i, EmitterParam.LIFETIME, original);
+			particles.GetParamOrig(i, EmitterParam.LIFETIME_RND, random);
+			if (original + random > 0.01)
+				life = ClampF(life, 0, 40.0 / (original + random));
+			particles.MultParam(i, EmitterParam.LIFETIME, life);
+			particles.MultParam(i, EmitterParam.LIFETIME_RND, life);
+		}
+	}
+
+	static bool HasClearPath(BaseWorld world, vector start, vector end, IEntity exclude = null)
+	{
+		if (vector.DistanceSq(start, end) < 0.01)
+			return true;
+		TraceParam trace = new TraceParam();
+		trace.Start = start;
+		trace.End = end;
+		trace.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
+		trace.Exclude = exclude;
+		return world.TraceMove(trace, null) >= 0.99;
+	}
+
+	static void ResetWetness()
+	{
+		s_fWetness = -1;
+		s_fWetnessLastTime = 0;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -439,12 +519,25 @@ class BER_SurfaceUtil
 // Everything BER spawns is marked here and skipped by adoption.
 class BER_OwnedEffects
 {
-	protected static ref array<ParticleEffectEntity> s_aOwned = {};
-	protected static ref array<float> s_aTime = {};
+	protected static ref array<ParticleEffectEntity> s_aOwned;
+	protected static ref array<float> s_aTime;
 
 	// longest-lived BER-spawned effect is an indoor smoke plume (up to ~120 s emission
 	// plus particle lifetime) — anything older than this can safely fall out
 	protected const float KEEP_TIME = 300.0;
+	protected static BaseWorld s_World;
+	protected static float s_fClock;
+	protected static void EnsureState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_aOwned || s_World != world || now < s_fClock)
+		{
+			s_World = world;
+			s_aOwned = {};
+			s_aTime = {};
+		}
+		s_fClock = now;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	static void MarkOwned(ParticleEffectEntity pfx)
@@ -452,6 +545,9 @@ class BER_OwnedEffects
 		if (!pfx)
 			return;
 
+		EnsureState(pfx.GetWorld());
+		if (s_aOwned.Find(pfx) != -1)
+			return;
 		float now = pfx.GetWorld().GetWorldTime() * 0.001;
 
 		for (int i = s_aOwned.Count() - 1; i >= 0; i--)
@@ -463,6 +559,11 @@ class BER_OwnedEffects
 			}
 		}
 
+		if (s_aOwned.Count() >= 2048)
+		{
+			s_aOwned.Remove(0);
+			s_aTime.Remove(0);
+		}
 		s_aOwned.Insert(pfx);
 		s_aTime.Insert(now);
 	}
@@ -470,6 +571,9 @@ class BER_OwnedEffects
 	//------------------------------------------------------------------------------------------------
 	static bool IsOwned(ParticleEffectEntity pfx)
 	{
+		if (!pfx)
+			return false;
+		EnsureState(pfx.GetWorld());
 		return s_aOwned.Find(pfx) != -1;
 	}
 }

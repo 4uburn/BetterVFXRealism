@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — server-authoritative ground wetness
+// Better VFX Realism — server-authoritative ground wetness
 //
 // The ground-wetness accumulator (BER_SurfaceUtil) depends on weather HISTORY, and the
 // weather API exposes no past states — a client that joins in progress cannot know it
@@ -28,12 +28,21 @@ modded class SCR_BaseGameMode
 	{
 		super.OnGameStart();
 
-		// ticks everywhere; the authority gate sits inside the tick — only the master
-		// ever publishes, clients receive the value through replication
+		BER_SurfaceUtil.ResetWetness();
+		if (!IsMaster())
+			return;
+		GetGame().GetCallqueue().Remove(BerWetnessTick);
+		BerWetnessTick(); // publish before the first periodic tick / early join-in-progress
 		GetGame().GetCallqueue().CallLater(BerWetnessTick, BER_WETNESS_TICK_MS, true);
 	}
 
 	//------------------------------------------------------------------------------------------------
+	void ~SCR_BaseGameMode()
+	{
+		if (GetGame() && GetGame().GetCallqueue())
+			GetGame().GetCallqueue().Remove(BerWetnessTick);
+	}
+
 	protected void BerWetnessTick()
 	{
 		if (!IsMaster())
@@ -44,7 +53,8 @@ modded class SCR_BaseGameMode
 			return;
 
 		float wet = BER_SurfaceUtil.AdvanceLocalWetness(world);
-		if (Math.AbsFloat(wet - m_fBerGroundWetness) > BER_WETNESS_EPSILON)
+		if (Math.AbsFloat(wet - m_fBerGroundWetness) > BER_WETNESS_EPSILON
+			|| ((wet == 0 || wet == 1) && wet != m_fBerGroundWetness))
 		{
 			m_fBerGroundWetness = wet;
 			Replication.BumpMe();

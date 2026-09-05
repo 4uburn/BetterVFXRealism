@@ -113,6 +113,7 @@ EffectDef {
    Repeat 0
   }
   EmitterDef trigger_blast_medium {
+   LocalTransform 0
    ConeAngle 360 0 1
    MaxNum 1
    BirthRate 100
@@ -133,6 +134,7 @@ EffectDef {
    Repeat 0
   }
   EmitterDef trigger_blast_small {
+   LocalTransform 0
    ConeAngle 360 0 360
    ConeAngleMinDist 80
    BirthRate 1000

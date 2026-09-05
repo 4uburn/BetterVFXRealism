@@ -106,6 +106,7 @@ EffectDef {
    Repeat 0
   }
   EmitterDef trigger_blast_small {
+   LocalTransform 0
    ConeAngle 360 0 360
    ConeAngleMinDist 80
    MaxNum 6

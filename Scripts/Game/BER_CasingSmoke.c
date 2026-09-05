@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — smoking ejected casings
+// Better VFX Realism — smoking ejected casings
 //
 // Large hot cases keep smoking after ejection:
 //  - 25x137 (M242) and 14.5x114 (KPVT) casing prefabs get this component via same-GUID
@@ -12,7 +12,7 @@
 //    smoke wisp is spawned at the breech at the moment the case comes out.
 //------------------------------------------------------------------------------------------------
 
-[EntityEditorProps(category: "GameScripted/BetterEffectsRealism", description: "Attaches a smoke trail to an ejected casing prefab-particle")]
+[EntityEditorProps(category: "GameScripted/BetterVFXRealism", description: "Attaches a smoke trail to an ejected casing prefab-particle")]
 class BER_CasingSmokeComponentClass : ScriptComponentClass
 {
 }
@@ -63,10 +63,26 @@ class BER_UGLCaseSmoke
 	protected const float HOT_WINDOW = 1.0;    // reload must start this soon after the shot
 	protected const float EJECT_DELAY = 1.1;   // seconds from reload start to the case leaving the breech
 
-	protected static ref array<IEntity> s_aWeapons = {};
-	protected static ref array<float> s_aFireTimes = {};
-	protected static ref array<float> s_aSpawnAt = {};   // <0 = not armed yet
+	protected static ref array<IEntity> s_aWeapons;
+	protected static ref array<float> s_aFireTimes;
+	protected static ref array<float> s_aSpawnAt;   // <0 = not armed yet
 	protected static bool s_bTicking;
+	protected static BaseWorld s_World;
+	protected static float s_fClock;
+	protected static void EnsureState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_aWeapons || s_World != world || now < s_fClock)
+		{
+			GetGame().GetCallqueue().Remove(Tick);
+			s_bTicking = false;
+			s_aWeapons = {};
+			s_aFireTimes = {};
+			s_aSpawnAt = {};
+			s_World = world;
+		}
+		s_fClock = now;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	static void NotifyFired(IEntity weaponEntity)
@@ -78,6 +94,7 @@ class BER_UGLCaseSmoke
 		if (!world)
 			return;
 
+		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
 
 		// one pending entry per weapon
@@ -89,6 +106,8 @@ class BER_UGLCaseSmoke
 		}
 		else
 		{
+			if (s_aWeapons.Count() >= 128)
+				return;
 			s_aWeapons.Insert(weaponEntity);
 			s_aFireTimes.Insert(now);
 			s_aSpawnAt.Insert(-1);
@@ -104,6 +123,17 @@ class BER_UGLCaseSmoke
 	//------------------------------------------------------------------------------------------------
 	protected static void Tick()
 	{
+		BaseWorld activeWorld = GetGame().GetWorld();
+		if (!activeWorld || activeWorld != s_World || activeWorld.GetWorldTime() < s_fClock)
+		{
+			GetGame().GetCallqueue().Remove(Tick);
+			s_bTicking = false;
+			s_aWeapons.Clear();
+			s_aFireTimes.Clear();
+			s_aSpawnAt.Clear();
+			return;
+		}
+		s_fClock = activeWorld.GetWorldTime();
 		for (int i = s_aWeapons.Count() - 1; i >= 0; i--)
 		{
 			IEntity weapon = s_aWeapons[i];
@@ -147,7 +177,11 @@ class BER_UGLCaseSmoke
 				continue;
 
 			CharacterControllerComponent controller = CharacterControllerComponent.Cast(character.FindComponent(CharacterControllerComponent));
-			if (controller && controller.IsReloading())
+			BaseWeaponManagerComponent manager = BaseWeaponManagerComponent.Cast(character.FindComponent(BaseWeaponManagerComponent));
+			BaseWeaponComponent current;
+			if (manager)
+				current = manager.GetCurrentWeapon();
+			if (controller && controller.IsReloading() && current && current.GetOwner() == weapon)
 				s_aSpawnAt[i] = now + EJECT_DELAY;
 		}
 

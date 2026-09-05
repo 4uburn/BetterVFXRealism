@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — surface-aware AP impact effect resolver
+// Better VFX Realism — surface-aware AP impact effect resolver
 //
 // AP rounds (25mm APDS-T M791 and anything else referencing Explosion_APDS.ptc) hardcode
 // one spark effect for every impact, so they shower sparks even on soil. The BER same-GUID
@@ -148,19 +148,15 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 
 		BER_OwnedEffects.MarkOwned(pfx); // already surface-resolved/oriented — adoption must not retune it
 
-		// inside a structure the impact dust hangs in unventilated air — let it linger
-		if (BER_SurfaceUtil.IsRoofed(world, pos, owner, 25.0))
+		bool indoor = BER_SurfaceUtil.IsRoofed(world, pos + bestNorm * 0.15, owner, 25.0);
+		Particles particles = pfx.GetParticles();
+		if (particles)
 		{
-			Particles particles = pfx.GetParticles();
-			if (particles)
-			{
-				int emitterCount = particles.GetNumEmitters();
-				for (int i = 0; i < emitterCount; i++)
-				{
-					particles.MultParam(i, EmitterParam.LIFETIME, 2.0);
-					particles.MultParam(i, EmitterParam.LIFETIME_RND, 2.0);
-				}
-			}
+			float dust = BER_SurfaceUtil.GetDustAvailability(world, pos, bestMat, indoor);
+			BER_SurfaceUtil.TuneDust(particles, dust, indoor);
+			// Keep hot impact aerosol/sparks on wet metal; only loose mineral dust is gated.
+			if (indoor)
+				particles.SetParam(-1, EmitterParam.WIND, false);
 		}
 
 		pfx.Play();
