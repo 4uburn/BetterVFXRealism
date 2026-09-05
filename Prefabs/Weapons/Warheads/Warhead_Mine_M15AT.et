@@ -52,6 +52,7 @@ GenericEntity : "{492CA9A2919ECA45}Prefabs/Weapons/Warheads/Warhead_Mine_HE.et" 
    "Trigger Offset" 0 0.11 0
   }
   BER_EffectTuningComponent "{BE20250902000001}" {
+   m_fCondensationStrength 0.65
    m_iBerFragImpacts 64
   }
  }

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — muzzle overpressure ground/hull dust
+// Better VFX Realism — muzzle overpressure ground/hull dust
 //
 // Hooks every weapon that uses SCR_MuzzleEffectComponent (all firearms, turrets, launchers).
 // The muzzle concussion rips loose dust off whatever lies under the muzzle:
@@ -21,6 +21,10 @@
 
 modded class SCR_MuzzleEffectComponent
 {
+	[Attribute(defvalue: "1", desc: "Action gas amount; 0 disables this cosmetic source.", params: "0 3 0.1")]
+	protected float m_fBERActionGasScale;
+	[Attribute(defvalue: "2", desc: "Suppressed action-gas multiplier. Tune lower for low-backpressure designs.", params: "0 4 0.1")]
+	protected float m_fBERSuppressedGasScale;
 	override void OnFired(IEntity effectEntity, BaseMuzzleComponent muzzle, IEntity projectileEntity)
 	{
 		super.OnFired(effectEntity, muzzle, projectileEntity);
@@ -29,7 +33,27 @@ modded class SCR_MuzzleEffectComponent
 		if (muzzle)
 			weaponEntity = muzzle.GetOwner();
 		BER_MuzzleBlastDust.OnWeaponFired(weaponEntity, effectEntity, projectileEntity);
+		BER_ActionGas.OnFired(muzzle, m_fBERActionGasScale, m_fBERSuppressedGasScale);
 	}
+}
+
+class BER_ShotSample
+{
+	IEntity m_Projectile;
+	vector m_Position;
+	vector m_Direction;
+	float m_fTime;
+	float m_fScale;
+	float m_fSpeed;
+	float m_fRewind;
+}
+
+class BER_VolleyState
+{
+	IEntity m_Weapon;
+	vector m_Position;
+	ref array<float> m_Times = {};
+	float m_fLastCloud = -100;
 }
 
 class BER_MuzzleBlastDust
@@ -44,7 +68,7 @@ class BER_MuzzleBlastDust
 
 	// small-arms ground dust — BER-authored with the tiny footprint (~0.4 m) baked in:
 	// runtime SHAPE_SIZE scaling of the meters-wide gamemat blast boxes proved to be a
-	// dead API (three successive halvings produced no visible change), so the size
+	// previously unreliable runtime shape scaling, so the size
 	// guarantee has to live in the authored file
 	protected const ResourceName RIFLE_DUST = "{BE20250902AC0025}Particles/BER/BER_RifleDust.ptc";
 
@@ -54,7 +78,7 @@ class BER_MuzzleBlastDust
 	protected const ResourceName RIFLE_CLOUD = "{BE20250902AC0026}Particles/BER/BER_RifleDustCloud.ptc";
 
 	// whole-deck hull kickoff sheets — ONE continuous film covering the hull top instead
-	// of per-probe point bursts (runtime emission-shape scaling is a dead API, so two
+	// of per-probe point bursts (authored footprints avoid relying on runtime shape scaling, so two
 	// authored footprints cover the vehicle size range)
 	protected const ResourceName HULL_SHEET_M = "{BE20250902AC0028}Particles/BER/BER_HullSheet_M.ptc";
 	protected const ResourceName HULL_SHEET_L = "{BE20250902AC0029}Particles/BER/BER_HullSheet_L.ptc";
@@ -63,10 +87,10 @@ class BER_MuzzleBlastDust
 	// kicks up ahead of its own bow, pumped up and over the hull by every shot of the burst
 	protected const ResourceName GLACIS_WASH = "{BE20250903AC0030}Particles/BER/BER_GlacisWash.ptc";
 
-	protected static ref array<ParticleEffectEntity> s_aWashPfx = {};
-	protected static ref array<float> s_aWashTime = {};
-	protected static ref array<float> s_aWashBirth = {};
-	protected static ref array<float> s_aWashLife = {};
+	protected static ref array<ParticleEffectEntity> s_aWashPfx;
+	protected static ref array<float> s_aWashTime;
+	protected static ref array<float> s_aWashBirth;
+	protected static ref array<float> s_aWashLife;
 	protected static int s_iWashPulse;
 
 	protected const float WASH_TRACK_TIME = 8.0;     // s a wash cloud stays pumpable
@@ -82,38 +106,33 @@ class BER_MuzzleBlastDust
 
 	// TESTING: bypass the hull reservoir gating so every burst shows the full hull kickoff.
 	// The reservoir keeps simulating underneath — flip to false to restore rip-off/regen gating.
-	protected const bool TEST_HULL_DUST_ALWAYS_ON = true;
+	protected const bool TEST_HULL_DUST_ALWAYS_ON = false;
 
-	protected static ref array<vector> s_aRecentPos = {};
-	protected static ref array<float> s_aRecentTime = {};
+	protected static ref array<vector> s_aRecentPos;
+	protected static ref array<float> s_aRecentTime;
 
 	protected const float DEDUP_RADIUS_SQ = 2.25;  // 1.5 m — one dust event per muzzle position...
 	protected const float DEDUP_TIME = 0.45;       // ...per 0.45 s, so automatic fire doesn't stack effects
 
 	// small-arms puffs the next shots' concussion can blow outbound
-	protected static ref array<ParticleEffectEntity> s_aRiflePuffs = {};
-	protected static ref array<float> s_aRiflePuffTime = {};
-	protected static ref array<float> s_aRiflePuffBirth = {};
-	protected static ref array<float> s_aRiflePuffLife = {};
+	protected static ref array<ParticleEffectEntity> s_aRiflePuffs;
+	protected static ref array<float> s_aRiflePuffTime;
+	protected static ref array<float> s_aRiflePuffBirth;
+	protected static ref array<float> s_aRiflePuffLife;
 
 	protected const float RIFLE_PUFF_TRACK_TIME = 8.0;  // s a puff stays shoveable
 	protected const float CONCUSSION_RADIUS = 2.0;      // m — the muzzle gas pressure doesn't reach far
 
 	// recent shot rays (every weapon, every shooter) — the impact deflection matches an
-	// impact point against the ray it lies on to recover the true incoming direction,
+	// impact point against a recent ray to infer its incoming direction,
 	// and the recorded weapon-class scale lets the impact scale its dust by caliber
-	protected static ref array<vector> s_aShotPos = {};
-	protected static ref array<vector> s_aShotDir = {};
-	protected static ref array<float> s_aShotTime = {};
-	protected static ref array<float> s_aShotScale = {};
+	protected static ref array<ref BER_ShotSample> s_aShots;
 
 	protected const float SHOT_RAY_KEEP = 2.5;   // s a ray stays matchable
 	protected const float SHOT_RAY_RANGE = 700;  // m of flight beyond which a match is rejected
 
-	// volley tracking — sustained small-arms fire from one position raises an enveloping cloud
-	protected static ref array<float> s_aVolleyTime = {};
-	protected static vector s_vVolleyPos = vector.Zero;
-	protected static float s_fLastCloudTime = -100;
+	// Each firing weapon owns its buildup; alternating shooters cannot reset each other.
+	protected static ref array<ref BER_VolleyState> s_aVolleys;
 
 	protected const float VOLLEY_WINDOW = 3.0;    // s a shot counts toward the volley
 	protected const int VOLLEY_SHOTS = 6;         // shots within the window that trigger the cloud
@@ -121,6 +140,31 @@ class BER_MuzzleBlastDust
 	protected const float VOLLEY_MOVE_RESET = 2.5; // m of muzzle movement that resets the volley
 
 	//------------------------------------------------------------------------------------------------
+	protected static BaseWorld s_World;
+	protected static float s_fClock;
+	protected static void EnsureState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_aShots || s_World != world || now < s_fClock)
+		{
+			s_World = world;
+			s_aWashPfx = {};
+			s_aWashTime = {};
+			s_aWashBirth = {};
+			s_aWashLife = {};
+			s_aRecentPos = {};
+			s_aRecentTime = {};
+			s_aRiflePuffs = {};
+			s_aRiflePuffTime = {};
+			s_aRiflePuffBirth = {};
+			s_aRiflePuffLife = {};
+			s_aShots = {};
+			s_aVolleys = {};
+			s_iWashPulse = 0;
+		}
+		s_fClock = now;
+	}
+
 	static void OnWeaponFired(IEntity weaponEntity, IEntity effectEntity, IEntity projectileEntity)
 	{
 		IEntity posSource = effectEntity;
@@ -132,6 +176,7 @@ class BER_MuzzleBlastDust
 		BaseWorld world = posSource.GetWorld();
 		if (!world)
 			return;
+		EnsureState(world);
 
 		// GetOrigin is parent-local for attached entities (the muzzle flash is a weapon
 		// child) — the world transform is the muzzle's real position
@@ -188,28 +233,11 @@ class BER_MuzzleBlastDust
 			}
 		}
 
+		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
 
-		// record the shot ray (full 3D muzzle direction) for impact-splash deflection
-		if (fwd != vector.Zero)
-		{
-			for (int i = s_aShotTime.Count() - 1; i >= 0; i--)
-			{
-				if (now - s_aShotTime[i] > SHOT_RAY_KEEP)
-				{
-					s_aShotTime.Remove(i);
-					s_aShotPos.Remove(i);
-					s_aShotDir.Remove(i);
-					s_aShotScale.Remove(i);
-				}
-			}
-			vector shotDir = fwd;
-			shotDir.Normalize();
-			s_aShotPos.Insert(muzzlePos);
-			s_aShotDir.Insert(shotDir);
-			s_aShotTime.Insert(now);
-			s_aShotScale.Insert(scale);
-		}
+		if (!RecordShot(muzzlePos, fwd, scale, projectileEntity, now))
+			return; // native weapon and muzzle-attachment callbacks can describe the same projectile
 
 		// every small-arms shot shoves the puffs of the previous shots outbound — the
 		// concussion blows the weapon's own dust cloud away from the muzzle, so this runs
@@ -321,7 +349,8 @@ class BER_MuzzleBlastDust
 
 		// only genuinely dusty surfaces react to small-arms overpressure — moist grass,
 		// wet sand, rain-soaked ground stays quiet (heavier blast waves excepted)
-		float dust = BER_SurfaceUtil.GetDustFactor(matName, hitPos[1]) * BER_SurfaceUtil.GetRainFactor(world);
+		bool sheltered = BER_SurfaceUtil.IsRoofed(world, muzzlePos, weaponEntity, 25.0);
+		float dust = BER_SurfaceUtil.GetDustAvailability(world, hitPos, matName, sheltered) * 1.6;
 		float dustThreshold = 1.0;
 		if (scale >= 1.0)
 			dustThreshold = 0.7;
@@ -437,21 +466,37 @@ class BER_MuzzleBlastDust
 	//! kicked-up dust rising around the firing position, refreshed while the fire continues.
 	protected static void TrackVolley(BaseWorld world, vector muzzlePos, vector fwdFlat, IEntity weaponEntity, float scale, float now)
 	{
-		// a new firing position starts a new volley
-		if (vector.DistanceSq(s_vVolleyPos, muzzlePos) > VOLLEY_MOVE_RESET * VOLLEY_MOVE_RESET)
-			s_aVolleyTime.Clear();
-		s_vVolleyPos = muzzlePos;
-
-		for (int i = s_aVolleyTime.Count() - 1; i >= 0; i--)
+		BER_VolleyState volley;
+		for (int i = s_aVolleys.Count() - 1; i >= 0; i--)
 		{
-			if (now - s_aVolleyTime[i] > VOLLEY_WINDOW)
-				s_aVolleyTime.Remove(i);
+			BER_VolleyState candidate = s_aVolleys[i];
+			if (candidate.m_Times.IsEmpty() || now - candidate.m_Times[candidate.m_Times.Count() - 1] > VOLLEY_WINDOW)
+			{
+				s_aVolleys.Remove(i);
+				continue;
+			}
+			if (candidate.m_Weapon == weaponEntity && weaponEntity)
+				volley = candidate;
 		}
-		s_aVolleyTime.Insert(now);
-
-		if (s_aVolleyTime.Count() < VOLLEY_SHOTS)
-			return;
-		if (now - s_fLastCloudTime < CLOUD_COOLDOWN)
+		if (!volley)
+		{
+			if (s_aVolleys.Count() >= 128)
+				return;
+			volley = new BER_VolleyState();
+			volley.m_Weapon = weaponEntity;
+			volley.m_Position = muzzlePos;
+			s_aVolleys.Insert(volley);
+		}
+		if (vector.DistanceSq(volley.m_Position, muzzlePos) > VOLLEY_MOVE_RESET * VOLLEY_MOVE_RESET)
+			volley.m_Times.Clear();
+		volley.m_Position = muzzlePos;
+		for (int i = volley.m_Times.Count() - 1; i >= 0; i--)
+		{
+			if (now - volley.m_Times[i] > VOLLEY_WINDOW)
+				volley.m_Times.Remove(i);
+		}
+		volley.m_Times.Insert(now);
+		if (volley.m_Times.Count() < VOLLEY_SHOTS || now - volley.m_fLastCloud < CLOUD_COOLDOWN)
 			return;
 
 		// same conditions as the per-shot kickup: muzzle low over genuinely dusty ground
@@ -475,14 +520,15 @@ class BER_MuzzleBlastDust
 			return;
 		if (matName == "")
 			return;
-		if (BER_SurfaceUtil.GetDustFactor(matName, hitPos[1]) * BER_SurfaceUtil.GetRainFactor(world) < 1.0)
+		bool sheltered = BER_SurfaceUtil.IsRoofed(world, muzzlePos, weaponEntity, 25.0);
+		if (BER_SurfaceUtil.GetDustAvailability(world, hitPos, matName, sheltered) * 1.6 < 1.0)
 			return;
 
 		float lifeMult;
 		bool allowDrift;
 		ComputeEnvFactors(world, muzzlePos, weaponEntity, lifeMult, allowDrift);
 
-		s_fLastCloudTime = now;
+		volley.m_fLastCloud = now;
 
 		// centered on the shooter's body, not the muzzle — the cloud envelops the firer
 		vector cloudPos = Vector(muzzlePos[0], hitPos[1], muzzlePos[2]);
@@ -503,19 +549,12 @@ class BER_MuzzleBlastDust
 			if (allowDrift)
 				BER_WindDriftAnimator.GetInstance().Register(cloud, 4.0, 1.0, lifeMult, 0.25);
 
-			// overlap field: a fresh envelop cloud spawned onto a standing one folds into
-			// it (the survivor thickens) instead of stacking a second overlapping cloud.
-			// The per-round splashes stay OUT of the field — their pulse-per-shot rhythm
-			// is the effect, and the concussion shoves already govern their overlap.
-			BER_CloudField.GetInstance().Register(cloud, BER_CloudField.FAMILY_RIFLE_CLOUD, !allowDrift, BER_CloudField.NewGroup(), 1.0, 1.0, lifeMult);
+
 		}
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! The concussion of a fresh shot shoves every still-living small-arms puff near the
-	//! muzzle FORWARD along the barrel (and thins it out via the animator's travel
-	//! dissipation) — the muzzle gas of sustained fire drives the dust cloud outbound in
-	//! the direction of fire, never sideways or upwind.
+	//! A fresh shot gives nearby small-arms dust a short radial impulse.
 	protected static void PushRecentRiflePuffs(vector muzzlePos, vector fwdFlat, float now)
 	{
 		// the flash hider vents to the sides — each shot pushes the standing dust RADIALLY
@@ -531,6 +570,7 @@ class BER_MuzzleBlastDust
 	{
 		if (!world)
 			return;
+		EnsureState(world);
 		ShovePuffsInternal(center, radius, dir, speed, world.GetWorldTime() * 0.001);
 	}
 
@@ -553,7 +593,7 @@ class BER_MuzzleBlastDust
 			float dx = puffPos[0] - center[0];
 			float dz = puffPos[2] - center[2];
 			float dist = Math.Pow(dx * dx + dz * dz, 0.5);
-			if (dist > radius)
+			if (dist > radius || !BER_SurfaceUtil.HasClearPath(pfx.GetWorld(), center + Vector(0, 0.2, 0), puffPos + Vector(0, 0.2, 0)))
 				continue;
 
 			vector shoveDir = dir;
@@ -593,35 +633,90 @@ class BER_MuzzleBlastDust
 		outScale = 0;
 		if (!world)
 			return false;
-
+		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
-		float bestScore = 999;
-
-		for (int i = s_aShotTime.Count() - 1; i >= 0; i--)
+		float bestScore = 1000;
+		foreach (BER_ShotSample shot : s_aShots)
 		{
-			if (now - s_aShotTime[i] > SHOT_RAY_KEEP)
-				continue; // pruning happens on record — just skip stale leftovers here
-
-			vector toImpact = impactPos - s_aShotPos[i];
-			float t = vector.Dot(toImpact, s_aShotDir[i]);
-			if (t < 0.4 || t > SHOT_RAY_RANGE)
+			float age = now - shot.m_fTime;
+			if (age < 0 || age > SHOT_RAY_KEEP)
 				continue;
-
-			vector offRay = toImpact - s_aShotDir[i] * t;
-			float perp = offRay.Length();
-			float tolerance = 0.9 + 0.004 * t;
-			if (perp > tolerance)
+			float score = ScoreShot(impactPos, shot, age);
+			if (score < 0 || score >= bestScore)
 				continue;
+			bestScore = score;
+			outDir = shot.m_Direction;
+			outScale = shot.m_fScale;
+		}
+		return outDir != vector.Zero;
+	}
 
-			if (perp < bestScore)
+	//! Pure geometric/time association, not a replacement ballistic simulation.
+	//! Broad uncertainty at range keeps native fallback preferable to an invented hit.
+	static float ScoreShot(vector impactPos, BER_ShotSample shot, float age)
+	{
+		vector toImpact = impactPos - shot.m_Position;
+		float distance = vector.Dot(toImpact, shot.m_Direction);
+		if (distance < 0.4 || distance > SHOT_RAY_RANGE)
+			return -1;
+		float tolerance = 0.25 + 0.004 * distance;
+		float perpendicular = (toImpact - shot.m_Direction * distance).Length();
+		if (perpendicular > tolerance)
+			return -1;
+		float timeError = 0;
+		if (shot.m_fSpeed > 10)
+		{
+			float earliestFlight = distance / shot.m_fSpeed;
+			float observedFlight = age + shot.m_fRewind;
+			if (observedFlight + 0.1 < earliestFlight)
+				return -1;
+			// Drag can lengthen flight; allow it without favoring arbitrarily old rays.
+			timeError = Math.AbsFloat(observedFlight - earliestFlight) / (0.15 + earliestFlight);
+		}
+		else
+			timeError = age / SHOT_RAY_KEEP;
+		return perpendicular / tolerance + 0.35 * timeError;
+	}
+
+	protected static bool RecordShot(vector muzzlePos, vector direction, float scale, IEntity projectile, float now)
+	{
+		if (direction.LengthSq() < 0.0001)
+			return true; // no usable ray, but retain the existing non-directional dust path
+		for (int i = s_aShots.Count() - 1; i >= 0; i--)
+		{
+			if (now - s_aShots[i].m_fTime > SHOT_RAY_KEEP)
+				s_aShots.Remove(i);
+			else if (projectile && s_aShots[i].m_Projectile == projectile)
+				return false;
+		}
+		if (s_aShots.Count() >= 512)
+			s_aShots.Remove(0);
+		BER_ShotSample shot = new BER_ShotSample();
+		shot.m_Projectile = projectile;
+		shot.m_Position = muzzlePos;
+		direction.Normalize();
+		shot.m_Direction = direction;
+		shot.m_fScale = scale;
+		shot.m_fTime = now;
+		if (projectile)
+		{
+			ProjectileMoveComponent movement = ProjectileMoveComponent.Cast(projectile.FindComponent(ProjectileMoveComponent));
+			if (movement)
 			{
-				bestScore = perp;
-				outDir = s_aShotDir[i];
-				outScale = s_aShotScale[i];
+				vector velocity = movement.GetVelocity();
+				shot.m_fSpeed = velocity.Length();
+				shot.m_fRewind = Math.Max(0, movement.GetRewindDuration());
+				if (shot.m_fSpeed > 10)
+				{
+					shot.m_Direction = velocity / shot.m_fSpeed;
+					vector transform[4];
+					projectile.GetWorldTransform(transform);
+					shot.m_Position = transform[3];
+				}
 			}
 		}
-
-		return outDir != vector.Zero;
+		s_aShots.Insert(shot);
+		return true;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -740,6 +835,7 @@ class BER_MuzzleBlastDust
 		if (!world)
 			return;
 
+		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
 		for (int i = s_aRecentTime.Count() - 1; i >= 0; i--)
 		{
@@ -793,7 +889,7 @@ class BER_MuzzleBlastDust
 	//------------------------------------------------------------------------------------------------
 	//! Kick dust off the vehicle as ONE continuous overpressure event:
 	//!  - chassis: a SINGLE authored dust sheet covering the whole deck (two footprint
-	//!    sizes; runtime emission-shape scaling is a dead API), spawned flat at the deck
+	//!    sizes; authored footprints avoid relying on runtime shape scaling), spawned flat at the deck
 	//!    plane — the median height of a probe grid, read dynamically so custom vehicles
 	//!    work unmodified. No per-spot bursts: the film lifts off uniformly everywhere
 	//!    and slides gently away from the muzzle as one front.
@@ -908,13 +1004,12 @@ class BER_MuzzleBlastDust
 
 		ParticleEffectEntitySpawnParams sheetParams = new ParticleEffectEntitySpawnParams();
 		sheetParams.UseFrameEvent = true;
-		sheetParams.PlayOnSpawn = false;
 		sheetParams.Transform[0] = vmat[0];
 		sheetParams.Transform[1] = vmat[1];
 		sheetParams.Transform[2] = vmat[2];
 		sheetParams.Transform[3] = Vector(center[0], deckY + 0.04, center[2]);
 
-		ParticleEffectEntity sheet = ParticleEffectEntity.SpawnParticleEffect(sheetRes, sheetParams);
+		ParticleEffectEntity sheet = BER_OwnedEffects.SpawnPaused(sheetRes, sheetParams);
 		if (!sheet)
 			return;
 
@@ -1010,7 +1105,6 @@ class BER_MuzzleBlastDust
 	{
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 
 		vector up = surfaceNormal;
 		if (up == vector.Zero)
@@ -1040,7 +1134,7 @@ class BER_MuzzleBlastDust
 			SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
 		spawnParams.Transform[3] = pos;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(blastRes, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(blastRes, spawnParams);
 		if (!pfx)
 			return null;
 
@@ -1071,10 +1165,10 @@ class BER_MuzzleBlastDust
 		pfx.Play();
 
 		// BER-overridden blast effects are wind-free/local-space — give them the same
-		// pressure-hold + gradual wind acceleration as explosion dust; under a roof the
+		// short response ramp for the local-space rifle clouds; under a roof the
 		// still air holds them in place instead
-		if (allowDrift)
-			BER_WindDriftAnimator.GetInstance().Register(pfx, 12, birthMult, lifeMult);
+		if (allowDrift && (blastRes == RIFLE_DUST || blastRes == RIFLE_CLOUD))
+			BER_WindDriftAnimator.GetInstance().Register(pfx, 2.5, birthMult, lifeMult);
 
 		return pfx;
 	}

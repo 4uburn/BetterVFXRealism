@@ -91,6 +91,7 @@ EffectDef {
    }
   }
   EmitterDef trigger_Mortar {
+   LocalTransform 0
    ConeAngle 360 0 1
    MaxNum 1
    BirthRate 100

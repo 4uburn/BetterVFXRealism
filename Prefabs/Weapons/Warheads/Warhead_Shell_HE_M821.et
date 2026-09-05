@@ -27,6 +27,7 @@ GenericEntity : "{D584F2FFFDC7DE49}Prefabs/Weapons/Warheads/Warhead_Shell_HE.et"
    ParticleEffect ""
   }
   BER_EffectTuningComponent "{BE20250902000001}" {
+   m_fCondensationStrength 0.65
    m_rTakeoverEffect "{318510C6FB1633D9}Particles/Weapon/Explosion_Mortar_Base.ptc"
    m_fDebrisScale 2.6
    m_iBerFragImpacts 64

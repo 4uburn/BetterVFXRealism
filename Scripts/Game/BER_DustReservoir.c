@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — dust reservoir (accumulation / rip-off / regeneration)
+// Better VFX Realism — dust reservoir (accumulation / rip-off / regeneration)
 //
 // Thin dust layers are finite: each dust kick-up event drains a local reservoir and the
 // layer regenerates slowly. Very dirty ground (dirt roads, forest floor, gravel) is a
@@ -28,8 +28,22 @@ class BER_VehicleDust
 
 class BER_DustReservoir
 {
-	protected static ref map<string, ref BER_DustCell> s_mCells = new map<string, ref BER_DustCell>();
-	protected static ref array<ref BER_VehicleDust> s_aVehicles = {};
+	protected static ref map<string, ref BER_DustCell> s_mCells;
+	protected static ref array<ref BER_VehicleDust> s_aVehicles;
+
+	protected static BaseWorld s_World;
+	protected static float s_fClock;
+	protected static void EnsureState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_mCells || s_World != world || now < s_fClock)
+		{
+			s_World = world;
+			s_mCells = new map<string, ref BER_DustCell>();
+			s_aVehicles = {};
+		}
+		s_fClock = now;
+	}
 
 	protected const float CELL_SIZE = 3.0;
 	protected const int MAX_CELLS = 512;
@@ -39,6 +53,7 @@ class BER_DustReservoir
 	//------------------------------------------------------------------------------------------------
 	protected static float Now(BaseWorld world)
 	{
+		EnsureState(world);
 		return world.GetWorldTime() * 0.001;
 	}
 
@@ -55,7 +70,19 @@ class BER_DustReservoir
 		if (!cell)
 		{
 			if (s_mCells.Count() >= MAX_CELLS)
-				s_mCells.Clear(); // crude but safe pressure valve
+			{
+				string oldestKey;
+				float oldestTime = now + 1;
+				foreach (string candidateKey, BER_DustCell candidate : s_mCells)
+				{
+					if (candidate.m_fLastTime < oldestTime)
+					{
+						oldestKey = candidateKey;
+						oldestTime = candidate.m_fLastTime;
+					}
+				}
+				s_mCells.Remove(oldestKey);
+			}
 
 			cell = new BER_DustCell();
 			cell.m_vPos = pos;
@@ -96,6 +123,8 @@ class BER_DustReservoir
 
 		if (!entry)
 		{
+			if (s_aVehicles.Count() >= 256)
+				s_aVehicles.Remove(0);
 			entry = new BER_VehicleDust();
 			entry.m_Vehicle = vehicle;
 			entry.m_fRemaining = 1.0; // starts fully dusty — first burst rips it all off
@@ -138,7 +167,8 @@ class BER_DustReservoir
 
 		foreach (string key, BER_DustCell cell : s_mCells)
 		{
-			if (vector.DistanceSq(cell.m_vPos, pos) <= radiusSq)
+			if (vector.DistanceSq(cell.m_vPos, pos) <= radiusSq
+				&& BER_SurfaceUtil.HasClearPath(world, pos + Vector(0, 0.2, 0), cell.m_vPos + Vector(0, 0.2, 0)))
 			{
 				cell.m_fRemaining = BER_SurfaceUtil.ClampF(cell.m_fRemaining - amount, 0, 1);
 				cell.m_fLastTime = now;
@@ -153,7 +183,8 @@ class BER_DustReservoir
 				s_aVehicles.Remove(i);
 				continue;
 			}
-			if (vector.DistanceSq(entry.m_Vehicle.GetOrigin(), pos) <= radiusSq)
+			if (vector.DistanceSq(entry.m_Vehicle.GetOrigin(), pos) <= radiusSq
+				&& BER_SurfaceUtil.HasClearPath(world, pos + Vector(0, 0.2, 0), entry.m_Vehicle.GetOrigin() + Vector(0, 0.5, 0), entry.m_Vehicle))
 			{
 				entry.m_fRemaining = BER_SurfaceUtil.ClampF(entry.m_fRemaining - amount, 0, 1);
 				entry.m_fLastTime = now;

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — shared surface/weather classification
+// Better VFX Realism — shared surface/weather classification
 //
 // One classifier used by every BER feature (explosion tuning, muzzle overpressure dust)
 // so all effects are driven through the same logic.
@@ -101,17 +101,19 @@ class BER_SurfaceUtil
 
 		// wet / water-adjacent first
 		if (matName.Contains("water") || matName.Contains("seaweed"))
-			return 0.25;
-		if (matName.Contains("snow") || matName.Contains("ice"))
-			return 0.45;
+			return 0;
+		if (matName.Contains("ice"))
+			return 0;
+		if (matName.Contains("snow"))
+			return 0.45; // loose snow can be entrained; ice cannot
 
-		// beach sand near sea level is damp; inland sand is drier
+		// Altitude alone does not establish wetness: dry sand can occur at sea level.
+		if (matName.Contains("mud_dry") || matName.Contains("dried_mud"))
+			return 1.6;
+		if (matName.Contains("wet") || matName.Contains("mud"))
+			return 0;
 		if (matName.Contains("sand"))
-		{
-			if (posY < 3.0)
-				return 0.45;
-			return 0.95;
-		}
+			return 1.6;
 
 		// dry unpaved surfaces — lots of dried mud and dust
 		if (matName.Contains("dirt_road"))
@@ -129,6 +131,10 @@ class BER_SurfaceUtil
 		if (matName.Contains("grass") || matName.Contains("moss") || matName.Contains("foliage"))
 			return 0.85;
 
+		// Friable wall finishes powder more readily than bare structural masonry.
+		if (matName.Contains("plaster") || matName.Contains("gypsum") || matName.Contains("drywall"))
+			return 1.35;
+
 		// hard man-made surfaces — little loose dust
 		if (matName.Contains("asphalt") || matName.Contains("concrete") || matName.Contains("brick")
 			|| matName.Contains("cobblestone") || matName.Contains("stone") || matName.Contains("tiles"))
@@ -140,6 +146,33 @@ class BER_SurfaceUtil
 			return 0.8;
 
 		return 1.0;
+	}
+
+	//! Visual loose solid availability; wetness suppresses dust, not wet clods.
+	static float GetSolidDebrisAvailability(string material)
+	{
+		material.ToLower();
+		if (material.Contains("water") || material.Contains("seaweed") || material.Contains("snow")
+			|| material.Contains("metal") || material.Contains("armor") || material.Contains("armour")
+			|| material.Contains("wood") || material.Contains("glass") || material.Contains("ice"))
+			return 0;
+		if (material.Contains("rock") || material.Contains("stone") || material.Contains("concrete")
+			|| material.Contains("asphalt") || material.Contains("brick") || material.Contains("tiles")
+			|| material.Contains("cobble") || material.Contains("gravel") || material.Contains("pebbles"))
+			return 0.6;
+		return 1.0;
+	}
+
+	//! Artistic event scale, not explosive mass/energy. Native particles integrate flight.
+	static float GetDebrisSpeedScale(float eventScale)
+	{
+		return Math.Pow(ClampF(eventScale, 0.25, 3.24), 0.5);
+	}
+
+	//! No-drag upward-flight estimate plus a settling margin; bounded cleanup timer.
+	static float GetDebrisLifetime(float maximumLaunchSpeed)
+	{
+		return ClampF(2.0 * maximumLaunchSpeed / 9.81 + 0.6, 1.0, 6.0);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -189,7 +222,7 @@ class BER_SurfaceUtil
 		float now = world.GetWorldTime() * 0.001;
 		float rain = GetRainIntensity(world);
 
-		if (s_fWetness < 0)
+		if (s_fWetness < 0 || now < s_fWetnessLastTime)
 		{
 			s_fWetness = rain;
 			s_fWetnessLastTime = now;
@@ -253,10 +286,182 @@ class BER_SurfaceUtil
 
 		if (wet < 0.01)
 			return 1.0;
-		float factor = 1.0 - wet;
+		float factor = 1.0 - wet / 0.25; // same mud threshold as wheel dust
 		if (factor < 0)
 			factor = 0;
 		return factor;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Loose surface dust, not combustion smoke. Full dustiness is fine dry soil/sand.
+	//! A roof shelters the impact from rain; explicitly wet materials remain dustless.
+	static float GetDustAvailability(BaseWorld world, vector pos, string material, bool indoor)
+	{
+		float dust = ClampF(GetDustFactor(material, pos[1]) / 1.6, 0, 1);
+		material.ToLower();
+		if (material.Contains("metal") || material.Contains("armor") || material.Contains("glass")
+			|| material.Contains("plastic") || material.Contains("rubber") || material.Contains("fabric")
+			|| material.Contains("flesh") || material.Contains("aramid"))
+			return 0;
+		if (!indoor)
+			dust *= GetRainFactor(world);
+		return dust;
+	}
+
+	static bool HasDustEmitters(Particles particles)
+	{
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (string name : names)
+		{
+			if (name.IndexOf("ber_dust_") == 0)
+				return true;
+		}
+		return false;
+	}
+
+	//! Explicit authored names replace lifetime guesses: debris can live longer than dust.
+	//! Called while paused whenever we own the spawn, before even the first particle.
+	static void TuneDust(Particles particles, float density, bool indoor, float size = 1.0, float lifetime = 1.0)
+	{
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (int i, string name : names)
+		{
+			if (name.IndexOf("ber_dust_") != 0)
+				continue;
+			particles.MultParam(i, EmitterParam.BIRTH_RATE, density);
+			particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, density);
+			particles.MultParam(i, EmitterParam.SIZE, size);
+			particles.MultParam(i, EmitterParam.SIZE_RND, size);
+			particles.SetParam(i, EmitterParam.WIND, !indoor);
+			float life = lifetime;
+			if (indoor)
+			{
+				life *= 1.5;
+				particles.MultParam(i, EmitterParam.VELOCITY, 0.65);
+				particles.MultParam(i, EmitterParam.VELOCITY_RND, 0.65);
+			}
+			float original, random;
+			particles.GetParamOrig(i, EmitterParam.LIFETIME, original);
+			particles.GetParamOrig(i, EmitterParam.LIFETIME_RND, random);
+			if (original + random > 0.01)
+				life = ClampF(life, 0, 40.0 / (original + random));
+			particles.MultParam(i, EmitterParam.LIFETIME, life);
+			particles.MultParam(i, EmitterParam.LIFETIME_RND, life);
+		}
+	}
+
+
+	//! Resolve the wall at the impact, rather than assuming an effect transform is a normal.
+	static bool TraceImpact(BaseWorld world, vector pos, vector incoming, IEntity exclude, out vector hitPos, out vector normal, out string material, out IEntity hitRoot)
+	{
+		hitRoot = null;
+		normal = vector.Zero;
+		material = "";
+		if (!world || incoming.LengthSq() < 0.0001)
+			return false;
+		incoming.Normalize();
+		TraceParam trace = new TraceParam();
+		trace.Start = pos - incoming * 0.75;
+		trace.End = pos + incoming * 0.35;
+		trace.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
+		trace.Exclude = exclude;
+		float fraction = world.TraceMove(trace, null);
+		if (fraction >= 1)
+			return false;
+		hitPos = trace.Start + (trace.End - trace.Start) * fraction;
+		if (vector.DistanceSq(hitPos, pos) > 0.2025 || trace.TraceNorm.LengthSq() < 0.0001)
+			return false;
+		normal = trace.TraceNorm;
+		normal.Normalize();
+		if (vector.Dot(incoming, normal) > 0)
+			normal = -normal;
+		material = "";
+		if (trace.SurfaceProps)
+			material = trace.SurfaceProps.GetName();
+		if (trace.TraceEnt)
+			hitRoot = trace.TraceEnt.GetRootParent();
+		return true;
+	}
+
+	//! Direction-only art model: preserve tangential momentum and retain outward lift.
+	//! No grazing-angle cutoff, no damage or ricochet prediction.
+	static vector GetImpactEjectaDirection(vector incoming, vector normal)
+	{
+		if (normal.LengthSq() < 0.0001)
+			return vector.Up;
+		normal.Normalize();
+		if (incoming.LengthSq() < 0.0001)
+			return normal;
+		incoming.Normalize();
+		float dot = vector.Dot(incoming, normal);
+		if (dot > 0)
+		{
+			normal = -normal;
+			dot = -dot;
+		}
+		float incidence = ClampF(-dot, 0, 1);
+		vector tangent = incoming - normal * dot;
+		vector direction = tangent + normal * (0.2 + 0.8 * incidence);
+		direction.Normalize();
+		return direction;
+	}
+
+	//! Bound the directional cone to the outward hemisphere, including shallow shots.
+	static void TuneImpactCone(Particles particles, vector direction, vector normal)
+	{
+		float clearance = ClampF(vector.Dot(direction, normal), 0, 1);
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (int i, string name : names)
+		{
+			if (name == "ber_dust_fines")
+				continue;
+			bool solid = name == "stone_chips" || name == "dirt_chips" || name == "dirt_clumps" || name.IndexOf("rock_chunks_") == 0;
+			if (!solid && name.IndexOf("ber_dust_") != 0 && name.IndexOf("sparks_") != 0 && name.IndexOf("debris") != 0)
+				continue; // never redirect light, fire, smoke or prefab contact triggers
+			particles.SetParam(i, EmitterParam.CONEANGLE, Vector(360, 0, 45 * clearance));
+		}
+	}
+
+	//! One swept center move. Stop short of a wall instead of placing haze through it.
+	static vector ClipCloudPosition(BaseWorld world, vector start, vector desired, IEntity exclude)
+	{
+		vector delta = desired - start;
+		float length = delta.Length();
+		if (length < 0.001)
+			return start;
+		float distance = WallRayDist(world, start, delta, exclude);
+		float travel = ClampF(distance - 0.08, 0, length);
+		return start + delta * (travel / length);
+	}
+
+	//! Conservative local emission box, not a room mesh or a ventilation solution.
+	static vector GetCloudExtent(BaseWorld world, vector center, IEntity exclude)
+	{
+		float x = Math.Min(WallRayDist(world, center, Vector(1.4, 0, 0), exclude), WallRayDist(world, center, Vector(-1.4, 0, 0), exclude));
+		float y = Math.Min(WallRayDist(world, center, Vector(0, 0.8, 0), exclude), WallRayDist(world, center, Vector(0, -0.8, 0), exclude));
+		float z = Math.Min(WallRayDist(world, center, Vector(0, 0, 1.4), exclude), WallRayDist(world, center, Vector(0, 0, -1.4), exclude));
+		return Vector(Math.Max(0, x - 0.12), Math.Max(0, y - 0.12), Math.Max(0, z - 0.12)) * 0.6;
+	}
+
+	static bool HasClearPath(BaseWorld world, vector start, vector end, IEntity exclude = null)
+	{
+		if (vector.DistanceSq(start, end) < 0.01)
+			return true;
+		TraceParam trace = new TraceParam();
+		trace.Start = start;
+		trace.End = end;
+		trace.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
+		trace.Exclude = exclude;
+		return world.TraceMove(trace, null) >= 0.99;
+	}
+
+	static void ResetWetness()
+	{
+		s_fWetness = -1;
+		s_fWetnessLastTime = 0;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -421,6 +626,31 @@ class BER_SurfaceUtil
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Exact decay over a time step; used by bounded visual source/impulse models.
+	static float Decay(float amount, float elapsed, float timeConstant)
+	{
+		if (timeConstant <= 0)
+			return 0;
+		return amount * Math.Pow(2.718281828, -Math.Max(0, elapsed) / timeConstant);
+	}
+
+	//! Allow travel up to a cached wall plane, then preserve tangential displacement.
+	//! Unlike stripping the normal immediately on a look-ahead hit, this reaches the wall.
+	static vector ClipDisplacementToPlane(vector pos, vector move, vector point, vector normal, float skin = 0.03)
+	{
+		float normalLength = normal.Length();
+		if (normalLength < 0.0001)
+			return move;
+		normal /= normalLength;
+		float into = vector.Dot(move, normal);
+		if (into >= 0)
+			return move;
+		float clearance = Math.Max(0, vector.Dot(pos - point, normal) - skin);
+		if (-into <= clearance)
+			return move;
+		return move - normal * (into + clearance);
+	}
+
 	static float ClampF(float value, float lo, float hi)
 	{
 		if (value < lo)
@@ -439,12 +669,45 @@ class BER_SurfaceUtil
 // Everything BER spawns is marked here and skipped by adoption.
 class BER_OwnedEffects
 {
-	protected static ref array<ParticleEffectEntity> s_aOwned = {};
-	protected static ref array<float> s_aTime = {};
+	//! Play creates the native handle; Pause keeps simulation at zero while callers tune.
+	//! PlayOnSpawn=false alone leaves GetParticles null in Workbench 1.8.
+	//! The caller resumes with Play after applying parameters and marks ownership.
+	static ParticleEffectEntity SpawnPaused(ResourceName resource, ParticleEffectEntitySpawnParams params)
+	{
+		params.PlayOnSpawn = false;
+		ParticleEffectEntity effect = ParticleEffectEntity.SpawnParticleEffect(resource, params);
+		if (!effect)
+			return null;
+		effect.Play();
+		effect.Pause();
+		if (!effect.GetParticles())
+		{
+			effect.SetDeleteWhenStopped(true);
+			effect.Stop();
+			return null; // no visual handle on headless or an invalid resource
+		}
+		return effect;
+	}
+
+	protected static ref array<ParticleEffectEntity> s_aOwned;
+	protected static ref array<float> s_aTime;
 
 	// longest-lived BER-spawned effect is an indoor smoke plume (up to ~120 s emission
 	// plus particle lifetime) — anything older than this can safely fall out
 	protected const float KEEP_TIME = 300.0;
+	protected static BaseWorld s_World;
+	protected static float s_fClock;
+	protected static void EnsureState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_aOwned || s_World != world || now < s_fClock)
+		{
+			s_World = world;
+			s_aOwned = {};
+			s_aTime = {};
+		}
+		s_fClock = now;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	static void MarkOwned(ParticleEffectEntity pfx)
@@ -452,6 +715,9 @@ class BER_OwnedEffects
 		if (!pfx)
 			return;
 
+		EnsureState(pfx.GetWorld());
+		if (s_aOwned.Find(pfx) != -1)
+			return;
 		float now = pfx.GetWorld().GetWorldTime() * 0.001;
 
 		for (int i = s_aOwned.Count() - 1; i >= 0; i--)
@@ -463,6 +729,11 @@ class BER_OwnedEffects
 			}
 		}
 
+		if (s_aOwned.Count() >= 2048)
+		{
+			s_aOwned.Remove(0);
+			s_aTime.Remove(0);
+		}
 		s_aOwned.Insert(pfx);
 		s_aTime.Insert(now);
 	}
@@ -470,6 +741,9 @@ class BER_OwnedEffects
 	//------------------------------------------------------------------------------------------------
 	static bool IsOwned(ParticleEffectEntity pfx)
 	{
+		if (!pfx)
+			return false;
+		EnsureState(pfx.GetWorld());
 		return s_aOwned.Find(pfx) != -1;
 	}
 }

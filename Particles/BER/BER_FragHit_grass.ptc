@@ -1,20 +1,22 @@
 EffectDef {
  Version 2
  Emitters {
-  EmitterDef whisp {
+  EmitterDef ber_dust_whisp {
+   WindInfluence 0.35
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 30
    ConeAngleMinDist 30
    ConeAngleRndRange 30
-   MaxNum 15
-   BirthRate 1000
+   MaxNum 3
+   BirthRate 60
    BirthRateRND 0
    LodMin 0
    LodMax 1
    Material "{6CF6075043D54BE3}Particles/_Materials/Gas/Whisp_01_Anim.emat"
-   SizeMultiplier 0.17
-   SizeRND 0.068
+   SizeMultiplier 0.165
+   SizeRND 0.066
    ScaleX 0.989
    CenterY 0
    RotMultiplier 45
@@ -23,8 +25,8 @@ EffectDef {
    RandomAngle 1
    FlipU Random
    Velocity 0
-   VelocityRND 4
-   AirResistance 5
+   VelocityRND 1.32
+   AirResistance 8
    AirResistanceRND 1
    GravityMultiply 0
    GravityMultiplyRND 0
@@ -35,7 +37,7 @@ EffectDef {
    Lifetime 0.6
    LifetimeRND 0.1
    Color {
-    0 0.44 0.394 0.338
+    0 0.5852 0.52402 0.44954 1 0.5852 0.52402 0.44954
    }
    Alpha {
     0 0 0.218 1 0.56 0.274 1 0

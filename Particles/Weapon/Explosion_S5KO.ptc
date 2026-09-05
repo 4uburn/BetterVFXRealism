@@ -106,8 +106,8 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef Blast_0 {
-   LocalTransform 1
+  EmitterDef ber_smoke_Blast_0 {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0 0 2000
    ConeAngle 360 -180 -175.6
@@ -122,8 +122,8 @@ EffectDef {
    FlipU Random
    Velocity 100
    VelocityRND 16.5
-   AirResistance 0.5
-   WindInfluence 0
+   AirResistance 2
+   WindInfluence 0.35
    ParentVelRelToAir 0
    GravityMultiply -0.065
    GravityMultiplyRND -0.13
@@ -156,6 +156,7 @@ EffectDef {
    }
   }
   EmitterDef trigger_blast_Huge {
+   LocalTransform 0
    ConeAngle 360 0 1
    MaxNum 1
    BirthRate 100

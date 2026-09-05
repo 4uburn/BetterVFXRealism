@@ -11,8 +11,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
-   SizeMultiplier 0.06
-   SizeRND 0.03
+   SizeMultiplier 0.09
+   SizeRND 0.045
    RotMultiplier 30
    RandomRotDir 1
    RandomAngle 1
@@ -38,7 +38,7 @@ EffectDef {
     0 1 1 0.3
    }
    Size {
-    0 0.5 1 1.5
+    0 0.333333333 1 1
    }
    EmittingTime 1.5
    Repeat 0

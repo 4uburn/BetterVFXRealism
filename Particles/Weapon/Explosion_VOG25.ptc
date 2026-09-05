@@ -106,8 +106,8 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef Smoke_Burst {
-   LocalTransform 1
+  EmitterDef ber_smoke_Smoke_Burst {
+   LocalTransform 0
    ShapeType Ellipse
    ShapeSize 0.25 0.15 0.25
    ConeAngle 360 0 45
@@ -128,14 +128,14 @@ EffectDef {
    FlipU Random
    Velocity 2.2
    VelocityRND 0.44
-   AirResistance 2
+   AirResistance 2.0
    AirResistanceRND 1
-   WindInfluence 0
-   GravityMultiply 0.02
-   GravityMultiplyRND 0.02
+   WindInfluence 0.35
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 1
    AnimFPS 40
    RandomFrame 0
@@ -162,8 +162,8 @@ EffectDef {
     0 0 0.809 1
    }
   }
-  EmitterDef Smoke_Burst_longer {
-   LocalTransform 1
+  EmitterDef ber_smoke_Smoke_Burst_longer {
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.25 0.25 0.25
    ConeAngle 360 0 60
@@ -186,12 +186,12 @@ EffectDef {
    VelocityRND 0.28
    AirResistance 1.6
    AirResistanceRND 1
-   WindInfluence 0
-   GravityMultiply 0.02
-   GravityMultiplyRND 0.02
+   WindInfluence 0.35
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimFPS 40
    RandomFrame 0
    Lifetime 5.5
@@ -218,6 +218,7 @@ EffectDef {
    }
   }
   EmitterDef trigger_blast_medium {
+   LocalTransform 0
    ConeAngle 360 0 1
    MaxNum 1
    BirthRate 1000
@@ -236,6 +237,7 @@ EffectDef {
    Repeat 0
   }
   EmitterDef trigger_blast_small {
+   LocalTransform 0
    ConeAngle 360 0 360
    ConeAngleMinDist 80
    BirthRate 1000

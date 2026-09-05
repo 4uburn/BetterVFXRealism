@@ -93,7 +93,8 @@ EffectDef {
     0 1 0.488 0.959 1 0.803
    }
   }
-  EmitterDef Smoke_Cloud {
+  EmitterDef ber_smoke_Smoke_Cloud {
+   AirResistance 2
    ShapeType Ellipse
    ShapeSize 1.6 1.6 1.6
    ConeAngle 360 0 60
@@ -101,7 +102,7 @@ EffectDef {
    BirthRate 4000
    Offset 0 0.5 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{896ED2720AFADD2C}Particles/_Materials/Gas/Smoke_Cloud_Dark_02.emat"
@@ -116,7 +117,7 @@ EffectDef {
    Velocity 3
    VelocityRND 0.55
    AirResistanceRND 0.5
-   WindInfluence 0
+   WindInfluence 0.35
    GravityMultiply 0.05
    GravityMultiplyRND -0.1
    EnableCollisions 1
@@ -150,7 +151,7 @@ EffectDef {
     0 1 0.488 0.959 1 0.803
    }
   }
-  EmitterDef Smoke_Loop {
+  EmitterDef ber_smoke_Smoke_Loop {
    ShapeType Ellipse
    ShapeSize 1.2 1.2 1.2
    ConeAngle 360 0 60
@@ -158,7 +159,7 @@ EffectDef {
    BirthRate 4000
    Offset 0 0.5 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
@@ -172,14 +173,14 @@ EffectDef {
    RandomAngle 1
    FlipU Random
    VelocityRND 0.55
-   AirResistance 0.4
+   AirResistance 2.0
    AirResistanceRND 0.5
-   WindInfluence 0
-   GravityMultiply 0.05
-   GravityMultiplyRND -0.1
+   WindInfluence 0.35
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimFPS 60
    Lifetime 4.8
    LifetimeRND 5.4
@@ -207,7 +208,8 @@ EffectDef {
     0 1 0.488 0.959 1 0.803
    }
   }
-  EmitterDef dust_blast_short {
+  EmitterDef ber_dust_dust_blast_short {
+   WindInfluence 0.35
    ShapeType Box
    ShapeSize 0.4 0 0.4
    ConeAngle 360 10 55
@@ -217,7 +219,7 @@ EffectDef {
    BirthRate 2000
    Offset 0 0 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{106C63A94553E961}Particles/_Materials/Gas/Smoke_Exhaust_Anim.emat"
@@ -247,7 +249,7 @@ EffectDef {
    Lifetime 1
    LifetimeRND 0.2
    Color {
-    0 0.0365 0.0365 0.0365 1 0.031 0.031 0.031
+    0 1 1 1 1 1 1 1
    }
    Alpha {
     0 0 0.175 1 0.65 1 1 0
@@ -310,7 +312,8 @@ EffectDef {
    }
   }
   EmitterDef debris_2D_small {
-   LocalTransform 1
+   WindInfluence 0
+   LocalTransform 0
    ShapeType Box
    ShapeSize 1 1 1
    ConeAngle 360 20 120
@@ -377,6 +380,8 @@ EffectDef {
    }
   }
   EmitterDef debris_3D_huge {
+   WindInfluence 0
+   LocalTransform 0
    ShapeType Box
    ShapeSize 1 4 1
    ConeAngle 360 20 120
@@ -448,7 +453,9 @@ EffectDef {
     0 0 0.083 0 0.359 1 1 1
    }
   }
-  EmitterDef Smoke_After_Air {
+  EmitterDef ber_smoke_Smoke_After_Air {
+   GravityMultiplyRND 0
+   GravityMultiply -0.008
    ShapeType Ellipse
    ShapeSize 2 1.6 2
    ConeAngle 360 0 55
@@ -457,7 +464,7 @@ EffectDef {
    MaxNum 12
    BirthRate 2000
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    Material "{61247CAB58EF0D6D}Particles/_Materials/Gas/Smoke_Explosion_02.emat"
    StretchMultiplier 1
    StreakFullUV 0
@@ -473,11 +480,11 @@ EffectDef {
    VelocityRND 5.5
    AirResistance 4.256
    AirResistanceRND 2.103
-   WindInfluence 0
+   WindInfluence 0.35
    ParentVelRelToAir 0.2
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 1
    AnimFPS 15
    RandomFrame 0
@@ -501,7 +508,7 @@ EffectDef {
     0 0 0.056 0 0.225 1 1 1
    }
   }
-  EmitterDef Smoke_After_Ground {
+  EmitterDef ber_smoke_Smoke_After_Ground {
    ShapeType Ellipse
    ShapeSize 1.6 0.8 1.6
    ConeAngle 360 20 65
@@ -512,7 +519,7 @@ EffectDef {
    BirthRateVel 1
    Offset 0 0.2 0
    Angles 0 0 0
-   LocalTransform 1
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{B6B47613FF3B9485}Particles/_Materials/Gas/Smoke_heavy_white_sheet.emat"
@@ -529,14 +536,14 @@ EffectDef {
    Velocity 0
    VelocityRND 0
    VelAffect 0
-   AirResistance 0.1
+   AirResistance 2.0
    AirResistanceRND 0.05
-   WindInfluence 0
-   GravityMultiply -0.005
-   GravityMultiplyRND -0.01
+   WindInfluence 0.35
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 0
    AnimFPS 0
    LifetimeByAnim 0
@@ -578,6 +585,7 @@ EffectDef {
    }
   }
   EmitterDef Explosion_Trigger {
+   LocalTransform 0
    ConeAngle 360 240 350
    MaxNum 5
    BirthRate 2000

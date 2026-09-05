@@ -2,6 +2,8 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef resolver {
+   WindInfluence 0
+   LocalTransform 0
    ShapeType Point
    MaxNum 1
    BirthRate 1000

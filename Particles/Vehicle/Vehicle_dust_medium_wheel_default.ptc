@@ -61,8 +61,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
-   SizeMultiplier 4.8
-   SizeRND 1.8
+   SizeMultiplier 5.28
+   SizeRND 1.98
    RotMultiplier 30
    RandomRotDir 1
    RandomAngle 1
@@ -89,7 +89,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.35 1 1.1
+    0 0.318181818 1 1
    }
    EmittingTime 0.1
    Repeat 1
@@ -105,8 +105,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{56901C2AD20B7D45}Particles/_Materials/Gas/Smoke_Explosion_02_forWheels.emat"
-   SizeMultiplier 3.9
-   SizeRND 1.5
+   SizeMultiplier 7.8
+   SizeRND 3
    RotMultiplier 45
    RandomRotDir 1
    RandomAngle 1
@@ -133,7 +133,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.4 1 2
+    0 0.2 1 1
    }
    EmittingTime 0.1
    Repeat 1

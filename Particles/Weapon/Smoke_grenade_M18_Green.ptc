@@ -2,13 +2,14 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef smoke_01 {
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0.12
-   ConeAngle 360 0 75
+   ConeAngle 360 0 55
    MaxNum 240
    BirthRate 13
    BirthRateRND 0
-   BirthRateVel 7
+   BirthRateVel 0
    Offset 0 0.08 0
    LodMin 0
    LodMax 0
@@ -22,37 +23,37 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 0
-   VelocityRND 0.2
+   Velocity 1.8
+   VelocityRND 0.8
    VelAffect 0.2
-   AirResistance 0.1
-   AirResistanceRND 0
+   AirResistance 1.2
+   AirResistanceRND 0.3
    WindInfluence 0.25
    ParentVelRelToAir 0.05
-   GravityMultiply 0.006
+   GravityMultiply -0.025
    GravityMultiplyRND 0
    Spring 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 1
    AnimFPS 25
    LifetimeByAnim 0
    RandomFrame 1
    Lifetime 10
    LifetimeRND 0
-   LifetimeVelFactor 1
+   LifetimeVelFactor 0
    Color {
     0 0.199 0.479 0.299 1 0.199 0.479 0.299
    }
    Alpha {
-    0 0.407 0.029 1 1 0
+    0 0.15 0.02 0.8 0.3 0.6 0.8 0.2 1 0
    }
    RotationSpeed {
     0 1 1 1
    }
    Size {
-    0 0 1 0.3188
+    0 0.025 0.1 0.14 0.4 0.26 1 0.35
    }
    EmittingTime 90
    Repeat 0
@@ -60,7 +61,7 @@ EffectDef {
     0 1 1 1 0.431 1 1 1 1 1 1 1
    }
    AlphaMast {
-    0 0 0.055 1 0.821 1 1 0
+    0 0.8 0.01 1 0.9 1 1 0.2
    }
    RotationSpeedMast {
     0 1 0.15 1 0.354 1 0.65 1 1 1
@@ -69,7 +70,7 @@ EffectDef {
     0 1 1 1
    }
    BRateMast {
-    0 0 0.1 0.363 1 0
+    0 0.6 0.01 1 0.85 1 0.97 0.65 1 0
    }
    VelocityMast {
     0 1 0.15 1 0.324 1 0.65 1 1 1
@@ -78,14 +79,14 @@ EffectDef {
   EmitterDef smoke_01_long {
    ShapeType Sphere
    ShapeSize 0.05 0.05 0.05
-   ConeAngle 360 55 85
+   ConeAngle 360 0 100
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    Occlusion 12
    MaxNum 220
    BirthRate 3.9
    BirthRateRND 0
-   BirthRateVel 1
+   BirthRateVel 0
    Offset 0 0.08 0
    LocalTransform 0
    LodMin 0
@@ -101,34 +102,34 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 1
-   VelocityRND 0.3
+   Velocity 0.95
+   VelocityRND 0.55
    VelAffect 0
-   AirResistance 0.1
-   AirResistanceRND 0.05
+   AirResistance 0.3
+   AirResistanceRND 0.1
    WindInfluence 0.5
-   GravityMultiply 0.006
+   GravityMultiply -0.003
    GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 0
    AnimFPS 60
    LifetimeByAnim 0
    Lifetime 22
    LifetimeRND 8
-   LifetimeVelFactor 0.15
+   LifetimeVelFactor 0
    Color {
     0 0.199 0.479 0.299 1 0.199 0.479 0.299
    }
    Alpha {
-    0 0 0.2065 0.9435 0.6915 0.9076 0.8494 0.1848 1 0
+    0 0.04 0.08 0.7 0.55 0.55 0.85 0.16 1 0
    }
    RotationSpeed {
     0 0.25 0.075 0.6 0.488 0.437 1 0.306
    }
    Size {
-    0 0.0081 1 0.555
+    0 0.025 0.3 0.24 1 0.48
    }
    EmittingTime 90
    Repeat 0
@@ -136,7 +137,7 @@ EffectDef {
     0 1 1 1 0.431 1 1 1 1 1 1 1
    }
    AlphaMast {
-    0 0 0.041 1 0.739 1 1 0
+    0 0.8 0.01 1 0.9 1 1 0.2
    }
    RotationSpeedMast {
     0 1 0.15 1 0.354 1 0.65 1 1 1
@@ -145,7 +146,7 @@ EffectDef {
     0 1 1 1
    }
    BRateMast {
-    0 0.06 0.089 0.35 0.2 1 1 1
+    0 0.6 0.01 1 0.85 1 0.97 0.65 1 0
    }
    VelocityMast {
     0 1 0.15 1 0.324 1 0.65 1 1 1
@@ -154,14 +155,14 @@ EffectDef {
   EmitterDef smoke_01_long_FAR {
    ShapeType Sphere
    ShapeSize 0.05 0.05 0.05
-   ConeAngle 360 55 85
+   ConeAngle 360 0 100
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    Occlusion 12
    MaxNum 140
    BirthRate 1.04
    BirthRateRND 0
-   BirthRateVel 1
+   BirthRateVel 0
    Offset 0 0.08 0
    LocalTransform 0
    LodMin 2
@@ -177,34 +178,34 @@ EffectDef {
    VelAngle 0
    RandomAngle 1
    FlipU Random
-   Velocity 1
-   VelocityRND 0.3
+   Velocity 0.95
+   VelocityRND 0.55
    VelAffect 0
-   AirResistance 0.1
-   AirResistanceRND 0.05
+   AirResistance 0.3
+   AirResistanceRND 0.1
    WindInfluence 0.5
-   GravityMultiply 0.006
+   GravityMultiply -0.003
    GravityMultiplyRND 0
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
+   NormalRestitution 0.12
+   TagentialRestitution 0.95
    AnimOnce 0
    AnimFPS 60
    LifetimeByAnim 0
    Lifetime 22
    LifetimeRND 8
-   LifetimeVelFactor 0.15
+   LifetimeVelFactor 0
    Color {
     0 0.199 0.479 0.299 1 0.199 0.479 0.299
    }
    Alpha {
-    0 0 0.2067 0.966 0.6428 0.9454 1 0
+    0 0.04 0.08 0.7 0.55 0.55 0.85 0.16 1 0
    }
    RotationSpeed {
     0 0.25 0.075 0.6 0.488 0.437 1 0.306
    }
    Size {
-    0 0.0081 1 0.555
+    0 0.025 0.3 0.24 1 0.48
    }
    EmittingTime 90
    Repeat 0
@@ -212,7 +213,7 @@ EffectDef {
     0 1 1 1 0.431 1 1 1 1 1 1 1
    }
    AlphaMast {
-    0 0 0.041 1 0.739 1 1 0
+    0 0.8 0.01 1 0.9 1 1 0.2
    }
    RotationSpeedMast {
     0 1 0.15 1 0.354 1 0.65 1 1 1
@@ -221,7 +222,7 @@ EffectDef {
     0 1 1 1
    }
    BRateMast {
-    0 0.06 0.089 0.35 0.2 1 1 1
+    0 0.6 0.01 1 0.85 1 0.97 0.65 1 0
    }
    VelocityMast {
     0 1 0.15 1 0.324 1 0.65 1 1 1

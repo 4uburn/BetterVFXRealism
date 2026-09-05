@@ -1,0 +1,167 @@
+EffectDef {
+ Version 2
+ Emitters {
+  EmitterDef noscope_ber_smoke_forward {
+   ShapeType Point
+   ConeAngle 360 0 35
+   LocalTransform 0
+   LodMin 0
+   LodMax 1
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   BirthRateRND 0
+   VelAffect 0.3
+   AirResistance 5
+   WindInfluence 0.6
+   GravityMultiply 0
+   GravityMultiplyRND 0
+   AnimOnce 0
+   AnimFPS 0.001
+   LifetimeByAnim 0
+   RandomFrame 1
+   RandomAngle 1
+   Repeat 0
+   MaxNum 4
+   BirthRate 80
+   Angles -90 0 0
+   Offset 0 0 0.15
+   SizeMultiplier 0.78
+   SizeRND 0.26
+   Velocity 5
+   VelocityRND 1
+   Lifetime 0.65
+   LifetimeRND 0.2
+   EmittingTime 0.05
+   Color {
+    0 0.74 0.74 0.72 1 0.74 0.74 0.72
+   }
+   Alpha {
+    0 0 0.08 0.6 0.45 0.25 1 0
+   }
+   Size {
+    0 0.269230769 0.3 0.615384615 1 1
+   }
+  }
+  EmitterDef noscope_ber_smoke_left {
+   ShapeType Point
+   ConeAngle 360 0 35
+   LocalTransform 0
+   LodMin 0
+   LodMax 1
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   BirthRateRND 0
+   VelAffect 0.3
+   AirResistance 5
+   WindInfluence 0.6
+   GravityMultiply 0
+   GravityMultiplyRND 0
+   AnimOnce 0
+   AnimFPS 0.001
+   LifetimeByAnim 0
+   RandomFrame 1
+   RandomAngle 1
+   Repeat 0
+   MaxNum 2
+   BirthRate 40
+   Angles 0 0 -90
+   SizeMultiplier 0.45
+   SizeRND 0.15
+   Velocity 2.8
+   VelocityRND 0.6
+   Lifetime 0.55
+   LifetimeRND 0.15
+   EmittingTime 0.05
+   Color {
+    0 0.74 0.74 0.72 1 0.74 0.74 0.72
+   }
+   Alpha {
+    0 0 0.1 0.35 1 0
+   }
+   Size {
+    0 0.3 1 1
+   }
+  }
+  EmitterDef noscope_ber_smoke_right {
+   ShapeType Point
+   ConeAngle 360 0 35
+   LocalTransform 0
+   LodMin 0
+   LodMax 1
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   BirthRateRND 0
+   VelAffect 0.3
+   AirResistance 5
+   WindInfluence 0.6
+   GravityMultiply 0
+   GravityMultiplyRND 0
+   AnimOnce 0
+   AnimFPS 0.001
+   LifetimeByAnim 0
+   RandomFrame 1
+   RandomAngle 1
+   Repeat 0
+   MaxNum 2
+   BirthRate 40
+   Angles 0 0 90
+   SizeMultiplier 0.45
+   SizeRND 0.15
+   Velocity 2.8
+   VelocityRND 0.6
+   Lifetime 0.55
+   LifetimeRND 0.15
+   EmittingTime 0.05
+   Color {
+    0 0.74 0.74 0.72 1 0.74 0.74 0.72
+   }
+   Alpha {
+    0 0 0.1 0.35 1 0
+   }
+   Size {
+    0 0.3 1 1
+   }
+  }
+  EmitterDef ber_smoke_residual {
+   EnableCollisions 1
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   ShapeType Point
+   ConeAngle 360 0 35
+   LocalTransform 0
+   LodMin 0
+   LodMax 1
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   BirthRateRND 0
+   VelAffect 0.3
+   AirResistance 5.0
+   WindInfluence 0.6
+   GravityMultiply -0.008
+   GravityMultiplyRND 0
+   AnimOnce 0
+   AnimFPS 0.001
+   LifetimeByAnim 0
+   RandomFrame 1
+   RandomAngle 1
+   Repeat 0
+   MaxNum 3
+   BirthRate 30
+   Angles -90 0 0
+   Offset 0 0 0.3
+   SizeMultiplier 0.9
+   SizeRND 0.24
+   Velocity 1.8
+   VelocityRND 0.4
+   Lifetime 1.2
+   LifetimeRND 0.4
+   EmittingTime 0.1
+   Color {
+    0 0.74 0.74 0.72 1 0.74 0.74 0.72
+   }
+   Alpha {
+    0 0 0.15 0.16 0.5 0.09 1 0
+   }
+   Size {
+    0 0.333333333 1 1
+   }
+  }
+ }
+ MinFPS 30
+}

@@ -2,93 +2,95 @@ EffectDef {
  Version 2
  Emitters {
   EmitterDef fog_body {
+   RandomFrame 1
    ShapeType Box
-   ShapeSize 2.6 1.8 2.6
+   ShapeSize 0.7 0.3 0.7
    ConeAngle 360 0 180
-   MaxNum 24
-   BirthRate 1000
+   MaxNum 8
+   BirthRate 2.4
    BirthRateRND 0
-   Offset 0 0.9 0
-   LocalTransform 1
+   Offset 0 0 0
+   LocalTransform 0
    LodMin 0
    LodMax 2
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
-   SizeMultiplier 1.7
-   SizeRND 0.5
+   SizeMultiplier 0.7
+   SizeRND 0.25
    RotMultiplier 5
    RandomRotDir 1
    RandomAngle 1
-   Velocity 0.28
-   VelocityRND 0.1
+   Velocity 0.18
+   VelocityRND 0.22
    VelAffect 0.3
-   AirResistance 1.5
-   AirResistanceRND 0.5
+   AirResistance 0.45
+   AirResistanceRND 0.25
    WindInfluence 0
-   GravityMultiply 0
+   GravityMultiply 0.0005
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
-   AnimFPS 60
-   Lifetime 34
-   LifetimeRND 6
+   NormalRestitution 0.08
+   TagentialRestitution 0.95
+   AnimFPS 0.001
+   Lifetime 26
+   LifetimeRND 14
    Color {
     0 0.5 0.42 0.32 1 0.44 0.37 0.28
    }
    Alpha {
-    0 0 0.003 0.27 0.88 0.24 1 0
+    0 0 0.08 0.055 0.4 0.035 0.75 0.012 1 0
    }
    RotationSpeed {
     0 1 1 0
    }
    Size {
-    0 0.55 0.3 1 1 1.15
+    0 0.35 0.2 0.6 1 1
    }
-   EmittingTime 1.2
+   EmittingTime 4
    Repeat 0
   }
   EmitterDef fog_low {
+   RandomFrame 1
    ShapeType Box
-   ShapeSize 2.8 1 2.8
+   ShapeSize 0.7 0.3 0.7
    ConeAngle 360 0 180
-   MaxNum 12
-   BirthRate 1000
+   MaxNum 4
+   BirthRate 1.2
    BirthRateRND 0
-   Offset 0 0.5 0
-   LocalTransform 1
+   Offset 0 0 0
+   LocalTransform 0
    LodMin 0
    LodMax 1
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
-   SizeMultiplier 1.4
-   SizeRND 0.4
+   SizeMultiplier 0.5
+   SizeRND 0.15
    RotMultiplier 4
    RandomRotDir 1
    RandomAngle 1
-   Velocity 0.2
-   VelocityRND 0.08
+   Velocity 0.18
+   VelocityRND 0.22
    VelAffect 0.3
-   AirResistance 1.5
-   AirResistanceRND 0.5
+   AirResistance 0.45
+   AirResistanceRND 0.25
    WindInfluence 0
-   GravityMultiply 0.01
+   GravityMultiply 0.002
    EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 1
-   AnimFPS 60
-   Lifetime 32
-   LifetimeRND 5
+   NormalRestitution 0.08
+   TagentialRestitution 0.95
+   AnimFPS 0.001
+   Lifetime 20
+   LifetimeRND 12
    Color {
     0 0.48 0.4 0.3 1 0.42 0.35 0.26
    }
    Alpha {
-    0 0 0.003 0.19 0.87 0.17 1 0
+    0 0 0.08 0.04 0.4 0.028 0.75 0.01 1 0
    }
    RotationSpeed {
     0 1 1 0
    }
    Size {
-    0 0.6 0.3 1 1 1.1
+    0 0.35 0.2 0.6 1 1
    }
-   EmittingTime 1.2
+   EmittingTime 4
    Repeat 0
   }
  }

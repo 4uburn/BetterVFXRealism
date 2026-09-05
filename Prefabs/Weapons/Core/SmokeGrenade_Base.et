@@ -48,7 +48,6 @@ GenericEntity : "{D7EB24176E5CEAA6}Prefabs/Weapons/Core/Grenade_Base.et" {
   }
   BER_EffectTuningComponent "{BE20250902000002}" {
    m_bScaleBySurface 0
-   m_fWindRampTime 0
    m_fScanDuration 200
    m_bIndoorSmokeSwap 1
   }

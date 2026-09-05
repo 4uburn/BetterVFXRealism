@@ -1,27 +1,37 @@
-//------------------------------------------------------------------------------------------------
-// Better Effects Realism — effect tuning component
-//
-// Attached (via prefab override) to Warhead_Base — which EVERY explosion AND every bullet
-// impact spawns — and to smoke grenade prefabs.
-//
-// TAKEOVER MODE (m_rTakeoverEffect set, per-warhead overrides): the vanilla explosion
-// particle reference is blanked in the prefab and this component spawns the same effect
-// itself, paused, so every parameter is set BEFORE the first particle exists:
-//  - density/size/lifetime scaled by surface dustiness (rain-aware),
-//  - emission time of long-lived dust emitters extended (opaque plateau, dissipation
-//    truncated to the end of the lifetime instead of a linear fade),
-//  - engine wind disabled and emitters switched to local-space simulation, then the
-//    whole effect entity is ANIMATED by BER_WindDriftAnimator: standstill during the
-//    pressure-wave hold, then smooth acceleration up to the actual wind speed.
-//
-// ADOPTION MODE (always active): child/nearby particles the engine spawned (gamemat
-// bullet-impact dust, effects without a takeover override) get the same density/lifetime
-// scaling; indoors their wind is disabled. They cannot be drift-animated retroactively.
-//------------------------------------------------------------------------------------------------
+// Better VFX Realism: owns takeover explosions, fragment wisps/holes and bounded indoor dust.
+// Contact dust is tuned by BER_OrientedContactComponent before emission. Adoption is
+// restricted to named BER dust emitters close to this impact; fire/debris remain independent.
 
-[EntityEditorProps(category: "GameScripted/BetterEffectsRealism", description: "Surface/weather/indoor aware tuning of spawned effect particles")]
+[EntityEditorProps(category: "GameScripted/BetterVFXRealism", description: "Surface/weather/indoor aware tuning of spawned effect particles")]
 class BER_EffectTuningComponentClass : ScriptComponentClass
 {
+}
+
+// One room record owns both pending dust and its currently living visual layers.
+class BER_RoomDustState
+{
+	vector m_Center;
+	float m_fUpdated;
+	float m_fLastEmission = -100;
+	float m_fPending;
+	ref array<ParticleEffectEntity> m_Layers = {};
+
+	void Accumulate(float now, float weight)
+	{
+		m_fPending = BER_SurfaceUtil.Decay(m_fPending, now - m_fUpdated, 20) + Math.Max(0, weight);
+		m_fPending = Math.Min(m_fPending, 4); // bounded source backlog, not unlimited stored opacity
+		m_fUpdated = now;
+	}
+
+	void PruneLayers()
+	{
+		for (int i = m_Layers.Count() - 1; i >= 0; i--)
+		{
+			ParticleEffectEntity layer = m_Layers[i];
+			if (!layer || layer.GetState() == EParticleEffectState.STOPPED)
+				m_Layers.Remove(i);
+		}
+	}
 }
 
 class BER_EffectTuningComponent : ScriptComponent
@@ -29,29 +39,25 @@ class BER_EffectTuningComponent : ScriptComponent
 	[Attribute(defvalue: "", UIWidgets.ResourcePickerThumbnail, desc: "Explosion effect to spawn under BER control (vanilla reference must be blanked in the same prefab)", params: "ptc")]
 	protected ResourceName m_rTakeoverEffect;
 
+	[Attribute(defvalue: "0", desc: "Brief pale envelope on selected large outdoor blasts, 0 disables. Artistic approximation: atmospheric humidity is not exposed.", params: "0 1 0.05")]
+	protected float m_fCondensationStrength;
+	protected const ResourceName CONDENSATION = "{BA176BEE23D045AC}Particles/BER/BER_BlastCondensation.ptc";
+
 	[Attribute(defvalue: "1", desc: "Scale particle density/lifetime by surface dustiness at the detonation point")]
 	protected bool m_bScaleBySurface;
 
-	// 52nd-pass USER RULING (reference: real frag-grenade footage on grass, 3-frame sequence
-	// in Downloads): explosions were generating far too much gas at far too large a size.
-	// Real look = compact ground-hugging puff at detonation, then a LOW translucent cloud
-	// ~6-7 m wide that thins out within seconds — no lingering gas ball. Old defaults
-	// (2 / 3 / 2.2 / 1) pumped ~3x the emitted volume of these values; never re-raise
-	// without an express instruction.
-	[Attribute(defvalue: "1.1", desc: "Baseline particle density (birth rate) multiplier before surface scaling", params: "0.1 4 0.05")]
+	// Compact density target; footprint is authored separately from particle count.
+	[Attribute(defvalue: "1.35", desc: "Baseline particle density (birth rate) multiplier before surface scaling", params: "0.1 4 0.05")]
 	protected float m_fDensityBoost;
 
 	[Attribute(defvalue: "1.8", desc: "Baseline particle lifetime multiplier before surface scaling", params: "0.1 6 0.05")]
 	protected float m_fLifetimeBoost;
 
-	[Attribute(defvalue: "1.3", desc: "Emission time multiplier for long-lived emitters (keeps the cloud replenished, dissipation happens near the end)", params: "1 5 0.05")]
+	[Attribute(defvalue: "1.3", desc: "Emission time multiplier for named dust and smoke emitters (fire and debris keep their authored timing)", params: "1 5 0.05")]
 	protected float m_fEmissionBoost;
 
 	[Attribute(defvalue: "0.7", desc: "Particle size multiplier on top of the authored .ptc sizes", params: "0.4 2.5 0.05")]
 	protected float m_fSizeBoost;
-
-	[Attribute(defvalue: "12", desc: "Seconds over which the drift-animated effect accelerates up to wind speed (0 = no drift)", params: "0 60 0.5")]
-	protected float m_fWindRampTime;
 
 	[Attribute(defvalue: "25", desc: "Roof detection trace distance in meters", params: "5 100 1")]
 	protected float m_fRoofCheckDistance;
@@ -59,7 +65,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	[Attribute(defvalue: "8", desc: "Seconds to keep watching for spawned particle children", params: "1 300 1")]
 	protected float m_fScanDuration;
 
-	[Attribute(defvalue: "0", desc: "Smoke grenades: when the device sits under a roof, restart the adopted smoke effect as a windless BER variant so the screen stays in the room instead of being blown through walls")]
+	[Attribute(defvalue: "0", desc: "Smoke grenades: update native source wind as the device moves indoors/outdoors, preserving its emission clock")]
 	protected bool m_bIndoorSmokeSwap;
 
 	[Attribute(defvalue: "0", desc: "Ground debris (dirt clumps / rock chips) thrown by the detonation; 1.0 = the 25mm HEIT baseline, 0 = none (bullet impacts)", params: "0 5 0.05")]
@@ -74,75 +80,40 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected const ResourceName DEBRIS_DIRT = "{BE20250902AC0020}Particles/BER/BER_Impact_DirtChunks.ptc";
 	protected const ResourceName DEBRIS_ROCK = "{BE20250902AC0021}Particles/BER/BER_Impact_RockChips.ptc";
 
-	// indoor events fill the room with structural dust fog that hangs at a constant
-	// opacity for 30+ seconds (authored plateau alpha curve, windless, wall-collided);
+	// Indoor events accumulate structural dust with a gradual fade over 30+ seconds;
 	// wood interiors shed a browner, thinner sawdust haze instead of grey plaster
 	protected const ResourceName ROOM_FOG = "{BE20250902AC0027}Particles/BER/BER_RoomFog.ptc";
 	protected const ResourceName ROOM_FOG_WOOD = "{BE20250903AC0037}Particles/BER/BER_RoomFog_Wood.ptc";
 
-	// one fog per room (keyed on the estimated room CENTER, so impacts on different walls
-	// of the same room merge). Every impact contributes a WEIGHT scaled by the round's
-	// caliber/destructive power (a 5.56 hit counts ~0.25, an autocannon round ~2.5) and by
-	// what it struck (plaster/masonry full, wood a quarter — splinters, not dust; sheet
-	// metal/glass nothing): the first fog appears once a room has accumulated enough
-	// weight, and sustained fire stacks extra layers per weight step until visibility
-	// really suffers. Once the entry ages out, continued fighting refreshes it from scratch.
-	protected static ref array<vector> s_aFogPos = {};
-	protected static ref array<float> s_aFogTime = {};
-	protected static ref array<float> s_aFogHits = {};   // accumulated impact weight
-	protected static ref array<int> s_aFogLayers = {};   // -1 = still accumulating, no fog spawned yet
-	protected const float FOG_DEDUP_RADIUS_SQ = 12.25; // 3.5 m
-	protected const float FOG_DEDUP_TIME = 20.0;
-	protected const float FOG_SPAWN_WEIGHT = 1.0;      // accumulated weight before the first fog appears
-	protected const float FOG_WEIGHT_PER_LAYER = 12.0; // further weight per extra fog layer
-	protected const int FOG_MAX_EXTRA_LAYERS = 3;
+	protected static ref array<ref BER_RoomDustState> s_aRooms;
+	protected const float FOG_DEDUP_RADIUS_SQ = 12.25; // 3.5 m, also requires a clear path
+	protected const float FOG_SPAWN_WEIGHT = 1.0;
+	protected const int FOG_MAX_LAYERS = 4;
+	protected const float FOG_MIN_INTERVAL = 2.0;
 
-	// TESTING: log the warhead-vs-impact-effect transform relationship so the deflection
-	// axis choice is verified with real numbers in a live test — flip to false before publish
-	protected const bool DIAG_DEFLECT = false;
+	protected const float FRAG_IMPACT_RANGE = 14.0;
+	protected const float FRAG_IMPACT_MIN_DIST = 0.7;
+	protected const float FRAG_DECAL_LIFETIME = 300.0;
 
-	// TESTING: log every visual-shrapnel ray (hit distance, material, traced entity, decal
-	// and particle results) — flip to false before publish
-	protected const bool DIAG_FRAG = true;
-
-	// Impact haze round-gate: a machinegun magazine into one wall must not stand up dozens
-	// of overlapping 30-40 s haze effects — only every Nth impact keeps its long-lived haze
-	// emitter (the authored haze alpha is raised xN in the .ptc so the summed occlusion of
-	// massed fire is conserved), the rest get their haze birth zeroed while still inside its
-	// 0.2 s emission window. This gate at SPAWN is the working merge for impacts: the cloud
-	// field's 400 ms tick only ever sees them after emission ended, when StopEmission can no
-	// longer absorb anything. The keep/suppress decision is remembered per effect for a few
-	// seconds because neighbouring impact components adopt each other's fresh splashes — a
-	// later adopter must repeat the first decision (its absolute-vs-original BIRTH_RATE
-	// write would otherwise silently un-zero a suppressed haze), never roll a new one.
-	protected static ref array<ParticleEffectEntity> s_aBerHazeGatePfx = {};
-	protected static ref array<float> s_aBerHazeGateTime = {};
-	protected static ref array<bool> s_aBerHazeGateKeep = {};
-	protected static int s_iBerHazeRound = 0;
-	protected const int HAZE_KEEP_EVERY_N = 5;
-	protected const float HAZE_GATE_MEMORY = 3.0;
-	// original lifetime above which an impact emitter is the appended long-lived haze
-	// (vanilla emitters in the rebuilt Hit_*_enter_01 files all live well under 2 s)
-	protected const float HAZE_ORIG_LIFETIME_MIN = 5.0;
-
-	// original lifetime below which an emitter counts as flash/sparks and is only mildly scaled
-	protected const float FLASH_LIFETIME_THRESHOLD = 0.6;
-
-	// Visual shrapnel (m_iBerFragImpacts): the engine's ExplosionFragmentationEffect is
-	// damage-only — no per-fragment visual exists anywhere in its configs — so the impacts
-	// players expect to see around a frag grenade are traced here. Each ray that lands plays
-	// the struck gamemat's HitEffectInfo bullet-hit particle plus its bullet-hole decal,
-	// tuned like a 9x19 strike (same caliber formulas and haze round-gate as bullet impacts).
-	protected const float FRAG_IMPACT_RANGE = 14.0;    // visual budget; damage reaches further but distant pocks read as unrelated
-	protected const float FRAG_IMPACT_MIN_DIST = 0.7;  // hits inside the blast's own splash add nothing
-	protected const float FRAG_DECAL_LIFETIME = 300.0; // seconds a shrapnel pock stays on the wall (tuning lever)
-	protected const float FRAG_SHOT_SCALE = 0.2;       // 9x19 class — fragment hits read as pistol-caliber strikes
+	protected static BaseWorld s_FogWorld;
+	protected static float s_fFogClock;
+	protected static void EnsureFogState(BaseWorld world)
+	{
+		float now = world.GetWorldTime();
+		if (!s_aRooms || s_FogWorld != world || now < s_fFogClock)
+		{
+			s_FogWorld = world;
+			s_aRooms = {};
+		}
+		s_fFogClock = now;
+	}
 
 	protected ref array<ParticleEffectEntity> m_aProcessed = {};
 	protected float m_fElapsed;
 	protected float m_fScanAccum;
-	protected int m_iQueriesDone;
+	protected float m_fSmokeShelterIn;
 	protected bool m_bTakeoverDone;
+	protected bool m_bCondensationDone;
 	protected bool m_bFragDone;
 	protected bool m_bHullKickupDone;
 	protected Vehicle m_KickupVehicle;
@@ -151,30 +122,11 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected bool m_bEnvComputed;
 	protected float m_fDustFactor = 1.0;
 	protected bool m_bIndoor;
-	protected float m_fWindSpeed;
 	protected vector m_vGroundNormal = vector.Up;
 	protected bool m_bGroundFound;
 	protected vector m_vGroundPos;
 	protected string m_sGroundMat;
-	protected float m_fMinWallDist = 100; // nearest wall around the detonation (indoors only)
 
-	// dust-branch multipliers actually applied by the last TuneEmitters call — the drift
-	// animator scales these down as the cloud travels (MultParam is absolute vs original)
-	protected float m_fAppliedDensityMult = 1.0;
-	protected float m_fAppliedLifetimeMult = 1.0;
-	protected float m_fAppliedSizeMult = 1.0;
-
-	// one cloud-field group per detonation: the central cloud and its own scattered
-	// contact dust never merge with or shove each other — only with OTHER events' clouds
-	protected int m_iBerCloudGroup;
-
-	// set while ProcessAdopted handles an effect born at this hit's own impact point (same
-	// 0.8 m gate as the deflection) — only such effects may take a NEW haze-gate decision;
-	// remoter adoptions are neighbours' effects and only ever reuse a remembered one
-	protected bool m_bBerAdoptOwnSplash;
-	// the last TuneImpactEmitters call kept its haze emitter alive — gated impacts have
-	// nothing long-lived left, so they stay out of the cloud field
-	protected bool m_bBerHazeKept;
 
 	// bullet impacts: matched shot's caliber weight + the material the shot actually
 	// struck, resolved once per impact and reused by fog accumulation and dust tuning
@@ -183,6 +135,9 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected float m_fBerImpactDensity = 1.0;  // scales the impact's own dust density by caliber
 	protected float m_fBerImpactSize = 1.0;     // scales the impact's particle size by caliber
 	protected string m_sBerStruckMat;
+	protected vector m_vBerHitPos;
+	protected vector m_vBerHitNormal;
+	protected bool m_bDirectionalImpactDone;
 	protected vector m_vBerShotDir;             // matched incoming shot direction (zero when unmatched)
 
 	protected vector m_vQueryCenter;
@@ -197,28 +152,28 @@ class BER_EffectTuningComponent : ScriptComponent
 	//------------------------------------------------------------------------------------------------
 	override void EOnFrame(IEntity owner, float timeSlice)
 	{
+		if (!owner || !owner.GetWorld())
+			return;
+		// A carried grenade must not trigger effects or exhaust its watch interval.
+		IEntity parent = owner.GetParent();
+		if (parent && ChimeraCharacter.Cast(parent.GetRootParent()))
+			return;
+
 		if (!m_bTakeoverDone && m_rTakeoverEffect != ResourceName.Empty)
 		{
 			m_bTakeoverDone = true;
 			SpawnTakeoverEffect(owner);
 		}
-
-		// Visual shrapnel fires on the first frame the warhead exists (the prefab only ever
-		// exists at the moment of detonation). It is deliberately NOT gated on the takeover:
-		// the AT mines spawn their blast through the engine's distance-effect system instead
-		// of a HitEffectComponent, so they carry no takeover effect, yet they fragment harder
-		// than anything else in the game and must still pockmark their surroundings.
-		// ComputeEnvironment is idempotent, so the takeover path above having already run it
-		// costs nothing here.
+		if (!m_bCondensationDone && m_fCondensationStrength > 0)
+		{
+			m_bCondensationDone = true;
+			SpawnCondensation(owner);
+		}
 		if (!m_bFragDone && m_iBerFragImpacts > 0)
 		{
 			m_bFragDone = true;
-			ComputeEnvironment(owner);
 			SpawnFragmentImpacts(owner);
 		}
-
-		// heavy rounds shake dust off a struck vehicle hull — resolved on the first frame
-		// so the kickoff appears together with the impact itself
 		if (!m_bHullKickupDone && m_fHullKickup > 0.01)
 		{
 			m_bHullKickupDone = true;
@@ -227,66 +182,33 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		m_fElapsed += timeSlice;
 		m_fScanAccum += timeSlice;
-
-		// warheads and bullet impacts classify their environment immediately, so indoor
-		// tuning can still catch their dust while it is emitting; smoke grenades (long
-		// scan) keep deferring — the device may still be carried around before use
-		if (m_fScanDuration <= 30 && !m_bEnvComputed)
-			ComputeEnvironment(owner);
-
-		// the tuning must catch the scattered blast/impact dust while it is still
-		// emitting (its emission window opens within ~50 ms) — query every frame for
-		// the first moments instead of waiting for the 0.5 s pass. Indoors that covers
-		// the whole room; outdoors, bullet impacts (no takeover) get a tight early
-		// query so the impact splash can be deflected/tuned before it finishes emitting
-		if (m_fScanDuration <= 30)
+		// Surface contact effects now tune themselves before their first particle.
+		// Only the owning impact's small neighbourhood may be adopted.
+		if (m_rTakeoverEffect == ResourceName.Empty && !m_bIndoorSmokeSwap && m_fElapsed <= 0.35)
 		{
-			if (m_bIndoor && m_fElapsed <= 0.8)
-			{
-				m_vQueryCenter = owner.GetOrigin();
-				owner.GetWorld().QueryEntitiesBySphere(m_vQueryCenter, 8.0, QueryParticleCallback, null, EQueryEntitiesFlags.ALL);
-			}
-			else if (!m_bIndoor && m_fElapsed <= 0.35 && m_rTakeoverEffect == ResourceName.Empty)
-			{
-				m_vQueryCenter = owner.GetOrigin();
-				owner.GetWorld().QueryEntitiesBySphere(m_vQueryCenter, 3.0, QueryParticleCallback, null, EQueryEntitiesFlags.ALL);
-			}
+			m_vQueryCenter = owner.GetOrigin();
+			owner.GetWorld().QueryEntitiesBySphere(m_vQueryCenter, 0.6, QueryParticleCallback, null, EQueryEntitiesFlags.ALL);
 		}
-
-		if (m_fScanAccum < 0.2)
-			return;
-		m_fScanAccum = 0;
-
-		// while held/carried by a character nothing can have detonated yet — don't scan or age out
-		IEntity parent = owner.GetParent();
-		if (parent && ChimeraCharacter.Cast(parent))
+		if (m_fScanAccum >= 0.2)
 		{
-			m_fElapsed = 0;
-			return;
+			m_fScanAccum = 0;
+			ScanChildren(owner);
 		}
-
-		ScanChildren(owner);
-
-		// the surface dust effects are spawned by invisible collision particles scattered
-		// around the blast zone — adopt everything close by, in two passes for late spawns
-		if (m_fScanDuration <= 30)
+		if (m_bIndoorSmokeSwap)
 		{
-			if ((m_iQueriesDone == 0 && m_fElapsed > 0.5) || (m_iQueriesDone == 1 && m_fElapsed > 1.5))
+			m_fSmokeShelterIn -= timeSlice;
+			if (m_fSmokeShelterIn <= 0)
 			{
-				m_iQueriesDone++;
-				m_vQueryCenter = owner.GetOrigin();
-				owner.GetWorld().QueryEntitiesBySphere(m_vQueryCenter, 8.0, QueryParticleCallback, null, EQueryEntitiesFlags.ALL);
+				m_fSmokeShelterIn = 0.5;
+				UpdateSmokeShelter(owner);
 			}
+			if (m_fElapsed > m_fScanDuration && m_aProcessed.IsEmpty())
+				ClearEventMask(owner, EntityEvent.FRAME);
 		}
-
-		if (m_fElapsed > m_fScanDuration)
+		else if (m_fElapsed > m_fScanDuration)
 			ClearEventMask(owner, EntityEvent.FRAME);
 	}
 
-	//------------------------------------------------------------------------------------------------
-	//! Spawn the explosion effect ourselves, paused, tune, then play. The BER .ptc overrides
-	//! already author WindInfluence 0 + LocalTransform 1, so wind exists only through the
-	//! drift animator moving the effect entity.
 	protected void SpawnTakeoverEffect(IEntity owner)
 	{
 		ComputeEnvironment(owner);
@@ -294,22 +216,17 @@ class BER_EffectTuningComponent : ScriptComponent
 		// the blast shock rips accumulated dust off nearby thin layers and vehicle hulls
 		BER_DustReservoir.RipArea(owner.GetWorld(), owner.GetOrigin(), 9.0, 1.0);
 
-		// ...and its pressure wave sweeps standing particle clouds radially away from the
-		// detonation — small-arms puffs and every drift-animated cloud within reach
+		// One impulse per tracked muzzle cloud, including sheltered impulse-only puffs.
 		BER_MuzzleBlastDust.ShovePuffs(owner.GetWorld(), owner.GetOrigin(), 9.0, vector.Zero, 2.5);
-		BER_WindDriftAnimator.GetInstance().ImpulseSweep(owner.GetOrigin(), 9.0, 2.5);
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
-		// align the effect to the ground slope — with LocalTransform-authored emitters the
-		// whole cloud follows, so hillside detonations no longer form a horizontal disk
-		// sticking out of the slope
+		// Align initial emission to the slope; subsequent motion is in world space.
 		if (m_vGroundNormal != vector.Zero && m_vGroundNormal != vector.Up)
 			SCR_EntityHelper.OrientUpToVector(m_vGroundNormal, spawnParams.Transform);
 		spawnParams.Transform[3] = owner.GetOrigin();
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(m_rTakeoverEffect, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(m_rTakeoverEffect, spawnParams);
 		if (!pfx)
 			return;
 
@@ -322,14 +239,7 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		pfx.Play();
 
-		if (!m_bIndoor && m_fWindRampTime > 0.05)
-			BER_WindDriftAnimator.GetInstance().Register(pfx, m_fWindRampTime, m_fAppliedDensityMult, m_fAppliedLifetimeMult);
-
-		// the lingering cloud takes part in the overlap field: crowded clouds shoulder
-		// each other apart, deeply overlapping ones merge (density-only indoors)
-		if (m_iBerCloudGroup == 0)
-			m_iBerCloudGroup = BER_CloudField.NewGroup();
-		BER_CloudField.GetInstance().Register(pfx, BER_CloudField.FAMILY_EXPLOSION, m_bIndoor, m_iBerCloudGroup, m_fAppliedDensityMult, m_fAppliedSizeMult, m_fAppliedLifetimeMult);
+		// Dust and smoke drift per particle through native drag; debris stays ballistic.
 
 		if (m_fDebrisScale > 0.01)
 			SpawnImpactDebris();
@@ -338,99 +248,81 @@ class BER_EffectTuningComponent : ScriptComponent
 		// room — a lingering fog on top of the explosion's own dust (not when it went off
 		// on a material that sheds none, e.g. a metal floor). Explosions carry enough
 		// weight to raise the fog at once and advance the layer buildup fast.
-		if (m_bIndoor && !IsDustExemptMaterial(m_sGroundMat))
-			SpawnRoomFog(owner, 1.0, 3.0, FogVariantFor(m_sGroundMat));
+		if (m_bIndoor && m_fDustFactor > 0)
+			SpawnRoomFog(owner, 1.0, 3.0 * m_fDustFactor, FogVariantFor(m_sGroundMat));
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Fill the room with slow structural dust fog (constant opacity for 30+ s, authored).
-	//! The fog sits at the estimated ROOM CENTER, not the impact point, so it spreads evenly
-	//! through the room instead of hugging the wall that was hit. Deduplicated per room —
-	//! and every impact contributes its caliber/material WEIGHT: the first fog appears once
-	//! the room has accumulated FOG_SPAWN_WEIGHT (heavy rounds and explosions immediately,
-	//! a 5.56 rifle only after several hits), and sustained fire stacks extra layers per
-	//! FOG_WEIGHT_PER_LAYER of further weight, so strafing a room with a machine gun builds
-	//! real visibility loss at a quarter of the rate for the small calibers.
+	//! Accumulate impact weight per estimated room, then emit bounded, fading dust layers
+	//! near the hit. A clear path prevents adjacent rooms sharing the same accumulator.
 	protected void SpawnRoomFog(IEntity owner, float strength, float weight, ResourceName fogRes)
 	{
-		BaseWorld world = owner.GetWorld();
-		vector pos = owner.GetOrigin();
-		float now = world.GetWorldTime() * 0.001;
+		vector start = owner.GetOrigin();
+		if (m_vBerHitNormal != vector.Zero)
+			start = m_vBerHitPos + m_vBerHitNormal * 0.08;
+		AddRoomDust(owner.GetWorld(), start, owner, strength, weight, fogRes);
+	}
 
+	//! One shared source path for impacts/fragments and the opt-in native regression fixture.
+	//! Returns only a newly emitted layer; an accumulating or full room returns null.
+	static ParticleEffectEntity AddRoomDust(BaseWorld world, vector start, IEntity exclude, float strength, float weight, ResourceName fogRes)
+	{
+		if (!world || weight <= 0)
+			return null;
+		float now = world.GetWorldTime() * 0.001;
 		vector roomCenter;
 		float roomHalf;
-		BER_SurfaceUtil.GetRoomGeometry(world, pos, owner, 9.0, roomCenter, roomHalf);
-
-		// the fog must APPEAR where the hit happened, not float in mid-room: spawn pulled
-		// back from the impact point into the room — along the incoming shot when known,
-		// toward the room's free center otherwise. Dedup stays keyed on the room center
-		// so hits on different walls of one room still merge into one buildup.
-		vector fogPos = pos;
-		if (m_vBerShotDir != vector.Zero)
+		BER_SurfaceUtil.GetRoomGeometry(world, start - Vector(0, 0.6, 0), exclude, 9.0, roomCenter, roomHalf);
+		roomCenter[1] = start[1];
+		vector desired = start;
+		vector toCenter = roomCenter - start;
+		if (toCenter.Length() > 0.01)
 		{
-			fogPos = pos - m_vBerShotDir * 1.4;
+			toCenter.Normalize();
+			desired = start + toCenter * 0.6;
 		}
-		else
-		{
-			vector toCenter = roomCenter - pos;
-			float len = toCenter.Length();
-			if (len > 0.3)
-			{
-				float pull = 1.4;
-				if (pull > len)
-					pull = len;
-				fogPos = pos + toCenter * (pull / len);
-			}
-		}
+		vector fogPos = BER_SurfaceUtil.ClipCloudPosition(world, start, desired, exclude);
 
-		for (int i = s_aFogTime.Count() - 1; i >= 0; i--)
+		EnsureFogState(world);
+		BER_RoomDustState room;
+		for (int i = s_aRooms.Count() - 1; i >= 0; i--)
 		{
-			if (now - s_aFogTime[i] > FOG_DEDUP_TIME)
+			BER_RoomDustState candidate = s_aRooms[i];
+			candidate.PruneLayers();
+			if (now - candidate.m_fUpdated > 60 && candidate.m_Layers.IsEmpty())
 			{
-				s_aFogTime.Remove(i);
-				s_aFogPos.Remove(i);
-				s_aFogHits.Remove(i);
-				s_aFogLayers.Remove(i);
+				s_aRooms.Remove(i);
 				continue;
 			}
-			if (vector.DistanceSq(s_aFogPos[i], roomCenter) < FOG_DEDUP_RADIUS_SQ)
-			{
-				s_aFogHits[i] = s_aFogHits[i] + weight;
-
-				// still accumulating toward the first fog
-				if (s_aFogLayers[i] < 0)
-				{
-					if (s_aFogHits[i] >= FOG_SPAWN_WEIGHT && SpawnFogEntity(fogPos, strength, roomHalf, fogRes))
-						s_aFogLayers[i] = 0;
-					return;
-				}
-
-				// fog standing — continued fire thickens it in weight steps, each new
-				// layer rising where the CURRENT fire is landing
-				if (s_aFogLayers[i] < FOG_MAX_EXTRA_LAYERS
-					&& s_aFogHits[i] >= FOG_SPAWN_WEIGHT + (s_aFogLayers[i] + 1) * FOG_WEIGHT_PER_LAYER)
-				{
-					s_aFogLayers[i] = s_aFogLayers[i] + 1;
-					SpawnFogEntity(fogPos, 0.45, roomHalf, fogRes);
-				}
-				return;
-			}
+			if (vector.DistanceSq(candidate.m_Center, roomCenter) < FOG_DEDUP_RADIUS_SQ
+				&& BER_SurfaceUtil.HasClearPath(world, roomCenter, candidate.m_Center, exclude))
+				room = candidate;
 		}
-
-		// new room entry — heavy rounds raise the fog at once, light rounds accumulate
-		int layers = -1;
-		if (weight >= FOG_SPAWN_WEIGHT && SpawnFogEntity(fogPos, strength, roomHalf, fogRes))
-			layers = 0;
-
-		s_aFogPos.Insert(roomCenter);
-		s_aFogTime.Insert(now);
-		s_aFogHits.Insert(weight);
-		s_aFogLayers.Insert(layers);
+		if (!room)
+		{
+			if (s_aRooms.Count() >= 64)
+				return null;
+			room = new BER_RoomDustState();
+			room.m_Center = roomCenter;
+			room.m_fUpdated = now;
+			s_aRooms.Insert(room);
+		}
+		room.Accumulate(now, weight);
+		if (room.m_fPending < FOG_SPAWN_WEIGHT || room.m_Layers.Count() >= FOG_MAX_LAYERS
+			|| now - room.m_fLastEmission < FOG_MIN_INTERVAL)
+			return null;
+		ParticleEffectEntity layer = SpawnFogEntity(world, exclude, fogPos, strength, fogRes);
+		if (layer)
+		{
+			room.m_Layers.Insert(layer);
+			room.m_fPending -= FOG_SPAWN_WEIGHT;
+			room.m_fLastEmission = now;
+		}
+		return layer;
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! How much structural dust a struck material sheds into the room, by easily researched
-	//! particulate logic: plaster/masonry/concrete/brick = lots of fine dust; bare stone a
+	//! Relative structural-dust weights: plaster/masonry/concrete/brick shed fine dust; bare stone a
 	//! bit less; dirt floors plenty; WOOD splinters but powders very little; sheet metal,
 	//! glass, plastic and the like (the typewriter) shed none at all. Unknown/no-ray
 	//! defaults to full — interiors are mostly masonry.
@@ -467,18 +359,10 @@ class BER_EffectTuningComponent : ScriptComponent
 	//! surface can be resolved.
 	protected string GetStruckMaterial(IEntity owner, vector shotDir)
 	{
-		BaseWorld world = owner.GetWorld();
-
-		TraceParam tp = new TraceParam();
-		tp.Start = owner.GetOrigin() - shotDir * 0.5;
-		tp.End = owner.GetOrigin() + shotDir * 0.4;
-		tp.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
-		tp.Exclude = owner;
-
-		if (world.TraceMove(tp, null) >= 1.0 || !tp.SurfaceProps)
-			return "";
-
-		return tp.SurfaceProps.GetName();
+		string material;
+		IEntity hitRoot;
+		BER_SurfaceUtil.TraceImpact(owner.GetWorld(), owner.GetOrigin(), shotDir, owner, m_vBerHitPos, m_vBerHitNormal, material, hitRoot);
+		return material;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -501,7 +385,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		else
 		{
 			// (scale/0.72)^2: 5.56 (0.36) -> 0.25, 7.62 (0.42) -> 0.34, pistols floor,
-			// 12.7+ (1.2+) capped — destructive power rises superlinearly with caliber
+			// 12.7+ (1.2+) capped. These are visual weights, not measured damage or energy.
 			m_fBerCalWeight = BER_SurfaceUtil.ClampF(Math.Pow(shotScale / 0.72, 2.0), 0.08, 2.5);
 			m_sBerStruckMat = GetStruckMaterial(owner, shotDir);
 			m_vBerShotDir = shotDir;
@@ -512,10 +396,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		// generating far too much per hit)
 		m_fBerImpactDensity = BER_SurfaceUtil.ClampF(m_fBerCalWeight, 0.12, 1.5);
 
-		// particle size follows the hole that was punched, LINEAR in caliber (a 5.56
-		// puff ~0.4x, pistols smaller still, .50+ up to 1.3x) — the generalized room fog
-		// is left to the cloud field MERGING nearby impacts together, not to any single
-		// impact being oversized
+		// Visual puff size follows weapon-class scale; this is not a wound/penetration model.
 		m_fBerImpactSize = BER_SurfaceUtil.ClampF(1.15 * shotScale, 0.25, 1.3);
 
 		string sm = m_sBerStruckMat;
@@ -534,40 +415,43 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected bool SpawnFogEntity(vector center, float strength, float roomHalf, ResourceName fogRes)
+	protected static ParticleEffectEntity SpawnFogEntity(BaseWorld world, IEntity exclude, vector center, float strength, ResourceName fogRes)
 	{
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 		spawnParams.Transform[3] = center;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(fogRes, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(fogRes, spawnParams);
 		if (!pfx)
-			return false;
+			return null;
 
 		BER_OwnedEffects.MarkOwned(pfx);
 
 		Particles particles = pfx.GetParticles();
 		if (particles)
 		{
-			// particle size follows the room's free half-extent (measured mid-room, so a
-			// detonation near a wall of a big hall still gets hall-sized fog)
-			float roomSize = BER_SurfaceUtil.ClampF(roomHalf / 4.0, 0.55, 1.3);
-			float sizeMult = roomSize * BER_SurfaceUtil.ClampF(strength, 0.4, 1.0);
+			vector extent = BER_SurfaceUtil.GetCloudExtent(world, center, exclude);
+			// Shape changes spread birth locations; strength changes amount, not cloud radius.
+			float clearance = BER_SurfaceUtil.GetMinWallDistance(world, center - Vector(0, 0.6, 0), exclude, 1.5);
+			float sizeMult = BER_SurfaceUtil.ClampF(clearance / 0.8, 0.08, 1);
 			int emitterCount = particles.GetNumEmitters();
 			for (int i = 0; i < emitterCount; i++)
+			{
+				particles.SetParam(i, EmitterParam.SHAPE_SIZE, extent);
 				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
+				particles.MultParam(i, EmitterParam.SIZE_RND, sizeMult);
+				particles.MultParam(i, EmitterParam.BIRTH_RATE, BER_SurfaceUtil.ClampF(strength, 0.2, 1));
+			}
 		}
 
 		pfx.Play();
-		return true;
+		return pfx;
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Physical ground debris (3D dirt clumps / stone chips) thrown by the detonation,
-	//! picked by the struck surface and scaled per warhead: count scales linearly with
-	//! m_fDebrisScale, chunk size sub-linearly (a rocket throws many more clods than a
-	//! 25mm hit, each somewhat bigger — not boulders).
+	//! Visual ground debris: surface availability and event scale determine a bounded
+	//! count. Native particles handle gravity/collision; the cleanup estimate is not
+	//! a damage or shrapnel-trajectory simulation.
 	protected void SpawnImpactDebris()
 	{
 		if (!m_bGroundFound)
@@ -576,8 +460,8 @@ class BER_EffectTuningComponent : ScriptComponent
 		string mat = m_sGroundMat;
 		mat.ToLower();
 
-		if (mat.Contains("water") || mat.Contains("seaweed") || mat.Contains("snow") || mat.Contains("ice")
-			|| mat.Contains("metal") || mat.Contains("armor") || mat.Contains("wood"))
+		float solidAvailability = BER_SurfaceUtil.GetSolidDebrisAvailability(mat);
+		if (solidAvailability <= 0)
 			return;
 
 		ResourceName res = DEBRIS_DIRT;
@@ -588,12 +472,11 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 		if (m_vGroundNormal != vector.Zero && m_vGroundNormal != vector.Up)
 			SCR_EntityHelper.OrientUpToVector(m_vGroundNormal, spawnParams.Transform);
 		spawnParams.Transform[3] = m_vGroundPos;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(res, spawnParams);
 		if (!pfx)
 			return;
 
@@ -602,21 +485,70 @@ class BER_EffectTuningComponent : ScriptComponent
 		Particles particles = pfx.GetParticles();
 		if (particles)
 		{
-			float sizeMult = BER_SurfaceUtil.ClampF(0.75 + 0.25 * m_fDebrisScale, 0.6, 1.8);
-			int emitterCount = particles.GetNumEmitters();
-			for (int i = 0; i < emitterCount; i++)
+			float eventScale = BER_SurfaceUtil.ClampF(m_fDebrisScale, 0, 5);
+			float sizeMult = BER_SurfaceUtil.ClampF(0.75 + 0.25 * eventScale, 0.6, 1.8);
+			float speedMult = BER_SurfaceUtil.GetDebrisSpeedScale(eventScale);
+			array<string> names = {};
+			particles.GetEmitterNames(names);
+			float authoredCount;
+			foreach (int i, string name : names)
 			{
-				particles.MultParam(i, EmitterParam.BIRTH_RATE, m_fDebrisScale);
-				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
+				if (name.IndexOf("ber_dust_") == 0)
+					continue;
+				float rate, variation, duration;
+				particles.GetParamOrig(i, EmitterParam.BIRTH_RATE, rate);
+				particles.GetParamOrig(i, EmitterParam.BIRTH_RATE_RND, variation);
+				particles.GetParamOrig(i, EmitterParam.EMITTING_TIME, duration);
+				authoredCount += (rate + variation) * duration;
 			}
+			float countMult = eventScale * solidAvailability;
+			if (authoredCount > 0 && authoredCount * countMult > 48)
+				countMult = 48.0 / authoredCount;
+			foreach (int i, string name : names)
+			{
+				if (name.IndexOf("ber_dust_") == 0)
+					continue;
+				particles.MultParam(i, EmitterParam.BIRTH_RATE, countMult);
+				particles.MultParam(i, EmitterParam.BIRTH_RATE_RND, countMult);
+				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
+				particles.MultParam(i, EmitterParam.SIZE_RND, sizeMult);
+				particles.MultParam(i, EmitterParam.VELOCITY, speedMult);
+				particles.MultParam(i, EmitterParam.VELOCITY_RND, speedMult);
+				float speed, speedRandom;
+				particles.GetParamOrig(i, EmitterParam.VELOCITY, speed);
+				particles.GetParamOrig(i, EmitterParam.VELOCITY_RND, speedRandom);
+				particles.SetParam(i, EmitterParam.LIFETIME, BER_SurfaceUtil.GetDebrisLifetime((speed + speedRandom) * speedMult));
+				particles.SetParam(i, EmitterParam.LIFETIME_RND, 0.2);
+			}
+			float dust = BER_SurfaceUtil.GetDustAvailability(GetOwner().GetWorld(), m_vGroundPos, m_sGroundMat, m_bIndoor);
+			BER_SurfaceUtil.TuneDust(particles, dust * m_fDebrisScale, m_bIndoor, sizeMult);
 		}
 
 		pfx.Play();
 	}
 
-	//------------------------------------------------------------------------------------------------
-	//! Uniform random direction over the sphere without trigonometry (Math.Sin/Cos are
-	//! unreliable in script components) — rejection-sample the unit ball.
+	//! Enabled by explicit large-blast prefab settings, independent of takeover effects.
+	//! No inference of atmospheric humidity from ground wetness.
+	protected void SpawnCondensation(IEntity owner)
+	{
+		if (m_fCondensationStrength <= 0)
+			return;
+		ComputeEnvironment(owner);
+		if (m_bIndoor)
+			return;
+		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
+		params.UseFrameEvent = true;
+		params.Transform[3] = owner.GetOrigin();
+		ParticleEffectEntity vapor = BER_OwnedEffects.SpawnPaused(CONDENSATION, params);
+		if (!vapor)
+			return;
+		BER_OwnedEffects.MarkOwned(vapor);
+		Particles particles = vapor.GetParticles();
+		if (particles)
+			particles.MultParam(-1, EmitterParam.BIRTH_RATE, BER_SurfaceUtil.ClampF(m_fCondensationStrength, 0, 1));
+		vapor.Play();
+	}
+
 	protected vector RandomSphereDir()
 	{
 		for (int tries = 0; tries < 16; tries++)
@@ -631,91 +563,86 @@ class BER_EffectTuningComponent : ScriptComponent
 		return vector.Up;
 	}
 
-	//------------------------------------------------------------------------------------------------
-	//! Visual shrapnel: trace m_iBerFragImpacts random rays out of the detonation; every
-	//! surface hit plays the shrapnel wisp for the struck gamemat — the bullet-impact wisp
-	//! of that material's Hit_<mat>_enter_01, extracted on its own and shrunk to a third
-	//! (BER_FragHit_<mat>.ptc). Sized in data, so it does NOT go through the caliber tuning
-	//! and carries no haze emitter to round-gate. Spawns are MarkOwned so no impact
-	//! component re-adopts or re-tunes them. No decal: real fragmentation leaves nothing
-	//! that reads as the 9 mm bullet-hole material, and the pock was invisible on terrain
-	//! anyway (user ruling, pass 57).
 	protected void SpawnFragmentImpacts(IEntity owner)
 	{
 		BaseWorld world = owner.GetWorld();
-
-		if (DIAG_FRAG)
-			PrintFormat("BER DIAG frag: START rays=%1 origin=%2", m_iBerFragImpacts, owner.GetOrigin());
-
-		// fragments leave the casing above ground level, not out of the soil
 		vector origin = owner.GetOrigin() + Vector(0, 0.18, 0);
-
-		for (int i = 0; i < m_iBerFragImpacts; i++)
+		int count = Math.ClampInt(m_iBerFragImpacts, 0, 64);
+		ComputeEnvironment(owner);
+		float fragmentDustWeight = 0;
+		for (int i = 0; i < count; i++)
 		{
 			vector dir = RandomSphereDir();
-
 			TraceParam tp = new TraceParam();
 			tp.Start = origin;
 			tp.End = origin + dir * FRAG_IMPACT_RANGE;
 			tp.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
 			tp.Exclude = owner;
-
-			float frac = world.TraceMove(tp, null);
-			if (frac >= 1.0)
+			float fraction = world.TraceMove(tp, null);
+			float distance = FRAG_IMPACT_RANGE * fraction;
+			if (fraction >= 1.0 || distance < FRAG_IMPACT_MIN_DIST || !tp.SurfaceProps)
 				continue;
-
-			float dist = FRAG_IMPACT_RANGE * frac;
-			if (dist < FRAG_IMPACT_MIN_DIST)
+			string material = tp.SurfaceProps.GetName();
+			material.ToLower();
+			if (material.Contains("water") || material.Contains("flesh"))
 				continue;
-
-			GameMaterial mat = tp.SurfaceProps;
-			if (!mat)
+			GameMaterial hitMaterial = tp.SurfaceProps;
+			if (!hitMaterial)
 				continue;
-
-			string matName = mat.GetName();
-			matName.ToLower();
-			if (matName.Contains("water") || matName.Contains("flesh"))
-				continue; // no pockmarks on water or people
-
-			HitEffectInfo hitInfo = mat.GetHitEffectInfo();
-			if (!hitInfo)
+			HitEffectInfo hit = hitMaterial.GetHitEffectInfo();
+			if (!hit)
 				continue;
+			vector pos = origin + dir * distance;
+			vector normal = tp.TraceNorm;
+			if (normal.LengthSq() < 0.0001)
+				continue;
+			normal.Normalize();
+			if (vector.Dot(dir, normal) > 0)
+				normal = -normal;
+			// Accept either getter ordering; select resources by their actual extension.
+			ResourceName first = hit.GetParticleEffectValue();
+			ResourceName second = hit.GetDecalMaterialValue();
+			ResourceName particle = ResourceName.Empty;
+			ResourceName decal = ResourceName.Empty;
+			string firstPath = first;
+			string secondPath = second;
+			if (firstPath.Contains(".ptc")) particle = first;
+			if (secondPath.Contains(".ptc")) particle = second;
+			if (firstPath.Contains(".emat")) decal = first;
+			if (secondPath.Contains(".emat")) decal = second;
 
-			vector hitPos = origin + dir * dist;
-			vector up = tp.TraceNorm;
-
-			// ⚠ the HitEffectInfo getters are CROSS-WIRED in the engine: GetParticleEffectValue()
-			// returns the DECAL .emat and GetDecalMaterialValue() returns the bullet-hit .ptc
-			// (proven with real logged values — 51st-pass DIAG_FRAG: every gamemat came back
-			// with the two resources swapped). Select by file extension so this keeps working
-			// even if a future game update fixes the wiring. Only the .ptc's material key is
-			// used here — it picks the matching shrapnel wisp.
-			ResourceName ptcRes = hitInfo.GetDecalMaterialValue();
-			string extProbe = ptcRes;
-			if (extProbe.Contains(".emat"))
-				ptcRes = hitInfo.GetParticleEffectValue();
-			ResourceName fragRes = ResolveFragHitEffect(ptcRes);
-
-			// shrapnel wisp, oriented out of the surface like the engine spawns bullet hits
-			ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
-			spawnParams.UseFrameEvent = true;
-			if (up != vector.Zero)
-				SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
-			spawnParams.Transform[3] = hitPos;
-
-			ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(fragRes, spawnParams);
-			if (DIAG_FRAG)
-			{
-				string entName = "NULL";
-				if (tp.TraceEnt)
-					entName = tp.TraceEnt.ClassName();
-				PrintFormat("BER DIAG frag: hit d=%1 mat=%2 ent=%3 hitPtc=%4 frag=%5 pfx=%6", dist, matName, entName, ptcRes, fragRes, pfx != null);
-			}
+			// Hole and dust have independent lifecycles: wetness never erases the hole.
+			World decalWorld = world;
+			if (decalWorld && tp.TraceEnt && decal != ResourceName.Empty)
+				decalWorld.CreateDecal(tp.TraceEnt, pos + normal * 0.01, -normal,
+					0, 0.08, Math.RandomFloat(0, 360), 0.045, 1, decal, FRAG_DECAL_LIFETIME, 0xFFFFFFFF);
+			bool indoor = BER_SurfaceUtil.IsRoofed(world, pos + normal * 0.15, owner, 25);
+			float dust = BER_SurfaceUtil.GetDustAvailability(world, pos, material, indoor);
+			if (dust <= 0.001 || particle == ResourceName.Empty)
+				continue;
+			ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
+			params.UseFrameEvent = true;
+			vector ejecta = BER_SurfaceUtil.GetImpactEjectaDirection(dir, normal);
+			if (ejecta != vector.Zero)
+				SCR_EntityHelper.OrientUpToVector(ejecta, params.Transform);
+			params.Transform[3] = pos + normal * 0.01;
+			ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(ResolveFragHitEffect(particle), params);
 			if (!pfx)
 				continue;
-
 			BER_OwnedEffects.MarkOwned(pfx);
+			Particles particles = pfx.GetParticles();
+			if (particles)
+			{
+				BER_SurfaceUtil.TuneDust(particles, dust, indoor, 1.0, 1.0);
+				BER_SurfaceUtil.TuneImpactCone(particles, ejecta, normal);
+			}
+			if (m_bIndoor && indoor && distance < 6
+				&& BER_SurfaceUtil.HasClearPath(world, origin, pos + normal * 0.08, owner))
+				fragmentDustWeight += dust * FogMaterialWeight(material) * 0.08;
+			pfx.Play();
 		}
+		if (fragmentDustWeight > 0)
+			SpawnRoomFog(owner, 0.7, Math.Min(fragmentDustWeight, 3), ROOM_FOG);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -724,16 +651,40 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected static ResourceName ResolveFragHitEffect(ResourceName hitPtc)
 	{
 		string path = hitPtc;
-		int a = path.IndexOf("Hit_");
-		int b = path.IndexOf("_enter_01");
-		if (a >= 0 && b > a + 4)
-		{
-			string mat = path.Substring(a + 4, b - a - 4);
-			int idx = FRAG_HIT_MATS.Find(mat);
-			if (idx >= 0)
-				return FRAG_HIT_EFFECTS[idx];
-		}
-		return FRAG_HIT_DEFAULT;
+		path.ToLower();
+		if (path.Contains("hit_asphalt_enter_01"))
+			return "{BE20250905AC0040}Particles/BER/BER_FragHit_asphalt.ptc";
+		if (path.Contains("hit_brick_enter_01"))
+			return "{BE20250905AC0041}Particles/BER/BER_FragHit_brick.ptc";
+		if (path.Contains("hit_concrete_enter_01"))
+			return "{BE20250905AC0042}Particles/BER/BER_FragHit_concrete.ptc";
+		if (path.Contains("hit_dirt_enter_01"))
+			return "{BE20250905AC0044}Particles/BER/BER_FragHit_dirt.ptc";
+		if (path.Contains("hit_fabric_enter_01"))
+			return "{BE20250905AC0045}Particles/BER/BER_FragHit_fabric.ptc";
+		if (path.Contains("hit_glass_enter_01"))
+			return "{BE20250905AC0046}Particles/BER/BER_FragHit_glass.ptc";
+		if (path.Contains("hit_grass_enter_01"))
+			return "{BE20250905AC0047}Particles/BER/BER_FragHit_grass.ptc";
+		if (path.Contains("hit_gravel_enter_01"))
+			return "{BE20250905AC0048}Particles/BER/BER_FragHit_gravel.ptc";
+		if (path.Contains("hit_metal_enter_01"))
+			return "{BE20250905AC0049}Particles/BER/BER_FragHit_metal.ptc";
+		if (path.Contains("hit_plastic_enter_01"))
+			return "{BE20250905AC0050}Particles/BER/BER_FragHit_plastic.ptc";
+		if (path.Contains("hit_rubber_enter_01"))
+			return "{BE20250905AC0051}Particles/BER/BER_FragHit_rubber.ptc";
+		if (path.Contains("hit_sand_enter_01"))
+			return "{BE20250905AC0052}Particles/BER/BER_FragHit_sand.ptc";
+		if (path.Contains("hit_snow_enter_01"))
+			return "{BE20250905AC0053}Particles/BER/BER_FragHit_snow.ptc";
+		if (path.Contains("hit_soil_enter_01"))
+			return "{BE20250905AC0054}Particles/BER/BER_FragHit_soil.ptc";
+		if (path.Contains("hit_stone_enter_01"))
+			return "{BE20250905AC0055}Particles/BER/BER_FragHit_stone.ptc";
+		if (path.Contains("hit_wood_enter_01"))
+			return "{BE20250905AC0056}Particles/BER/BER_FragHit_wood.ptc";
+		return "{BE20250905AC0043}Particles/BER/BER_FragHit_default.ptc";
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -776,7 +727,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		while (child)
 		{
 			ParticleEffectEntity pfx = ParticleEffectEntity.Cast(child);
-			if (pfx && m_aProcessed.Find(pfx) == -1)
+			if (pfx && m_aProcessed.Find(pfx) == -1 && (m_bIndoorSmokeSwap || pfx.GetParticles()))
 			{
 				m_aProcessed.Insert(pfx);
 				ProcessAdopted(pfx, owner);
@@ -789,11 +740,11 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected bool QueryParticleCallback(IEntity ent)
 	{
 		ParticleEffectEntity pfx = ParticleEffectEntity.Cast(ent);
-		if (!pfx || m_aProcessed.Find(pfx) != -1)
+		if (!pfx || m_aProcessed.Find(pfx) != -1 || !pfx.GetParticles())
 			return true;
 
 		// only adopt effects that belong to this blast zone
-		if (vector.DistanceSq(pfx.GetOrigin(), m_vQueryCenter) > 36.0)
+		if (vector.DistanceSq(pfx.GetOrigin(), m_vQueryCenter) > 0.36)
 			return true;
 
 		m_aProcessed.Insert(pfx);
@@ -802,376 +753,154 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Adopted effects near a takeover explosion are the scattered surface blast dust with
-	//! BER-overridden .ptc (wind-free, local-space) — drift-animating them gives the same
-	//! hold + wind acceleration. Drift is gated to takeover warheads ONLY: smoke grenades /
-	//! smoke shells attach their emitter to the device and moving it would detach the
-	//! smoke origin. Parented effects are never drifted for the same reason.
+	//! Adopt only nearby named impact dust. Native world-space particles provide drift;
+	//! smoke devices keep the native source and clock while already emitted smoke stays behind.
 	protected void ProcessAdopted(ParticleEffectEntity pfx, IEntity owner)
 	{
-		// never adopt effects BER itself spawned — they are tuned at spawn by whoever
-		// spawned them; re-adoption would re-boost lifetimes, double-register drift or
-		// reorient effects that were placed deliberately
 		if (BER_OwnedEffects.IsOwned(pfx))
 			return;
-
 		Particles particles = pfx.GetParticles();
 		if (!particles)
 			return;
+		if (!m_bIndoorSmokeSwap && !BER_SurfaceUtil.HasDustEmitters(particles))
+			return; // never adopt an unrelated flash, exhaust, tracer or another mod's effect
+		if (m_bIndoorSmokeSwap)
+			return; // UpdateSmokeShelter tunes the original source without restarting it.
 
 		ComputeEnvironment(owner);
+		if (m_rTakeoverEffect != ResourceName.Empty)
+			return; // takeover and surface contacts already have an owner
 
-		// bullet impacts: resolve the matched round's caliber weight and the struck
-		// material once, then deflect the splash away from the impact angle — the engine
-		// spawns it at right angles to the surface no matter where the shot came from
-		if (m_rTakeoverEffect == ResourceName.Empty && !m_bIndoorSmokeSwap && m_bScaleBySurface)
+		BER_OwnedEffects.MarkOwned(pfx);
+		ResolveImpactInfo(owner);
+		ParticleEffectEntity originalImpact = pfx;
+		pfx = ReplaceDirectionalImpact(pfx, owner);
+		bool directional = pfx != originalImpact;
+		particles = pfx.GetParticles();
+		if (!particles)
+			return;
+		string struck = m_sBerStruckMat;
+		if (struck == "")
+			struck = m_sGroundMat;
+		float dust = BER_SurfaceUtil.GetDustAvailability(owner.GetWorld(), pfx.GetOrigin(), struck, m_bIndoor);
+		BER_SurfaceUtil.TuneDust(particles, dust * m_fBerImpactDensity, m_bIndoor, m_fBerImpactSize, 1.0);
+		if (directional)
 		{
-			ResolveImpactInfo(owner);
-			DeflectImpactSplash(pfx, owner);
+			vector direction = BER_SurfaceUtil.GetImpactEjectaDirection(m_vBerShotDir, m_vBerHitNormal);
+			BER_SurfaceUtil.TuneImpactCone(particles, direction, m_vBerHitNormal);
 		}
+		pfx.Play();
+		if (m_bIndoor && dust > 0)
+			SpawnRoomFog(owner, 0.7, dust * m_fBerCalWeight * FogMaterialWeight(struck), FogVariantFor(struck));
+	}
 
-		m_bBerAdoptOwnSplash = vector.DistanceSq(pfx.GetOrigin(), owner.GetOrigin()) <= 0.64;
-		m_bBerHazeKept = false;
-
-		// smoke grenade under a roof: stop the vanilla wind-coupled plume (its few
-		// already-born particles fade on their own curves) and restart the same smoke as
-		// the windless BER variant — the screen stays in the room and lingers
-		if (m_bIndoorSmokeSwap && m_bIndoor)
+	//------------------------------------------------------------------------------------------------
+	//! Replace the supported native wall hit while paused: rotating an emitting world-space
+	//! effect cannot redirect particles already born. Hole decals remain engine-owned.
+	protected ParticleEffectEntity ReplaceDirectionalImpact(ParticleEffectEntity original, IEntity owner)
+	{
+		if (m_vBerHitNormal == vector.Zero || m_bDirectionalImpactDone)
+			return original;
+		// This marker exists only in our six native wall-hit overrides.
+		// Nearby blast, fragment and other-mod effects keep their resource and lifecycle.
+		array<string> names = {};
+		original.GetParticles().GetEmitterNames(names);
+		if (names.Find("ber_dust_fines") == -1 || vector.DistanceSq(original.GetOrigin(), owner.GetOrigin()) > 0.64)
+			return original;
+		ResourceName resource = GetDirectionalImpactResource(m_sBerStruckMat);
+		if (resource == ResourceName.Empty)
+			return original;
+		vector direction = BER_SurfaceUtil.GetImpactEjectaDirection(m_vBerShotDir, m_vBerHitNormal);
+		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
+		params.UseFrameEvent = true;
+		SCR_EntityHelper.OrientUpToVector(direction, params.Transform);
+		params.Transform[3] = m_vBerHitPos + m_vBerHitNormal * 0.025;
+		ParticleEffectEntity replacement = BER_OwnedEffects.SpawnPaused(resource, params);
+		if (!replacement)
+			return original;
+		if (!replacement.GetParticles())
 		{
-			ParticleEffectEntity swapped = SwapToIndoorVariant(pfx, owner);
-			if (swapped)
+			replacement.Stop();
+			return original;
+		}
+		m_bDirectionalImpactDone = true;
+		BER_OwnedEffects.MarkOwned(replacement);
+		original.Stop();
+		return replacement;
+	}
+
+	protected ResourceName GetDirectionalImpactResource(string material)
+	{
+		material.ToLower();
+		if (material.Contains("wood"))
+			return "{0A96BBE6A54CA14E}Particles/Enviroment/Hit_wood_enter_01.ptc";
+		if (material.Contains("brick"))
+			return "{A510ABAAA567CA34}Particles/Enviroment/Hit_brick_enter_01.ptc";
+		if (material.Contains("concrete") || material.Contains("plaster") || material.Contains("drywall") || material.Contains("cement"))
+			return "{5AF94EADA8B7BD2A}Particles/Enviroment/Hit_concrete_enter_01.ptc";
+		if (material.Contains("stone") || material.Contains("rock"))
+			return "{8B297E5BF3F7345D}Particles/Enviroment/Hit_stone_enter_01.ptc";
+		if (material.Contains("asphalt"))
+			return "{9439EC3E0681B089}Particles/Enviroment/Hit_asphalt_enter_01.ptc";
+		if (material == "default")
+			return "{F62C467C3B897254}Particles/Enviroment/Hit_default_enter_01.ptc";
+		return ResourceName.Empty; // unknown/other mods keep their selected material effect
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Change source wind in place. Never restart a smoke device's native burn clock,
+	//! repeat phase, occlusion or colour by substituting a fresh particle entity.
+	protected void UpdateSmokeShelter(IEntity owner)
+	{
+		if (m_aProcessed.IsEmpty())
+			return;
+		bool indoor = BER_SurfaceUtil.IsRoofed(owner.GetWorld(), owner.GetOrigin(), owner, m_fRoofCheckDistance);
+		for (int i = m_aProcessed.Count() - 1; i >= 0; i--)
+		{
+			ParticleEffectEntity source = m_aProcessed[i];
+			if (!source || source.GetState() == EParticleEffectState.STOPPED)
 			{
-				m_aProcessed.Insert(swapped);
-				pfx = swapped;
-				particles = pfx.GetParticles();
-				if (!particles)
-					return;
+				m_aProcessed.Remove(i);
+				continue;
+			}
+			Particles particles = source.GetParticles();
+			if (!particles)
+				continue;
+			array<string> names = {};
+			particles.GetEmitterNames(names);
+			foreach (int emitter, string name : names)
+			{
+				if (name.IndexOf("smoke_") == 0)
+					particles.SetParam(emitter, EmitterParam.WIND, !indoor);
 			}
 		}
-
-		TuneEmitters(particles, pfx);
-
-		// bullet impacts spawn NO extra fog entity anymore — the intended behavior is
-		// driven entirely through the vanilla impact particle (long-lived wisps that
-		// accumulate and merge via the cloud field into the generalized haze). Only
-		// explosions still shake a room fog loose (takeover path).
-
-		// (the smoke plume's under-floor birth fix lives in the authored .ptc now: the
-		// emission point sits at the fuze opening — Offset 0 0.08 0 along the device's
-		// body axis — instead of the old unverified runtime EMITOFFSET push)
-
-		if (m_rTakeoverEffect != ResourceName.Empty && !pfx.GetParent() && !m_bIndoor && m_fWindRampTime > 0.05)
-			BER_WindDriftAnimator.GetInstance().Register(pfx, m_fWindRampTime, m_fAppliedDensityMult, m_fAppliedLifetimeMult);
-
-		// adopted impact/contact dust joins the overlap field (same group as this event's
-		// own clouds): repeated fire into one spot merges its standing dust — density-only
-		// indoors, so the cloud thickens without ever outgrowing the room — instead of
-		// stacking ever more overlapping effects. Grenade smoke stays out: suppressing a
-		// colored signal plume would alter gameplay, not just visuals. Bullet impacts whose
-		// haze the round-gate suppressed carry nothing that outlives the vanilla splash —
-		// keeping them out of the field is what keeps its pair scan cheap under a mag dump.
-		bool registerField = !pfx.GetParent() && !m_bIndoorSmokeSwap && m_bScaleBySurface;
-		if (registerField && m_rTakeoverEffect == ResourceName.Empty && !m_bBerHazeKept)
-			registerField = false;
-		if (registerField)
-		{
-			if (m_iBerCloudGroup == 0)
-				m_iBerCloudGroup = BER_CloudField.NewGroup();
-			BER_CloudField.GetInstance().Register(pfx, BER_CloudField.FAMILY_IMPACT, m_bIndoor, m_iBerCloudGroup, m_fAppliedDensityMult, m_fAppliedSizeMult, m_fAppliedLifetimeMult);
-		}
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Reorient a freshly adopted bullet-impact splash along the deflection of the shot:
-	//! R = D - 2(D.N)N off the surface plane, with a slight lift along the normal. Newly
-	//! born particles (the effect is caught inside its ~0.2 s emission window) then splash
-	//! away from the impact angle — the wall dust dragged along the ricochet — instead of
-	//! jetting straight out of the surface.
-	//! The shot direction comes from the muzzle hook's recent-shot rays (the impact point
-	//! is matched against the ray it lies on). The warhead entity's own transform proved
-	//! USELESS for this — 19th-pass diag logging showed its forward axis pointing straight
-	//! up or along the struck building's grid, never along the shot.
-	protected void DeflectImpactSplash(ParticleEffectEntity pfx, IEntity owner)
-	{
-		if (pfx.GetParent())
-			return;
-
-		// only the splash born at the impact point itself — anything farther away is
-		// scattered secondary dust, not this hit's directional splash
-		if (vector.DistanceSq(pfx.GetOrigin(), owner.GetOrigin()) > 0.64)
-			return;
-
-		vector d;
-		if (!BER_MuzzleBlastDust.GetIncomingShotDir(owner.GetWorld(), owner.GetOrigin(), d))
-		{
-			if (DIAG_DEFLECT)
-				Print("BER DIAG deflect: no shot ray matched this impact");
-			return;
-		}
-
-		vector pfxMat[4];
-		pfx.GetWorldTransform(pfxMat);
-		vector n = pfxMat[1]; // engine orients the splash's emission axis along the surface normal
-
-		float dot = vector.Dot(d, n);
-
-		if (DIAG_DEFLECT)
-			PrintFormat("BER DIAG deflect: pfxUp=%1 shotDir=%2 dot=%3", n, d, dot);
-
-		// the shot must actually point into the surface (a ray that merely passes nearby
-		// on its way somewhere else fails this) — leave the effect untouched otherwise
-		if (dot > -0.15)
-			return;
-
-		vector r = d - n * (2.0 * dot);
-		r = r + n * 0.12; // slight lift off the surface so a grazing splash doesn't hug the wall
-		r.Normalize();
-
-		SCR_EntityHelper.OrientUpToVector(r, pfxMat);
-		pfx.SetWorldTransform(pfxMat);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected ParticleEffectEntity SwapToIndoorVariant(ParticleEffectEntity pfx, IEntity owner)
-	{
-		ResourceName res = GetIndoorSmokeVariant(owner);
-		if (res == ResourceName.Empty)
-			return null;
-
-		pfx.StopEmission();
-
-		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
-		spawnParams.UseFrameEvent = true;
-		// the emitter must stay stuck to the grenade for its whole emitting life — the swap
-		// can happen while the device is still flying/rolling, and an unparented emitter
-		// then keeps pouring smoke at the point in mid-air where the swap happened.
-		// With FollowParent the spawn Transform is interpreted LOCAL to the followed entity
-		// (TransformMode defaults to LOCAL — vanilla passes local offsets here); keep the
-		// identity transform so the effect sits exactly on the device. Passing the world
-		// transform instead composes device x world = the effect lands kilometers off-map
-		// and no smoke ever appears (the 19th-pass indoor-smoke regression).
-		spawnParams.FollowParent = owner;
-
-		ParticleEffectEntity swapped = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
-		BER_OwnedEffects.MarkOwned(swapped);
-		return swapped;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! The engine gives no way to read which .ptc an adopted effect was spawned from, so the
-	//! windless variant is resolved from the grenade's own prefab name.
-	protected ResourceName GetIndoorSmokeVariant(IEntity owner)
-	{
-		EntityPrefabData prefabData = owner.GetPrefabData();
-		if (!prefabData)
-			return ResourceName.Empty;
-
-		string path = prefabData.GetPrefabName();
-
-		if (path.Contains("Smoke_M18_Red_Repeating"))
-			return "{BE20250902AC0014}Particles/BER/BER_SmokeIndoor_M18_Red_Repeat.ptc";
-		if (path.Contains("Smoke_M18_Violet_Repeating"))
-			return "{BE20250902AC0015}Particles/BER/BER_SmokeIndoor_M18_Purple_Repeating.ptc";
-		if (path.Contains("Smoke_M18_Red"))
-			return "{BE20250902AC0011}Particles/BER/BER_SmokeIndoor_M18_Red.ptc";
-		if (path.Contains("Smoke_M18_Violet"))
-			return "{BE20250902AC0013}Particles/BER/BER_SmokeIndoor_M18_Purple.ptc";
-		if (path.Contains("Smoke_M18_Yellow"))
-			return "{BE20250902AC0012}Particles/BER/BER_SmokeIndoor_M18_Yellow.ptc";
-		if (path.Contains("ANM8"))
-			return "{BE20250902AC0016}Particles/BER/BER_SmokeIndoor_AN-M8_HC.ptc";
-		if (path.Contains("RDG2"))
-			return "{BE20250902AC0017}Particles/BER/BER_SmokeIndoor_RDG-2.ptc";
-		if (path.Contains("Smoke_M18"))
-			return "{BE20250902AC0010}Particles/BER/BER_SmokeIndoor_M18_Green.ptc"; // base default
-
-		return ResourceName.Empty; // unknown (modded) smoke — leave the vanilla effect alone
 	}
 
 	//------------------------------------------------------------------------------------------------
 	//! Shared surface-scaled emitter tuning; requires ComputeEnvironment to have run.
-	//! pfx is only needed on the bullet-impact branch (haze round-gate bookkeeping).
-	protected void TuneEmitters(Particles particles, ParticleEffectEntity pfx = null)
+	protected void TuneEmitters(Particles particles)
 	{
 		if (!m_bScaleBySurface)
 			return;
-
-		int emitterCount = particles.GetNumEmitters();
-		if (emitterCount <= 0)
-			return;
-
-		// bullet impacts drive the intended behavior through the vanilla-shaped .ptc
-		// itself (rebuilt with long-lived, spawn-bright wisps) — runtime only modulates
-		// caliber, wetness and environment lifetime. The full surface/density/emission
-		// boost stack below is what let one 5.56 hit envelop a hallway.
-		if (m_rTakeoverEffect == ResourceName.Empty && !m_bIndoorSmokeSwap)
+		float density = m_fDensityBoost * BER_SurfaceUtil.ClampF(m_fDustFactor, 0, 1.6);
+		BER_SurfaceUtil.TuneDust(particles, density, m_bIndoor, m_fSizeBoost, m_fLifetimeBoost);
+		// Combustion aerosol is not suppressed by wet soil. Fire and prefab emitters
+		// retain their original timing/counts, including on a dedicated server.
+		array<string> names = {};
+		particles.GetEmitterNames(names);
+		foreach (int i, string name : names)
 		{
-			TuneImpactEmitters(particles, emitterCount, pfx);
-			return;
-		}
-
-		// travel factor: a cloud the wind will carry dissipates on the way; still air
-		// (indoors, becalmed) lets it stand and linger as a gameplay-relevant screen —
-		// structures barely ventilate, so indoor effects hang around much longer
-		float travelLife = 1.0;
-		float travelEmit = 1.0;
-		float travelDensity = 1.0;
-		if (m_bIndoor)
-		{
-			travelLife = 2.2;
-			travelEmit = 1.5;
-
-		}
-		else
-		{
-			float windNorm = BER_SurfaceUtil.ClampF(m_fWindSpeed / 10.0, 0, 1);
-			travelLife = 1.0 - 0.45 * windNorm;
-			travelEmit = 1.0 - 0.3 * windNorm;
-		}
-
-		float densityMult = BER_SurfaceUtil.ClampF(m_fDensityBoost * m_fDustFactor * travelDensity, 0.4, 3.5);
-
-		// wet (or inherently dustless) ground generates no dust at all — the usual clamp
-		// floor would keep 40% of the cloud alive, so it is faded out below the floor here
-		if (m_fDustFactor < 0.35)
-			densityMult = densityMult * (m_fDustFactor / 0.35);
-
-		float lifetimeMult = BER_SurfaceUtil.ClampF(m_fLifetimeBoost * m_fDustFactor * travelLife, 0.4, 6.5);
-		float emissionMult = BER_SurfaceUtil.ClampF(m_fEmissionBoost * m_fDustFactor * travelEmit, 1.0, 4.0);
-		float sizeMult = BER_SurfaceUtil.ClampF(m_fSizeBoost * (1.0 + 0.12 * (m_fDustFactor - 1.0)), 0.5, 2.2);
-
-
-		m_fAppliedDensityMult = densityMult;
-		m_fAppliedLifetimeMult = lifetimeMult;
-		m_fAppliedSizeMult = sizeMult;
-
-		float origLifetime;
-		vector origShape;
-		for (int i = 0; i < emitterCount; i++)
-		{
-			origLifetime = 0;
-			particles.GetParamOrig(i, EmitterParam.LIFETIME, origLifetime);
-
-			if (origLifetime < FLASH_LIFETIME_THRESHOLD)
-			{
-				// flash/sparks/fireball — mild scaling only, fire must not linger
-				particles.MultParam(i, EmitterParam.BIRTH_RATE, 1.0 + (densityMult - 1.0) * 0.5);
-				particles.MultParam(i, EmitterParam.LIFETIME, 1.0 + (lifetimeMult - 1.0) * 0.25);
-				particles.MultParam(i, EmitterParam.SIZE, 1.0 + (sizeMult - 1.0) * 0.5);
-			}
-			else
-			{
-				// dust/smoke — full boost plus extended emission for a plateau-then-collapse profile
-				particles.MultParam(i, EmitterParam.BIRTH_RATE, densityMult);
-				particles.MultParam(i, EmitterParam.LIFETIME, lifetimeMult);
-				particles.MultParam(i, EmitterParam.LIFETIME_RND, lifetimeMult);
-				particles.MultParam(i, EmitterParam.EMITTING_TIME, emissionMult);
-				particles.MultParam(i, EmitterParam.SIZE, sizeMult);
-
-				// indoors an explosion's overpressure has nowhere to go — full-sphere
-				// dispersion so the gas fills the room evenly instead of jetting in one
-				// authored cone. Bullet impacts are exempt: their splash is deliberately
-				// deflected along the shot's ricochet direction instead.
-				if (m_bIndoor && m_rTakeoverEffect != ResourceName.Empty)
-					particles.SetParam(i, EmitterParam.CONEANGLE, Vector(360, 0, 180));
-
-				// indoors: slow the ejection to the room size so the dust spreads out and
-				// hangs instead of the whole cloud smacking into the nearest wall
-				if (m_bIndoor)
-					particles.MultParam(i, EmitterParam.VELOCITY, BER_SurfaceUtil.ClampF(m_fMinWallDist / 8.0, 0.35, 0.9));
-			}
-
-			// indoors: shrink birth volumes wider than the room so no particle is born on
-			// the far side of a wall (blast dust boxes span up to 10 m)
+			if (name.IndexOf("ber_dust_") == 0 || name.IndexOf("ber_smoke_") == 0)
+				particles.MultParam(i, EmitterParam.EMITTING_TIME, BER_SurfaceUtil.ClampF(m_fEmissionBoost, 1, 2));
+			if (name.IndexOf("ber_smoke_") != 0)
+				continue;
+			particles.SetParam(i, EmitterParam.WIND, !m_bIndoor);
 			if (m_bIndoor)
 			{
-				origShape = vector.Zero;
-				particles.GetParamOrig(i, EmitterParam.SHAPE_SIZE, origShape);
-				float halfExtent = origShape[0];
-				if (origShape[2] > halfExtent)
-					halfExtent = origShape[2];
-				halfExtent = halfExtent * 0.5;
-				if (halfExtent > 0.05 && halfExtent > m_fMinWallDist)
-					particles.MultParam(i, EmitterParam.SHAPE_SIZE, m_fMinWallDist / halfExtent);
+				particles.MultParam(i, EmitterParam.VELOCITY, 0.65);
+				particles.MultParam(i, EmitterParam.LIFETIME, 1.5);
+				particles.MultParam(i, EmitterParam.LIFETIME_RND, 1.5);
 			}
-		}
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Minimal tuning for a bullet impact's own effect: density and particle size follow
-	//! the round that hit (both near-vanilla for the heavies, well below for 5.56 and
-	//! pistols), wet surfaces shed nothing, and an unventilated room lets the wisps hang
-	//! a little longer while outdoor wind thins them. Nothing else — the look itself is
-	//! authored in the rebuilt .ptc.
-	protected void TuneImpactEmitters(Particles particles, int emitterCount, ParticleEffectEntity pfx)
-	{
-		float density = m_fBerImpactDensity;
-		if (m_fDustFactor < 0.35)
-			density = density * (m_fDustFactor / 0.35);
-
-		float life = 1.0;
-		if (m_bIndoor)
-			life = 1.4;
-		else
-			life = 1.0 - 0.45 * BER_SurfaceUtil.ClampF(m_fWindSpeed / 10.0, 0, 1);
-
-		m_fAppliedDensityMult = density;
-		m_fAppliedLifetimeMult = life;
-		m_fAppliedSizeMult = m_fBerImpactSize;
-
-		// haze round-gate (see the statics up top): a NEW decision only for this hit's own
-		// splash; an effect already in the gate memory reuses whatever was decided for it.
-		// Effects that are neither (an older neighbour swept up by the adoption query) get
-		// no haze write at all — their haze finished emitting long ago either way.
-		bool keepHaze = true;
-		bool hazeDecided = false;
-		if (pfx)
-		{
-			float now = GetGame().GetWorld().GetWorldTime() * 0.001;
-			for (int g = s_aBerHazeGatePfx.Count() - 1; g >= 0; g--)
-			{
-				if (!s_aBerHazeGatePfx[g] || now - s_aBerHazeGateTime[g] > HAZE_GATE_MEMORY)
-				{
-					s_aBerHazeGatePfx.Remove(g);
-					s_aBerHazeGateTime.Remove(g);
-					s_aBerHazeGateKeep.Remove(g);
-				}
-			}
-
-			int gateIdx = s_aBerHazeGatePfx.Find(pfx);
-			if (gateIdx != -1)
-			{
-				keepHaze = s_aBerHazeGateKeep[gateIdx];
-				hazeDecided = true;
-			}
-			else if (m_bBerAdoptOwnSplash)
-			{
-				s_iBerHazeRound++;
-				// == 1 keeps the 1st, 6th, 11th... round's haze — a lone shot still answers
-				keepHaze = (s_iBerHazeRound % HAZE_KEEP_EVERY_N) == 1;
-				hazeDecided = true;
-				s_aBerHazeGatePfx.Insert(pfx);
-				s_aBerHazeGateTime.Insert(now);
-				s_aBerHazeGateKeep.Insert(keepHaze);
-			}
-		}
-		m_bBerHazeKept = hazeDecided && keepHaze;
-
-		float origLifetime;
-		for (int i = 0; i < emitterCount; i++)
-		{
-			origLifetime = 0;
-			particles.GetParamOrig(i, EmitterParam.LIFETIME, origLifetime);
-			if (origLifetime > HAZE_ORIG_LIFETIME_MIN && hazeDecided && !keepHaze)
-			{
-				particles.MultParam(i, EmitterParam.BIRTH_RATE, 0);
-				continue;
-			}
-
-			particles.MultParam(i, EmitterParam.BIRTH_RATE, density);
-			particles.MultParam(i, EmitterParam.LIFETIME, life);
-			particles.MultParam(i, EmitterParam.LIFETIME_RND, life);
-			particles.MultParam(i, EmitterParam.SIZE, m_fBerImpactSize);
 		}
 	}
 
@@ -1191,7 +920,6 @@ class BER_EffectTuningComponent : ScriptComponent
 		vector groundNormal;
 		if (BER_SurfaceUtil.TraceGround(world, pos, 4.0, owner, groundPos, matName, groundNormal) && matName != "")
 		{
-			m_fDustFactor = BER_SurfaceUtil.GetDustFactor(matName, pos[1]);
 			if (groundNormal != vector.Zero)
 				m_vGroundNormal = groundNormal;
 			m_bGroundFound = true;
@@ -1201,17 +929,11 @@ class BER_EffectTuningComponent : ScriptComponent
 		else
 			m_fDustFactor = 1.0; // airburst / nothing below — neutral
 
-		m_fWindSpeed = BER_SurfaceUtil.GetWindSpeed(world);
 
 		m_bIndoor = BER_SurfaceUtil.IsRoofed(world, pos, owner, m_fRoofCheckDistance);
 
 		// wetness only wets the outdoors — a roofed interior floor stays dry in any storm
-		if (!m_bIndoor)
-			m_fDustFactor = m_fDustFactor * BER_SurfaceUtil.GetRainFactor(world);
+		m_fDustFactor = BER_SurfaceUtil.GetDustAvailability(world, pos, m_sGroundMat, m_bIndoor);
 
-		// nearest wall around an indoor detonation — used to shrink particle birth volumes
-		// so the cloud is born inside the room, not on the far side of its walls
-		if (m_bIndoor)
-			m_fMinWallDist = BER_SurfaceUtil.GetMinWallDistance(world, pos, owner, 12.0);
 	}
 }

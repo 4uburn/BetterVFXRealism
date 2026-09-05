@@ -1,18 +1,18 @@
 //------------------------------------------------------------------------------------------------
-// Better Effects Realism — surface-aware AP impact effect resolver
+// Better VFX Realism — surface-aware AP impact effect resolver
 //
 // AP rounds (25mm APDS-T M791 and anything else referencing Explosion_APDS.ptc) hardcode
 // one spark effect for every impact, so they shower sparks even on soil. The BER same-GUID
 // override of that .ptc spawns THIS prefab instead (single invisible prefab-particle at the
 // impact point). The component probes for the nearest surface around itself and spawns the
 // appropriate reaction, oriented to the surface normal:
-//  - metal / armor / vehicle hulls  -> the full vanilla spark shower (copied 1:1)
+//  - metal / armor / vehicle hulls  -> brief flash, gravity-driven sparks and a short aerosol tail
 //  - rock / concrete / hard mineral -> stone chips + grey dust, NO sparks
 //  - soil / sand / vegetation / etc -> dirt thrown out by the round boring in, NO sparks
 //  - water                          -> nothing (vanilla splash already handles it)
 //------------------------------------------------------------------------------------------------
 
-[EntityEditorProps(category: "GameScripted/BetterEffectsRealism", description: "Resolves AP round impact effect by surface material")]
+[EntityEditorProps(category: "GameScripted/BetterVFXRealism", description: "Resolves AP round impact effect by surface material")]
 class BER_APDSImpactResolverComponentClass : ScriptComponentClass
 {
 }
@@ -59,66 +59,35 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 		owner.GetWorldTransform(mat);
 		vector pos = mat[3];
 
-		// the impact point sits on (or within centimeters of) the struck surface — probe all
-		// six axis directions and take the nearest hit so wall impacts resolve to the wall,
-		// not the ground below it
-		vector bestNorm;
+		// A matched shot identifies the actual struck plane, including corners.
+		// Only ambiguous/unmatched impacts need the six nearest-surface probes.
+		vector incoming, impactPos, bestNorm;
 		string bestMat;
 		IEntity bestRoot;
-		float bestDist = 1000;
-		vector hitNorm;
-		string hitMat;
-		IEntity hitRoot;
-		float dist;
-
-		if (Probe(world, owner, pos, Vector(0, -1.3, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
+		float shotScale;
+		bool directional = BER_MuzzleBlastDust.GetIncomingShotInfo(world, pos, incoming, shotScale)
+			&& BER_SurfaceUtil.TraceImpact(world, pos, incoming, owner, impactPos, bestNorm, bestMat, bestRoot);
+		if (directional)
+			pos = impactPos;
+		else
 		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 1.0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(1.0, 0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(-1.0, 0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 0, 1.0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 0, -1.0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-
-		if (bestDist > 999)
-		{
-			// nothing close — airburst/despawn edge case; metal spark is the least wrong
-			// visual for an AP round breaking up mid-air, but with no surface just skip
-			return;
+			array<vector> offsets = {"0 -1.3 0", "0 1 0", "1 0 0", "-1 0 0", "0 0 1", "0 0 -1"};
+			float bestDist = 1000;
+			foreach (vector offset : offsets)
+			{
+				vector normal;
+				string material;
+				IEntity root;
+				float distance;
+				if (!Probe(world, owner, pos, offset, normal, material, root, distance) || distance >= bestDist)
+					continue;
+				bestDist = distance;
+				bestNorm = normal;
+				bestMat = material;
+				bestRoot = root;
+			}
+			if (bestDist > 999)
+				return; // no nearby surface: do not invent an impact response
 		}
 
 		// a 25mm AP slug slamming into a vehicle also shakes the dust off its hull
@@ -135,32 +104,31 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 
 		vector up = bestNorm;
+		if (directional)
+			up = BER_SurfaceUtil.GetImpactEjectaDirection(incoming, bestNorm);
 		if (up != vector.Zero)
 			SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
-		spawnParams.Transform[3] = pos;
+		spawnParams.Transform[3] = pos + bestNorm * 0.025;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(res, spawnParams);
 		if (!pfx)
 			return;
 
 		BER_OwnedEffects.MarkOwned(pfx); // already surface-resolved/oriented — adoption must not retune it
 
-		// inside a structure the impact dust hangs in unventilated air — let it linger
-		if (BER_SurfaceUtil.IsRoofed(world, pos, owner, 25.0))
+		bool indoor = BER_SurfaceUtil.IsRoofed(world, pos + bestNorm * 0.15, owner, 25.0);
+		Particles particles = pfx.GetParticles();
+		if (particles)
 		{
-			Particles particles = pfx.GetParticles();
-			if (particles)
-			{
-				int emitterCount = particles.GetNumEmitters();
-				for (int i = 0; i < emitterCount; i++)
-				{
-					particles.MultParam(i, EmitterParam.LIFETIME, 2.0);
-					particles.MultParam(i, EmitterParam.LIFETIME_RND, 2.0);
-				}
-			}
+			float dust = BER_SurfaceUtil.GetDustAvailability(world, pos, bestMat, indoor);
+			BER_SurfaceUtil.TuneDust(particles, dust, indoor);
+			if (directional)
+				BER_SurfaceUtil.TuneImpactCone(particles, up, bestNorm);
+			// Keep hot impact aerosol/sparks on wet metal; only loose mineral dust is gated.
+			if (indoor)
+				particles.SetParam(-1, EmitterParam.WIND, false);
 		}
 
 		pfx.Play();

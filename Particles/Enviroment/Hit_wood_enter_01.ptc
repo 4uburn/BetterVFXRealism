@@ -1,7 +1,12 @@
 EffectDef {
  Version 2
  Emitters {
-  EmitterDef whisp {
+  EmitterDef ber_dust_whisp {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
+   WindInfluence 0.35
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 20
@@ -34,7 +39,7 @@ EffectDef {
    Lifetime 0.3
    LifetimeRND 0.7
    Color {
-    0.029 0.768 0.691 0.597
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
     0 1 0.267 0.196 0.561 0
@@ -51,7 +56,11 @@ EffectDef {
     0 1
    }
   }
-  EmitterDef whisp_side {
+  EmitterDef ber_dust_whisp_side {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0 0 0
    ConeAngle 360 170 180
@@ -75,7 +84,7 @@ EffectDef {
    VelocityRND 2
    AirResistance 20
    AirResistanceRND 3.176
-   WindInfluence 0.07
+   WindInfluence 0.35
    GravityMultiply 0
    GravityMultiplyRND 0
    AnimOnce 1
@@ -84,7 +93,7 @@ EffectDef {
    Lifetime 1
    LifetimeRND 2
    Color {
-    0.1 0.768 0.691 0.597 0.9 0.382 0.346 0.295
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
     0 0 0.041 0.575 0.631 0.26 1 0
@@ -98,7 +107,11 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef whisp_cloned {
+  EmitterDef ber_dust_whisp_cloned {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
+   LocalTransform 0
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 20
@@ -124,7 +137,7 @@ EffectDef {
    VelocityRND 5
    AirResistance 5
    AirResistanceRND 1
-   WindInfluence 0.1
+   WindInfluence 0.35
    GravityMultiply 0
    GravityMultiplyRND 0
    AnimOnce 1
@@ -134,7 +147,7 @@ EffectDef {
    Lifetime 0.5
    LifetimeRND 0.7
    Color {
-    0.03 0.768 0.691 0.597 0.342 0.382 0.346 0.295
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
     0.017 1 0.074 0.257 0.144 0.014
@@ -149,13 +162,18 @@ EffectDef {
    Repeat 0
   }
   EmitterDef debris {
+   WindInfluence 0
+   TagentialRestitution 0.65
+   NormalRestitution 0.2
+   EnableCollisions 1
+   MaxNum 24
    ShapeType Point
    ShapeSize 0 0 0
    ConeAngle 360 0 130
    ConeAngleMinDist 30
    ConeAngleRndRange 30
-   BirthRate 500
-   BirthRateRND 40
+   BirthRate 100
+   BirthRateRND 20
    LocalTransform 0
    LodMin 0
    LodMax 1
@@ -240,14 +258,19 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef dust_cone {
+  EmitterDef ber_dust_dust_cone {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
+   WindInfluence 0.35
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.05 0.05 0.05
    ConeAngle 360 0 40
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    MaxNum 1
-   BirthRate 30
+   BirthRate 0
    BirthRateRND 0
    LodMin 0
    LodMax 1
@@ -262,7 +285,7 @@ EffectDef {
    RandomAngle 0
    Velocity 0.3
    VelocityRND 0
-   AirResistance 0
+   AirResistance 2
    AirResistanceRND 0
    GravityMultiply 0
    GravityMultiplyRND 0
@@ -273,7 +296,7 @@ EffectDef {
    Lifetime 0.2
    LifetimeRND 0.1
    Color {
-    0 0.768 0.691 0.597
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
     0 0 0.054 0.892 0.332 0.155 0.718 0
@@ -287,14 +310,18 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef dust_big {
+  EmitterDef ber_dust_dust_big {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
+   LocalTransform 0
    ShapeType Sphere
    ShapeSize 0.2 0.2 0.2
    ConeAngle 360 10 60
    ConeAngleMinDist 30
    ConeAngleRndRange 30
    MaxNum 1
-   BirthRate 30
+   BirthRate 0
    BirthRateRND 0
    Offset 0 -0.1 0.1
    LodMin 0
@@ -310,7 +337,7 @@ EffectDef {
    VelocityRND 0.5
    AirResistance 4
    AirResistanceRND 1
-   WindInfluence 0.025
+   WindInfluence 0.35
    GravityMultiply 0.1
    GravityMultiplyRND 0.05
    AnimOnce 1
@@ -320,7 +347,7 @@ EffectDef {
    Lifetime 4
    LifetimeRND 0.2
    Color {
-    0.001 0.571 0.517 0.44 1 0.382 0.346 0.295
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
     0 0 0.098 0.384 0.33 0.219 0.454 0.123
@@ -334,58 +361,47 @@ EffectDef {
    EmittingTime 0.1
    Repeat 0
   }
-  EmitterDef ber_wisp_haze {
+  EmitterDef ber_dust_fines {
+   TagentialRestitution 0.95
+   NormalRestitution 0.12
+   EnableCollisions 1
    ShapeType Point
-   ShapeSize 0 0 0
-   ConeAngle 360 0 20
-   ConeAngleMinDist 30
-   ConeAngleRndRange 30
-   MaxNum 2
-   BirthRate 30
+   ConeAngle 360 0 60
+   LocalTransform 0
+   MaxNum 3
+   BirthRate 75
    BirthRateRND 0
    LodMin 0
    LodMax 1
-   Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
-   SizeMultiplier 25
-   SizeRND 0.4
-   ScaleX 0.989
-   CenterY 0
-   RotMultiplier 15
-   RandomRotDir 0
-   VelAngle 0
-   RandomAngle 1
-   FlipU Random
-   Velocity 3
-   VelocityRND 2
-   AirResistance 6
-   AirResistanceRND 1.5
-   WindInfluence 0
-   GravityMultiply 0.006
+   Material "{5C751A80FB6CD3F4}Particles/_Materials/Gas/Smoke_loop_02.emat"
+   SizeMultiplier 0.45
+   SizeRND 0.15
+   Velocity 0.7
+   VelocityRND 0.3
+   AirResistance 5
+   WindInfluence 0.6
+   GravityMultiply 0.03
    GravityMultiplyRND 0
-   EnableCollisions 1
-   NormalRestitution 0.2
-   TagentialRestitution 0.85
    AnimOnce 0
-   AnimFPS 10
-   LifetimeByAnim 0
+   AnimFPS 0.001
    RandomFrame 1
-   Lifetime 30
-   LifetimeRND 10
+   LifetimeByAnim 0
+   Lifetime 2.5
+   LifetimeRND 0.5
    Color {
-    0 0.768 0.691 0.597 1 0.768 0.691 0.597
+    0 1 0.91903 0.79401 1 1 0.91903 0.79401
    }
    Alpha {
-    0 0 0.015 0.25 0.5 0.15 1 0
-   }
-   RotationSpeed {
-    0 1 1 0
+    0 0 0.08 0.3 0.4 0.13 1 0
    }
    Size {
-    0 0.0345 0.1 1 1 1
+    0 0.25 0.25 0.6 1 1
    }
-   EmittingTime 0.2
+   EmittingTime 0.04
    Repeat 0
   }
+
+
  }
  MinFPS 30
 }
