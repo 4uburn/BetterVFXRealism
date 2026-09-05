@@ -19,6 +19,7 @@ class BER_WindDriftEntry
 	vector m_vImpulse;
 	float m_fBirthDist;
 	float m_fLifeDist;
+	vector m_vBlockPoint;
 	vector m_vBlockNormal;   // surface blocking the drift path (zero = clear)
 	float m_fBlockCheckIn;   // s until the next obstruction probe
 }
@@ -204,7 +205,7 @@ class BER_WindDriftAnimator
 		for (int i = m_aEntries.Count() - 1; i >= 0; i--)
 		{
 			BER_WindDriftEntry entry = m_aEntries[i];
-			if (!entry.m_Pfx || entry.m_fAge > MAX_LIFETIME)
+			if (!entry.m_Pfx || entry.m_fAge > MAX_LIFETIME || entry.m_Pfx.GetState() == EParticleEffectState.STOPPED)
 			{
 				m_aEntries.Remove(i);
 				continue;
@@ -228,11 +229,9 @@ class BER_WindDriftAnimator
 			// decaying exponentially so a shove travels a short, sharp distance
 			if (entry.m_vImpulse != vector.Zero)
 			{
-				move = entry.m_vImpulse * dt;
-				stepLen = entry.m_vImpulse.Length() * dt;
-				float keep = 1.0 - IMPULSE_DECAY * dt;
-				if (keep < 0.1)
-					keep = 0.1;
+				float keep = BER_SurfaceUtil.Decay(1, dt, 1.0 / IMPULSE_DECAY);
+				move = entry.m_vImpulse * ((1.0 - keep) / IMPULSE_DECAY);
+				stepLen = move.Length();
 				entry.m_vImpulse = entry.m_vImpulse * keep;
 				if (entry.m_vImpulse.Length() < IMPULSE_MIN)
 					entry.m_vImpulse = vector.Zero;
@@ -263,13 +262,11 @@ class BER_WindDriftAnimator
 			if (entry.m_fBlockCheckIn <= 0)
 			{
 				entry.m_fBlockCheckIn = 0.2;
-				entry.m_vBlockNormal = ProbeObstruction(world, pos, move, 1.5 + (entry.m_fWindSpeed + 5.0) * 0.2);
+				entry.m_vBlockNormal = ProbeObstruction(world, pos, move, 0.1 + (entry.m_fWindSpeed + 5.0) * (0.2 + dt), entry.m_vBlockPoint);
 			}
 			if (entry.m_vBlockNormal != vector.Zero)
 			{
-				float into = vector.Dot(move, entry.m_vBlockNormal);
-				if (into < 0)
-					move = move - entry.m_vBlockNormal * into;
+				move = BER_SurfaceUtil.ClipDisplacementToPlane(pos, move, entry.m_vBlockPoint, entry.m_vBlockNormal);
 				stepLen = move.Length();
 				if (stepLen <= 0.0001)
 					continue; // pinned flat against the obstacle — no drift this frame
@@ -291,7 +288,7 @@ class BER_WindDriftAnimator
 	//------------------------------------------------------------------------------------------------
 	//! Short look-ahead ray along the current drift direction: returns the blocking
 	//! surface's normal (oriented against the movement), or zero when the path is clear.
-	protected vector ProbeObstruction(BaseWorld world, vector pos, vector move, float lookAhead)
+	protected vector ProbeObstruction(BaseWorld world, vector pos, vector move, float lookAhead, out vector hitPoint)
 	{
 		float moveLen = move.Length();
 		if (moveLen < 0.0001)
@@ -300,12 +297,14 @@ class BER_WindDriftAnimator
 		vector dir = move * (1.0 / moveLen);
 
 		TraceParam tp = new TraceParam();
-		tp.Start = pos + Vector(0, 0.5, 0);
+		tp.Start = pos;
 		tp.End = tp.Start + dir * lookAhead; // covers travel until the next probe, even in strong wind
 		tp.Flags = TraceFlags.WORLD | TraceFlags.ENTS;
 
-		if (world.TraceMove(tp, null) >= 1.0)
+		float fraction = world.TraceMove(tp, null);
+		if (fraction >= 1.0)
 			return vector.Zero;
+		hitPoint = tp.Start + (tp.End - tp.Start) * fraction;
 
 		vector n = tp.TraceNorm;
 		if (vector.Dot(n, dir) > 0)

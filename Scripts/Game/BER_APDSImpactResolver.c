@@ -12,7 +12,7 @@
 //  - water                          -> nothing (vanilla splash already handles it)
 //------------------------------------------------------------------------------------------------
 
-[EntityEditorProps(category: "GameScripted/BetterEffectsRealism", description: "Resolves AP round impact effect by surface material")]
+[EntityEditorProps(category: "GameScripted/BetterVFXRealism", description: "Resolves AP round impact effect by surface material")]
 class BER_APDSImpactResolverComponentClass : ScriptComponentClass
 {
 }
@@ -59,81 +59,35 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 		owner.GetWorldTransform(mat);
 		vector pos = mat[3];
 
-		// the impact point sits on (or within centimeters of) the struck surface — probe all
-		// six axis directions and take the nearest hit so wall impacts resolve to the wall,
-		// not the ground below it
-		vector bestNorm;
+		// A matched shot identifies the actual struck plane, including corners.
+		// Only ambiguous/unmatched impacts need the six nearest-surface probes.
+		vector incoming, impactPos, bestNorm;
 		string bestMat;
 		IEntity bestRoot;
-		float bestDist = 1000;
-		vector hitNorm;
-		string hitMat;
-		IEntity hitRoot;
-		float dist;
-
-		if (Probe(world, owner, pos, Vector(0, -1.3, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 1.0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(1.0, 0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(-1.0, 0, 0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 0, 1.0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-		if (Probe(world, owner, pos, Vector(0, 0, -1.0), hitNorm, hitMat, hitRoot, dist) && dist < bestDist)
-		{
-			bestDist = dist;
-			bestNorm = hitNorm;
-			bestMat = hitMat;
-			bestRoot = hitRoot;
-		}
-
-		if (bestDist > 999)
-		{
-			// nothing close — airburst/despawn edge case; metal spark is the least wrong
-			// visual for an AP round breaking up mid-air, but with no surface just skip
-			return;
-		}
-
-		// Prefer a matched incoming ray and its actual surface over axis probes at corners.
-		vector incoming, impactPos, impactNormal;
-		string impactMaterial;
-		IEntity impactRoot;
 		float shotScale;
 		bool directional = BER_MuzzleBlastDust.GetIncomingShotInfo(world, pos, incoming, shotScale)
-			&& BER_SurfaceUtil.TraceImpact(world, pos, incoming, owner, impactPos, impactNormal, impactMaterial, impactRoot);
+			&& BER_SurfaceUtil.TraceImpact(world, pos, incoming, owner, impactPos, bestNorm, bestMat, bestRoot);
 		if (directional)
-		{
 			pos = impactPos;
-			bestNorm = impactNormal;
-			bestMat = impactMaterial;
-			bestRoot = impactRoot;
+		else
+		{
+			array<vector> offsets = {"0 -1.3 0", "0 1 0", "1 0 0", "-1 0 0", "0 0 1", "0 0 -1"};
+			float bestDist = 1000;
+			foreach (vector offset : offsets)
+			{
+				vector normal;
+				string material;
+				IEntity root;
+				float distance;
+				if (!Probe(world, owner, pos, offset, normal, material, root, distance) || distance >= bestDist)
+					continue;
+				bestDist = distance;
+				bestNorm = normal;
+				bestMat = material;
+				bestRoot = root;
+			}
+			if (bestDist > 999)
+				return; // no nearby surface: do not invent an impact response
 		}
 
 		// a 25mm AP slug slamming into a vehicle also shakes the dust off its hull
@@ -150,7 +104,6 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 
 		vector up = bestNorm;
 		if (directional)
@@ -159,7 +112,7 @@ class BER_APDSImpactResolverComponent : ScriptComponent
 			SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
 		spawnParams.Transform[3] = pos + bestNorm * 0.025;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(res, spawnParams);
 		if (!pfx)
 			return;
 

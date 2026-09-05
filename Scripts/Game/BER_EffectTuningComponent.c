@@ -7,6 +7,33 @@ class BER_EffectTuningComponentClass : ScriptComponentClass
 {
 }
 
+// One room record owns both pending dust and its currently living visual layers.
+class BER_RoomDustState
+{
+	vector m_Center;
+	float m_fUpdated;
+	float m_fLastEmission = -100;
+	float m_fPending;
+	ref array<ParticleEffectEntity> m_Layers = {};
+
+	void Accumulate(float now, float weight)
+	{
+		m_fPending = BER_SurfaceUtil.Decay(m_fPending, now - m_fUpdated, 20) + Math.Max(0, weight);
+		m_fPending = Math.Min(m_fPending, 4); // bounded source backlog, not unlimited stored opacity
+		m_fUpdated = now;
+	}
+
+	void PruneLayers()
+	{
+		for (int i = m_Layers.Count() - 1; i >= 0; i--)
+		{
+			ParticleEffectEntity layer = m_Layers[i];
+			if (!layer || layer.GetState() == EParticleEffectState.STOPPED)
+				m_Layers.Remove(i);
+		}
+	}
+}
+
 class BER_EffectTuningComponent : ScriptComponent
 {
 	[Attribute(defvalue: "", UIWidgets.ResourcePickerThumbnail, desc: "Explosion effect to spawn under BER control (vanilla reference must be blanked in the same prefab)", params: "ptc")]
@@ -38,7 +65,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	[Attribute(defvalue: "8", desc: "Seconds to keep watching for spawned particle children", params: "1 300 1")]
 	protected float m_fScanDuration;
 
-	[Attribute(defvalue: "0", desc: "Smoke grenades: when the device sits under a roof, restart the adopted smoke effect as a windless BER variant so the screen stays in the room instead of being blown through walls")]
+	[Attribute(defvalue: "0", desc: "Smoke grenades: update native source wind as the device moves indoors/outdoors, preserving its emission clock")]
 	protected bool m_bIndoorSmokeSwap;
 
 	[Attribute(defvalue: "0", desc: "Ground debris (dirt clumps / rock chips) thrown by the detonation; 1.0 = the 25mm HEIT baseline, 0 = none (bullet impacts)", params: "0 5 0.05")]
@@ -58,17 +85,11 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected const ResourceName ROOM_FOG = "{BE20250902AC0027}Particles/BER/BER_RoomFog.ptc";
 	protected const ResourceName ROOM_FOG_WOOD = "{BE20250903AC0037}Particles/BER/BER_RoomFog_Wood.ptc";
 
-	protected static ref array<vector> s_aFogPos;
-	protected static ref array<float> s_aFogTime;
-	protected static ref array<float> s_aFogUpdate;
-	protected static ref array<float> s_aFogHits;   // accumulated impact weight
-	protected static ref array<int> s_aFogLayers;   // -1 = still accumulating, no fog spawned yet
-	protected const float FOG_DEDUP_RADIUS_SQ = 12.25; // 3.5 m
-	protected const float FOG_DEDUP_TIME = 40.0;
-	protected const float FOG_SPAWN_WEIGHT = 1.0;      // accumulated weight before the first fog appears
-	protected const float FOG_WEIGHT_PER_LAYER = 3.0; // further weight per extra fog layer
-	protected const int FOG_MAX_EXTRA_LAYERS = 3;
-
+	protected static ref array<ref BER_RoomDustState> s_aRooms;
+	protected const float FOG_DEDUP_RADIUS_SQ = 12.25; // 3.5 m, also requires a clear path
+	protected const float FOG_SPAWN_WEIGHT = 1.0;
+	protected const int FOG_MAX_LAYERS = 4;
+	protected const float FOG_MIN_INTERVAL = 2.0;
 
 	protected const float FRAG_IMPACT_RANGE = 14.0;
 	protected const float FRAG_IMPACT_MIN_DIST = 0.7;
@@ -79,14 +100,10 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected static void EnsureFogState(BaseWorld world)
 	{
 		float now = world.GetWorldTime();
-		if (!s_aFogPos || s_FogWorld != world || now < s_fFogClock)
+		if (!s_aRooms || s_FogWorld != world || now < s_fFogClock)
 		{
 			s_FogWorld = world;
-			s_aFogPos = {};
-			s_aFogTime = {};
-			s_aFogHits = {};
-			s_aFogUpdate = {};
-			s_aFogLayers = {};
+			s_aRooms = {};
 		}
 		s_fFogClock = now;
 	}
@@ -94,6 +111,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected ref array<ParticleEffectEntity> m_aProcessed = {};
 	protected float m_fElapsed;
 	protected float m_fScanAccum;
+	protected float m_fSmokeShelterIn;
 	protected bool m_bTakeoverDone;
 	protected bool m_bCondensationDone;
 	protected bool m_bFragDone;
@@ -136,7 +154,6 @@ class BER_EffectTuningComponent : ScriptComponent
 	{
 		if (!owner || !owner.GetWorld())
 			return;
-		EnsureFogState(owner.GetWorld());
 		// A carried grenade must not trigger effects or exhaust its watch interval.
 		IEntity parent = owner.GetParent();
 		if (parent && ChimeraCharacter.Cast(parent.GetRootParent()))
@@ -177,7 +194,18 @@ class BER_EffectTuningComponent : ScriptComponent
 			m_fScanAccum = 0;
 			ScanChildren(owner);
 		}
-		if (m_fElapsed > m_fScanDuration)
+		if (m_bIndoorSmokeSwap)
+		{
+			m_fSmokeShelterIn -= timeSlice;
+			if (m_fSmokeShelterIn <= 0)
+			{
+				m_fSmokeShelterIn = 0.5;
+				UpdateSmokeShelter(owner);
+			}
+			if (m_fElapsed > m_fScanDuration && m_aProcessed.IsEmpty())
+				ClearEventMask(owner, EntityEvent.FRAME);
+		}
+		else if (m_fElapsed > m_fScanDuration)
 			ClearEventMask(owner, EntityEvent.FRAME);
 	}
 
@@ -193,13 +221,12 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 		// Align initial emission to the slope; subsequent motion is in world space.
 		if (m_vGroundNormal != vector.Zero && m_vGroundNormal != vector.Up)
 			SCR_EntityHelper.OrientUpToVector(m_vGroundNormal, spawnParams.Transform);
 		spawnParams.Transform[3] = owner.GetOrigin();
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(m_rTakeoverEffect, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(m_rTakeoverEffect, spawnParams);
 		if (!pfx)
 			return;
 
@@ -230,21 +257,22 @@ class BER_EffectTuningComponent : ScriptComponent
 	//! near the hit. A clear path prevents adjacent rooms sharing the same accumulator.
 	protected void SpawnRoomFog(IEntity owner, float strength, float weight, ResourceName fogRes)
 	{
-		BaseWorld world = owner.GetWorld();
-		vector pos = owner.GetOrigin();
-		if (weight <= 0)
-			return;
-		float now = world.GetWorldTime() * 0.001;
-
-		vector roomCenter;
-		float roomHalf;
-
-		// Start just outside the actual wall. Move a short checked distance into free space;
-		// a fixed 1.4 m pull could pass through the opposite wall of a confined space.
-		vector start = pos;
+		vector start = owner.GetOrigin();
 		if (m_vBerHitNormal != vector.Zero)
 			start = m_vBerHitPos + m_vBerHitNormal * 0.08;
-		BER_SurfaceUtil.GetRoomGeometry(world, start - Vector(0, 0.6, 0), owner, 9.0, roomCenter, roomHalf);
+		AddRoomDust(owner.GetWorld(), start, owner, strength, weight, fogRes);
+	}
+
+	//! One shared source path for impacts/fragments and the opt-in native regression fixture.
+	//! Returns only a newly emitted layer; an accumulating or full room returns null.
+	static ParticleEffectEntity AddRoomDust(BaseWorld world, vector start, IEntity exclude, float strength, float weight, ResourceName fogRes)
+	{
+		if (!world || weight <= 0)
+			return null;
+		float now = world.GetWorldTime() * 0.001;
+		vector roomCenter;
+		float roomHalf;
+		BER_SurfaceUtil.GetRoomGeometry(world, start - Vector(0, 0.6, 0), exclude, 9.0, roomCenter, roomHalf);
 		roomCenter[1] = start[1];
 		vector desired = start;
 		vector toCenter = roomCenter - start;
@@ -253,64 +281,48 @@ class BER_EffectTuningComponent : ScriptComponent
 			toCenter.Normalize();
 			desired = start + toCenter * 0.6;
 		}
-		vector fogPos = BER_SurfaceUtil.ClipCloudPosition(world, start, desired, owner);
+		vector fogPos = BER_SurfaceUtil.ClipCloudPosition(world, start, desired, exclude);
 
-		for (int i = s_aFogTime.Count() - 1; i >= 0; i--)
+		EnsureFogState(world);
+		BER_RoomDustState room;
+		for (int i = s_aRooms.Count() - 1; i >= 0; i--)
 		{
-			if (now - s_aFogTime[i] > FOG_DEDUP_TIME)
+			BER_RoomDustState candidate = s_aRooms[i];
+			candidate.PruneLayers();
+			if (now - candidate.m_fUpdated > 60 && candidate.m_Layers.IsEmpty())
 			{
-				s_aFogTime.Remove(i);
-				s_aFogPos.Remove(i);
-				s_aFogHits.Remove(i);
-				s_aFogUpdate.Remove(i);
-				s_aFogLayers.Remove(i);
+				s_aRooms.Remove(i);
 				continue;
 			}
-			if (vector.DistanceSq(s_aFogPos[i], roomCenter) < FOG_DEDUP_RADIUS_SQ
-				&& BER_SurfaceUtil.HasClearPath(world, roomCenter, s_aFogPos[i], owner))
-			{
-				float dt = Math.Max(0, now - s_aFogUpdate[i]);
-				s_aFogHits[i] = s_aFogHits[i] * Math.Pow(2.718281828, -dt / 20.0) + weight;
-				s_aFogUpdate[i] = now;
-
-				// still accumulating toward the first fog
-				if (s_aFogLayers[i] < 0)
-				{
-					if (s_aFogHits[i] >= FOG_SPAWN_WEIGHT && SpawnFogEntity(fogPos, strength, roomHalf, fogRes))
-						s_aFogLayers[i] = 0;
-					return;
-				}
-
-				// fog standing — continued fire thickens it in weight steps, each new
-				// layer rising where the CURRENT fire is landing
-				if (s_aFogLayers[i] < FOG_MAX_EXTRA_LAYERS
-					&& s_aFogHits[i] >= FOG_SPAWN_WEIGHT + (s_aFogLayers[i] + 1) * FOG_WEIGHT_PER_LAYER)
-				{
-					if (SpawnFogEntity(fogPos, 0.45, roomHalf, fogRes))
-						s_aFogLayers[i] = s_aFogLayers[i] + 1;
-				}
-				return;
-			}
+			if (vector.DistanceSq(candidate.m_Center, roomCenter) < FOG_DEDUP_RADIUS_SQ
+				&& BER_SurfaceUtil.HasClearPath(world, roomCenter, candidate.m_Center, exclude))
+				room = candidate;
 		}
-
-		if (s_aFogPos.Count() >= 64)
-			return; // bound the active room budget during large battles
-
-		// new room entry — heavy rounds raise the fog at once, light rounds accumulate
-		int layers = -1;
-		if (weight >= FOG_SPAWN_WEIGHT && SpawnFogEntity(fogPos, strength, roomHalf, fogRes))
-			layers = 0;
-
-		s_aFogPos.Insert(roomCenter);
-		s_aFogTime.Insert(now);
-		s_aFogHits.Insert(weight);
-		s_aFogUpdate.Insert(now);
-		s_aFogLayers.Insert(layers);
+		if (!room)
+		{
+			if (s_aRooms.Count() >= 64)
+				return null;
+			room = new BER_RoomDustState();
+			room.m_Center = roomCenter;
+			room.m_fUpdated = now;
+			s_aRooms.Insert(room);
+		}
+		room.Accumulate(now, weight);
+		if (room.m_fPending < FOG_SPAWN_WEIGHT || room.m_Layers.Count() >= FOG_MAX_LAYERS
+			|| now - room.m_fLastEmission < FOG_MIN_INTERVAL)
+			return null;
+		ParticleEffectEntity layer = SpawnFogEntity(world, exclude, fogPos, strength, fogRes);
+		if (layer)
+		{
+			room.m_Layers.Insert(layer);
+			room.m_fPending -= FOG_SPAWN_WEIGHT;
+			room.m_fLastEmission = now;
+		}
+		return layer;
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! How much structural dust a struck material sheds into the room, by easily researched
-	//! particulate logic: plaster/masonry/concrete/brick = lots of fine dust; bare stone a
+	//! Relative structural-dust weights: plaster/masonry/concrete/brick shed fine dust; bare stone a
 	//! bit less; dirt floors plenty; WOOD splinters but powders very little; sheet metal,
 	//! glass, plastic and the like (the typewriter) shed none at all. Unknown/no-ray
 	//! defaults to full — interiors are mostly masonry.
@@ -373,7 +385,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		else
 		{
 			// (scale/0.72)^2: 5.56 (0.36) -> 0.25, 7.62 (0.42) -> 0.34, pistols floor,
-			// 12.7+ (1.2+) capped — destructive power rises superlinearly with caliber
+			// 12.7+ (1.2+) capped. These are visual weights, not measured damage or energy.
 			m_fBerCalWeight = BER_SurfaceUtil.ClampF(Math.Pow(shotScale / 0.72, 2.0), 0.08, 2.5);
 			m_sBerStruckMat = GetStruckMaterial(owner, shotDir);
 			m_vBerShotDir = shotDir;
@@ -403,26 +415,24 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected bool SpawnFogEntity(vector center, float strength, float roomHalf, ResourceName fogRes)
+	protected static ParticleEffectEntity SpawnFogEntity(BaseWorld world, IEntity exclude, vector center, float strength, ResourceName fogRes)
 	{
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 		spawnParams.Transform[3] = center;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(fogRes, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(fogRes, spawnParams);
 		if (!pfx)
-			return false;
+			return null;
 
 		BER_OwnedEffects.MarkOwned(pfx);
 
 		Particles particles = pfx.GetParticles();
 		if (particles)
 		{
-			BaseWorld world = GetOwner().GetWorld();
-			vector extent = BER_SurfaceUtil.GetCloudExtent(world, center, GetOwner());
+			vector extent = BER_SurfaceUtil.GetCloudExtent(world, center, exclude);
 			// Shape changes spread birth locations; strength changes amount, not cloud radius.
-			float clearance = BER_SurfaceUtil.GetMinWallDistance(world, center - Vector(0, 0.6, 0), GetOwner(), 1.5);
+			float clearance = BER_SurfaceUtil.GetMinWallDistance(world, center - Vector(0, 0.6, 0), exclude, 1.5);
 			float sizeMult = BER_SurfaceUtil.ClampF(clearance / 0.8, 0.08, 1);
 			int emitterCount = particles.GetNumEmitters();
 			for (int i = 0; i < emitterCount; i++)
@@ -435,7 +445,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		}
 
 		pfx.Play();
-		return true;
+		return pfx;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -462,12 +472,11 @@ class BER_EffectTuningComponent : ScriptComponent
 
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 		if (m_vGroundNormal != vector.Zero && m_vGroundNormal != vector.Up)
 			SCR_EntityHelper.OrientUpToVector(m_vGroundNormal, spawnParams.Transform);
 		spawnParams.Transform[3] = m_vGroundPos;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(res, spawnParams);
 		if (!pfx)
 			return;
 
@@ -529,9 +538,8 @@ class BER_EffectTuningComponent : ScriptComponent
 			return;
 		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 		params.UseFrameEvent = true;
-		params.PlayOnSpawn = false;
 		params.Transform[3] = owner.GetOrigin();
-		ParticleEffectEntity vapor = ParticleEffectEntity.SpawnParticleEffect(CONDENSATION, params);
+		ParticleEffectEntity vapor = BER_OwnedEffects.SpawnPaused(CONDENSATION, params);
 		if (!vapor)
 			return;
 		BER_OwnedEffects.MarkOwned(vapor);
@@ -614,12 +622,11 @@ class BER_EffectTuningComponent : ScriptComponent
 				continue;
 			ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 			params.UseFrameEvent = true;
-			params.PlayOnSpawn = false;
 			vector ejecta = BER_SurfaceUtil.GetImpactEjectaDirection(dir, normal);
 			if (ejecta != vector.Zero)
 				SCR_EntityHelper.OrientUpToVector(ejecta, params.Transform);
 			params.Transform[3] = pos + normal * 0.01;
-			ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(ResolveFragHitEffect(particle), params);
+			ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(ResolveFragHitEffect(particle), params);
 			if (!pfx)
 				continue;
 			BER_OwnedEffects.MarkOwned(pfx);
@@ -720,7 +727,7 @@ class BER_EffectTuningComponent : ScriptComponent
 		while (child)
 		{
 			ParticleEffectEntity pfx = ParticleEffectEntity.Cast(child);
-			if (pfx && m_aProcessed.Find(pfx) == -1)
+			if (pfx && m_aProcessed.Find(pfx) == -1 && (m_bIndoorSmokeSwap || pfx.GetParticles()))
 			{
 				m_aProcessed.Insert(pfx);
 				ProcessAdopted(pfx, owner);
@@ -733,7 +740,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected bool QueryParticleCallback(IEntity ent)
 	{
 		ParticleEffectEntity pfx = ParticleEffectEntity.Cast(ent);
-		if (!pfx || m_aProcessed.Find(pfx) != -1)
+		if (!pfx || m_aProcessed.Find(pfx) != -1 || !pfx.GetParticles())
 			return true;
 
 		// only adopt effects that belong to this blast zone
@@ -747,7 +754,7 @@ class BER_EffectTuningComponent : ScriptComponent
 
 	//------------------------------------------------------------------------------------------------
 	//! Adopt only nearby named impact dust. Native world-space particles provide drift;
-	//! smoke-device replacement follows its source while already emitted smoke stays behind.
+	//! smoke devices keep the native source and clock while already emitted smoke stays behind.
 	protected void ProcessAdopted(ParticleEffectEntity pfx, IEntity owner)
 	{
 		if (BER_OwnedEffects.IsOwned(pfx))
@@ -757,14 +764,10 @@ class BER_EffectTuningComponent : ScriptComponent
 			return;
 		if (!m_bIndoorSmokeSwap && !BER_SurfaceUtil.HasDustEmitters(particles))
 			return; // never adopt an unrelated flash, exhaust, tracer or another mod's effect
-		ComputeEnvironment(owner);
-
 		if (m_bIndoorSmokeSwap)
-		{
-			if (m_bIndoor)
-				SwapToIndoorVariant(pfx, owner);
-			return;
-		}
+			return; // UpdateSmokeShelter tunes the original source without restarting it.
+
+		ComputeEnvironment(owner);
 		if (m_rTakeoverEffect != ResourceName.Empty)
 			return; // takeover and surface contacts already have an owner
 
@@ -810,10 +813,9 @@ class BER_EffectTuningComponent : ScriptComponent
 		vector direction = BER_SurfaceUtil.GetImpactEjectaDirection(m_vBerShotDir, m_vBerHitNormal);
 		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 		params.UseFrameEvent = true;
-		params.PlayOnSpawn = false;
 		SCR_EntityHelper.OrientUpToVector(direction, params.Transform);
 		params.Transform[3] = m_vBerHitPos + m_vBerHitNormal * 0.025;
-		ParticleEffectEntity replacement = ParticleEffectEntity.SpawnParticleEffect(resource, params);
+		ParticleEffectEntity replacement = BER_OwnedEffects.SpawnPaused(resource, params);
 		if (!replacement)
 			return original;
 		if (!replacement.GetParticles())
@@ -846,60 +848,32 @@ class BER_EffectTuningComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected ParticleEffectEntity SwapToIndoorVariant(ParticleEffectEntity pfx, IEntity owner)
+	//! Change source wind in place. Never restart a smoke device's native burn clock,
+	//! repeat phase, occlusion or colour by substituting a fresh particle entity.
+	protected void UpdateSmokeShelter(IEntity owner)
 	{
-		ResourceName res = GetIndoorSmokeVariant(owner);
-		if (res == ResourceName.Empty)
-			return null;
-
-		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
-		spawnParams.UseFrameEvent = true;
-		// the emitter must stay stuck to the grenade for its whole emitting life — the swap
-		// can happen while the device is still flying/rolling, and an unparented emitter
-		// then keeps pouring smoke at the point in mid-air where the swap happened.
-		// With FollowParent the spawn Transform is interpreted LOCAL to the followed entity
-		// (TransformMode defaults to LOCAL — vanilla passes local offsets here); keep the
-		// identity transform so the effect sits exactly on the device. Passing the world
-		// transform instead composes device x world = the effect lands kilometers off-map
-		// and no smoke ever appears (the 19th-pass indoor-smoke regression).
-		spawnParams.FollowParent = owner;
-
-		ParticleEffectEntity swapped = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
-		if (swapped)
+		if (m_aProcessed.IsEmpty())
+			return;
+		bool indoor = BER_SurfaceUtil.IsRoofed(owner.GetWorld(), owner.GetOrigin(), owner, m_fRoofCheckDistance);
+		for (int i = m_aProcessed.Count() - 1; i >= 0; i--)
 		{
-			pfx.StopEmission();
-			BER_OwnedEffects.MarkOwned(pfx);
-			BER_OwnedEffects.MarkOwned(swapped);
+			ParticleEffectEntity source = m_aProcessed[i];
+			if (!source || source.GetState() == EParticleEffectState.STOPPED)
+			{
+				m_aProcessed.Remove(i);
+				continue;
+			}
+			Particles particles = source.GetParticles();
+			if (!particles)
+				continue;
+			array<string> names = {};
+			particles.GetEmitterNames(names);
+			foreach (int emitter, string name : names)
+			{
+				if (name.IndexOf("smoke_") == 0)
+					particles.SetParam(emitter, EmitterParam.WIND, !indoor);
+			}
 		}
-		return swapped;
-	}
-
-	protected ResourceName GetIndoorSmokeVariant(IEntity owner)
-	{
-		EntityPrefabData prefabData = owner.GetPrefabData();
-		if (!prefabData)
-			return ResourceName.Empty;
-
-		string path = prefabData.GetPrefabName();
-
-		if (path.Contains("Smoke_M18_Red_Repeating"))
-			return "{BE20250902AC0014}Particles/BER/BER_SmokeIndoor_M18_Red_Repeat.ptc";
-		if (path.Contains("Smoke_M18_Violet_Repeating"))
-			return "{BE20250902AC0015}Particles/BER/BER_SmokeIndoor_M18_Purple_Repeating.ptc";
-		if (path.Contains("Smoke_M18_Red"))
-			return "{BE20250902AC0011}Particles/BER/BER_SmokeIndoor_M18_Red.ptc";
-		if (path.Contains("Smoke_M18_Violet"))
-			return "{BE20250902AC0013}Particles/BER/BER_SmokeIndoor_M18_Purple.ptc";
-		if (path.Contains("Smoke_M18_Yellow"))
-			return "{BE20250902AC0012}Particles/BER/BER_SmokeIndoor_M18_Yellow.ptc";
-		if (path.Contains("ANM8"))
-			return "{BE20250902AC0016}Particles/BER/BER_SmokeIndoor_AN-M8_HC.ptc";
-		if (path.Contains("RDG2"))
-			return "{BE20250902AC0017}Particles/BER/BER_SmokeIndoor_RDG-2.ptc";
-		if (path.Contains("Smoke_M18"))
-			return "{BE20250902AC0010}Particles/BER/BER_SmokeIndoor_M18_Green.ptc"; // base default
-
-		return ResourceName.Empty; // unknown (modded) smoke — leave the vanilla effect alone
 	}
 
 	//------------------------------------------------------------------------------------------------

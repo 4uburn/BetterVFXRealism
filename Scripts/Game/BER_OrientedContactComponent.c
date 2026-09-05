@@ -47,7 +47,6 @@ class BER_OrientedContactComponent : SCR_ParticleContactComponent
 			{
 				ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 				spawnParams.UseFrameEvent = true;
-				spawnParams.PlayOnSpawn = false;
 
 				vector up = contact.Normal;
 				if (vector.Dot(up, owner.GetOrigin() - contact.Position) < 0)
@@ -56,7 +55,7 @@ class BER_OrientedContactComponent : SCR_ParticleContactComponent
 					SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
 
 				spawnParams.Transform[3] = contact.Position;
-				ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(res, spawnParams);
+				ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(res, spawnParams);
 				if (pfx)
 				{
 					BER_OwnedEffects.MarkOwned(pfx);

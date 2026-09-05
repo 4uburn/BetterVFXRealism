@@ -247,7 +247,7 @@ class BER_ActionGas
 		s_fClock = now;
 		for (int e = s_Effects.Count() - 1; e >= 0; e--)
 		{
-			if (!s_Effects[e] || (s_Effects[e].GetTotalSimulationTime() > 0.15 && !s_Effects[e].HasActiveParticles()))
+			if (!s_Effects[e] || s_Effects[e].GetState() == EParticleEffectState.STOPPED)
 				s_Effects.Remove(e);
 		}
 		BER_ActionGasState state;
@@ -273,7 +273,7 @@ class BER_ActionGas
 		float elapsed = now - state.m_fTime;
 		if (elapsed < 0.025)
 			return; // duplicate attachment callbacks for the same shot
-		state.m_fHeat = Math.Min(20, state.m_fHeat * Math.Pow(2.718281828, -elapsed / 4.0) + 1);
+		state.m_fHeat = Math.Min(20, BER_SurfaceUtil.Decay(state.m_fHeat, elapsed, 4.0) + 1);
 		state.m_fTime = now;
 		float strength = BER_SurfaceUtil.ClampF(amount, 0, 3) * (0.45 + 0.04 * state.m_fHeat);
 		bool suppressed = muzzle.IsMuzzleSuppressed();
@@ -282,14 +282,16 @@ class BER_ActionGas
 		if (strength <= 0)
 			return;
 
-		// Authored chamber pivot: no hard-coded right/left side or guessed world offset.
+		// Native TNodeId values can be negative. Validate the bone matrix rather
+		// than treating the identifier as a nonnegative array index.
+		PointInfo chamber = new PointInfo();
+		vector identity[4];
+		Math3D.MatrixIdentity4(identity);
+		chamber.Set(weapon, "barrel_chamber", identity);
 		Animation animation = weapon.GetAnimation();
-		if (animation && animation.GetBoneIndex("barrel_chamber") >= 0)
+		vector chamberModel[4];
+		if (animation && animation.GetBoneMatrix(chamber.GetNodeId(), chamberModel))
 		{
-			PointInfo chamber = new PointInfo();
-			vector identity[4];
-			Math3D.MatrixIdentity4(identity);
-			chamber.Set(weapon, "barrel_chamber", identity);
 			vector chamberWorld[4];
 			chamber.GetWorldTransform(chamberWorld);
 			Spawn(world, chamberWorld, strength);
@@ -297,7 +299,12 @@ class BER_ActionGas
 		BaseMagazineComponent magazine = muzzle.GetMagazine();
 		if (magazine && magazine.GetOwner())
 		{
-			EntitySlotInfo slot = EntitySlotInfo.GetSlotInfo(magazine.GetOwner());
+			InventoryItemComponent item = InventoryItemComponent.Cast(magazine.GetOwner().FindComponent(InventoryItemComponent));
+			EntitySlotInfo slot;
+			if (item)
+				slot = item.GetParentSlot();
+			if (!slot)
+				slot = EntitySlotInfo.GetSlotInfo(magazine.GetOwner());
 			if (slot)
 			{
 				vector magWorld[4];
@@ -313,10 +320,9 @@ class BER_ActionGas
 			return;
 		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 		params.UseFrameEvent = true;
-		params.PlayOnSpawn = false;
 		for (int i = 0; i < 4; i++)
 			params.Transform[i] = transform[i];
-		ParticleEffectEntity effect = ParticleEffectEntity.SpawnParticleEffect(GAS, params);
+		ParticleEffectEntity effect = BER_OwnedEffects.SpawnPaused(GAS, params);
 		if (!effect)
 			return;
 		Particles particles = effect.GetParticles();

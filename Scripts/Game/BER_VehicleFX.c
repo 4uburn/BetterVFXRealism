@@ -430,7 +430,6 @@ modded class SCR_MotorExhaustEffectGeneralComponent
 			// unstaged effects: vanilla multiplies LIFETIME by m_fLifetimeScale here, but that
 			// field is never assigned (0) — using the EGT coefficient alone instead
 			particles.MultParam(-1, EmitterParam.BIRTH_RATE, birthCoef);
-		particles.MultParam(-1, EmitterParam.BIRTH_RATE_RND, birthCoef);
 			particles.MultParam(-1, EmitterParam.BIRTH_RATE_RND, birthCoef);
 			particles.MultParam(-1, EmitterParam.LIFETIME, lifeCoef);
 			particles.MultParam(-1, EmitterParam.LIFETIME_RND, lifeCoef);

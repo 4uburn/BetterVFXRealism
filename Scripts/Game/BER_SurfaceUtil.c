@@ -418,7 +418,8 @@ class BER_SurfaceUtil
 		{
 			if (name == "ber_dust_fines")
 				continue;
-			if (name.IndexOf("ber_dust_") != 0 && name.IndexOf("sparks_") != 0 && name.IndexOf("debris") != 0)
+			bool solid = name == "stone_chips" || name == "dirt_chips" || name == "dirt_clumps" || name.IndexOf("rock_chunks_") == 0;
+			if (!solid && name.IndexOf("ber_dust_") != 0 && name.IndexOf("sparks_") != 0 && name.IndexOf("debris") != 0)
 				continue; // never redirect light, fire, smoke or prefab contact triggers
 			particles.SetParam(i, EmitterParam.CONEANGLE, Vector(360, 0, 45 * clearance));
 		}
@@ -625,6 +626,31 @@ class BER_SurfaceUtil
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Exact decay over a time step; used by bounded visual source/impulse models.
+	static float Decay(float amount, float elapsed, float timeConstant)
+	{
+		if (timeConstant <= 0)
+			return 0;
+		return amount * Math.Pow(2.718281828, -Math.Max(0, elapsed) / timeConstant);
+	}
+
+	//! Allow travel up to a cached wall plane, then preserve tangential displacement.
+	//! Unlike stripping the normal immediately on a look-ahead hit, this reaches the wall.
+	static vector ClipDisplacementToPlane(vector pos, vector move, vector point, vector normal, float skin = 0.03)
+	{
+		float normalLength = normal.Length();
+		if (normalLength < 0.0001)
+			return move;
+		normal /= normalLength;
+		float into = vector.Dot(move, normal);
+		if (into >= 0)
+			return move;
+		float clearance = Math.Max(0, vector.Dot(pos - point, normal) - skin);
+		if (-into <= clearance)
+			return move;
+		return move - normal * (into + clearance);
+	}
+
 	static float ClampF(float value, float lo, float hi)
 	{
 		if (value < lo)
@@ -643,6 +669,26 @@ class BER_SurfaceUtil
 // Everything BER spawns is marked here and skipped by adoption.
 class BER_OwnedEffects
 {
+	//! Play creates the native handle; Pause keeps simulation at zero while callers tune.
+	//! PlayOnSpawn=false alone leaves GetParticles null in Workbench 1.8.
+	//! The caller resumes with Play after applying parameters and marks ownership.
+	static ParticleEffectEntity SpawnPaused(ResourceName resource, ParticleEffectEntitySpawnParams params)
+	{
+		params.PlayOnSpawn = false;
+		ParticleEffectEntity effect = ParticleEffectEntity.SpawnParticleEffect(resource, params);
+		if (!effect)
+			return null;
+		effect.Play();
+		effect.Pause();
+		if (!effect.GetParticles())
+		{
+			effect.SetDeleteWhenStopped(true);
+			effect.Stop();
+			return null; // no visual handle on headless or an invalid resource
+		}
+		return effect;
+	}
+
 	protected static ref array<ParticleEffectEntity> s_aOwned;
 	protected static ref array<float> s_aTime;
 

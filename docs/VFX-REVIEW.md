@@ -90,7 +90,7 @@ Baseline: 0dd4fcf. Inventory: all 12 original Game scripts, 121 particle files, 
 - Existing six environment-hit overrides stop the large dirt-splash emitters. Normal bullet-hole handling remains the engine's responsibility; fragment effects contain only the reduced primary wisp.
 - Fragment holes are requested on the struck entity for 300 seconds, before dust suppression. World.CreateDecal requires an entity; terrain traces without TraceEnt and surfaces that reject decals cannot be promised holes. A dynamic decal's null return is not treated as failure.
 - Fragment rays are visual-only, uniform sphere samples, capped at 64 and 14 m. They do not alter damage, calculate fragment ballistics or represent measured shrapnel ranges.
-- Indoor fog appears near the hit, pulled into the room and sized by clearance. A room receives one initial layer and at most three additional layers during its 40-second accumulation period; at most 64 rooms are tracked.
+- Indoor fog appears near the hit, pulled into the room and sized by clearance. Each room record holds at most four living layers and releases their budget when they expire; new layers are at least two seconds apart. At most 64 room records are tracked. See the native sustained-fire tests in [OVERNIGHT-REVIEW.md](OVERNIGHT-REVIEW.md).
 - The two room-fog assets fade gradually. Roof shelter disables ambient wind, while collision/clearance reduce wall leakage. Billboard edges can still intersect geometry.
 - Explicitly wet indoor materials also suppress room-dust accumulation. Ambient rain alone does not wet a sheltered floor.
 - Existing disabled vehicle hull blankets/sheets/wash remain disabled. The forced hull-dust test switch is now also off; wheel dust and exhaust remain active.
@@ -103,14 +103,15 @@ Validation was performed with installed Arma Reforger/Workbench 1.8.0.13 on Wind
 | Check | Result / boundary |
 | --- | --- |
 | Workbench MCP ValidateScripts, configuration WORKBENCH | Passed, 14 existing base-game obsolete-API warnings; no addon errors. This includes Game and WorkbenchGame modules, not a live dedicated-server test. |
-| python tools/validate_vfx.py | Passed: 525 emitters, 184 resource GUIDs, 17 exact 0.33 size pairs, 60 surface-palette assets; local paths/GUIDs, numeric ranges, brace balance and dust classification checked. |
+| python tools/validate_vfx.py | Passed: 525 emitters, 185 resource GUIDs including the review world, 17 exact 0.33 size pairs, 60 surface-palette assets; local paths/GUIDs, numeric ranges, brace balance and dust classification checked. |
 | MCP particle inspection | Initial pass covered all 121 particle files. Follow-up inspected all 17 changed/new assets; the completion pass also inspected all 48 curve-corrected assets. Current total 125; all 37 changed/new follow-up assets also passed structural inspection. Structural parsing only, not rendering or a native runtime build. |
 | Size-curve regression | Passed: 131 curves across 48 files preserve all control times and intended size/variation products within 1e-7 tolerance. Other particle fields are unchanged, apart from trailing newlines. Size/Alpha/Color curve values are now in 0–1. |
 | Native Particle Editor | Loaded the addon condensation resource and confirmed corrected size properties without new curve errors. This is a limited load check, not visual acceptance of all effects. |
 | Prefab-emitter regression comparison | 56 trigger/other prefab emitters retain preceding review travel/emission properties. Three supplemental solid emitters were intentionally retuned with the bounded debris model. |
 | git diff --check | Passed. |
 | Native data packaging | Not validated. The MCP build launcher missed base-game resolution; a direct hidden launch with the correct dependency path initialized and compiled the addon but did not produce a data build. Task-owned build processes were stopped. No package or Workshop release is claimed. |
-| Multiplayer/JIP, performance, rendered VFX, AI occlusion | Not run. Required before release. |
+| Native runtime and rendered VFX | Bounded room, live rifle/suppressor and moving smoke-device tests are recorded in [OVERNIGHT-REVIEW.md](OVERNIGHT-REVIEW.md). These extend the original compile/data-only pass. |
+| Multiplayer/JIP, performance, AI occlusion | Not established by the local review fixture. Required before release. |
 
 MCP handlers and local caches are excluded from the contribution. The tracked resource database is preserved from baseline rather than shipping a database polluted by temporary editor handlers.
 

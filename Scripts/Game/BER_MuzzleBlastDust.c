@@ -37,6 +37,17 @@ modded class SCR_MuzzleEffectComponent
 	}
 }
 
+class BER_ShotSample
+{
+	IEntity m_Projectile;
+	vector m_Position;
+	vector m_Direction;
+	float m_fTime;
+	float m_fScale;
+	float m_fSpeed;
+	float m_fRewind;
+}
+
 class BER_VolleyState
 {
 	IEntity m_Weapon;
@@ -113,12 +124,9 @@ class BER_MuzzleBlastDust
 	protected const float CONCUSSION_RADIUS = 2.0;      // m — the muzzle gas pressure doesn't reach far
 
 	// recent shot rays (every weapon, every shooter) — the impact deflection matches an
-	// impact point against the ray it lies on to recover the true incoming direction,
+	// impact point against a recent ray to infer its incoming direction,
 	// and the recorded weapon-class scale lets the impact scale its dust by caliber
-	protected static ref array<vector> s_aShotPos;
-	protected static ref array<vector> s_aShotDir;
-	protected static ref array<float> s_aShotTime;
-	protected static ref array<float> s_aShotScale;
+	protected static ref array<ref BER_ShotSample> s_aShots;
 
 	protected const float SHOT_RAY_KEEP = 2.5;   // s a ray stays matchable
 	protected const float SHOT_RAY_RANGE = 700;  // m of flight beyond which a match is rejected
@@ -137,7 +145,7 @@ class BER_MuzzleBlastDust
 	protected static void EnsureState(BaseWorld world)
 	{
 		float now = world.GetWorldTime();
-		if (!s_aShotTime || s_World != world || now < s_fClock)
+		if (!s_aShots || s_World != world || now < s_fClock)
 		{
 			s_World = world;
 			s_aWashPfx = {};
@@ -150,10 +158,7 @@ class BER_MuzzleBlastDust
 			s_aRiflePuffTime = {};
 			s_aRiflePuffBirth = {};
 			s_aRiflePuffLife = {};
-			s_aShotPos = {};
-			s_aShotDir = {};
-			s_aShotTime = {};
-			s_aShotScale = {};
+			s_aShots = {};
 			s_aVolleys = {};
 			s_iWashPulse = 0;
 		}
@@ -231,33 +236,8 @@ class BER_MuzzleBlastDust
 		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
 
-		// record the shot ray (full 3D muzzle direction) for impact-splash deflection
-		if (fwd != vector.Zero)
-		{
-			for (int i = s_aShotTime.Count() - 1; i >= 0; i--)
-			{
-				if (now - s_aShotTime[i] > SHOT_RAY_KEEP)
-				{
-					s_aShotTime.Remove(i);
-					s_aShotPos.Remove(i);
-					s_aShotDir.Remove(i);
-					s_aShotScale.Remove(i);
-				}
-			}
-			vector shotDir = fwd;
-			shotDir.Normalize();
-			if (s_aShotPos.Count() >= 512)
-			{
-				s_aShotPos.Remove(0);
-				s_aShotDir.Remove(0);
-				s_aShotTime.Remove(0);
-				s_aShotScale.Remove(0);
-			}
-			s_aShotPos.Insert(muzzlePos);
-			s_aShotDir.Insert(shotDir);
-			s_aShotTime.Insert(now);
-			s_aShotScale.Insert(scale);
-		}
+		if (!RecordShot(muzzlePos, fwd, scale, projectileEntity, now))
+			return; // native weapon and muzzle-attachment callbacks can describe the same projectile
 
 		// every small-arms shot shoves the puffs of the previous shots outbound — the
 		// concussion blows the weapon's own dust cloud away from the muzzle, so this runs
@@ -653,36 +633,90 @@ class BER_MuzzleBlastDust
 		outScale = 0;
 		if (!world)
 			return false;
-
 		EnsureState(world);
 		float now = world.GetWorldTime() * 0.001;
-		float bestScore = 999;
-
-		for (int i = s_aShotTime.Count() - 1; i >= 0; i--)
+		float bestScore = 1000;
+		foreach (BER_ShotSample shot : s_aShots)
 		{
-			if (now - s_aShotTime[i] > SHOT_RAY_KEEP)
-				continue; // pruning happens on record — just skip stale leftovers here
-
-			vector toImpact = impactPos - s_aShotPos[i];
-			float t = vector.Dot(toImpact, s_aShotDir[i]);
-			if (t < 0.4 || t > SHOT_RAY_RANGE)
+			float age = now - shot.m_fTime;
+			if (age < 0 || age > SHOT_RAY_KEEP)
 				continue;
-
-			vector offRay = toImpact - s_aShotDir[i] * t;
-			float perp = offRay.Length();
-			float tolerance = 0.9 + 0.004 * t;
-			if (perp > tolerance)
+			float score = ScoreShot(impactPos, shot, age);
+			if (score < 0 || score >= bestScore)
 				continue;
+			bestScore = score;
+			outDir = shot.m_Direction;
+			outScale = shot.m_fScale;
+		}
+		return outDir != vector.Zero;
+	}
 
-			if (perp < bestScore)
+	//! Pure geometric/time association, not a replacement ballistic simulation.
+	//! Broad uncertainty at range keeps native fallback preferable to an invented hit.
+	static float ScoreShot(vector impactPos, BER_ShotSample shot, float age)
+	{
+		vector toImpact = impactPos - shot.m_Position;
+		float distance = vector.Dot(toImpact, shot.m_Direction);
+		if (distance < 0.4 || distance > SHOT_RAY_RANGE)
+			return -1;
+		float tolerance = 0.25 + 0.004 * distance;
+		float perpendicular = (toImpact - shot.m_Direction * distance).Length();
+		if (perpendicular > tolerance)
+			return -1;
+		float timeError = 0;
+		if (shot.m_fSpeed > 10)
+		{
+			float earliestFlight = distance / shot.m_fSpeed;
+			float observedFlight = age + shot.m_fRewind;
+			if (observedFlight + 0.1 < earliestFlight)
+				return -1;
+			// Drag can lengthen flight; allow it without favoring arbitrarily old rays.
+			timeError = Math.AbsFloat(observedFlight - earliestFlight) / (0.15 + earliestFlight);
+		}
+		else
+			timeError = age / SHOT_RAY_KEEP;
+		return perpendicular / tolerance + 0.35 * timeError;
+	}
+
+	protected static bool RecordShot(vector muzzlePos, vector direction, float scale, IEntity projectile, float now)
+	{
+		if (direction.LengthSq() < 0.0001)
+			return true; // no usable ray, but retain the existing non-directional dust path
+		for (int i = s_aShots.Count() - 1; i >= 0; i--)
+		{
+			if (now - s_aShots[i].m_fTime > SHOT_RAY_KEEP)
+				s_aShots.Remove(i);
+			else if (projectile && s_aShots[i].m_Projectile == projectile)
+				return false;
+		}
+		if (s_aShots.Count() >= 512)
+			s_aShots.Remove(0);
+		BER_ShotSample shot = new BER_ShotSample();
+		shot.m_Projectile = projectile;
+		shot.m_Position = muzzlePos;
+		direction.Normalize();
+		shot.m_Direction = direction;
+		shot.m_fScale = scale;
+		shot.m_fTime = now;
+		if (projectile)
+		{
+			ProjectileMoveComponent movement = ProjectileMoveComponent.Cast(projectile.FindComponent(ProjectileMoveComponent));
+			if (movement)
 			{
-				bestScore = perp;
-				outDir = s_aShotDir[i];
-				outScale = s_aShotScale[i];
+				vector velocity = movement.GetVelocity();
+				shot.m_fSpeed = velocity.Length();
+				shot.m_fRewind = Math.Max(0, movement.GetRewindDuration());
+				if (shot.m_fSpeed > 10)
+				{
+					shot.m_Direction = velocity / shot.m_fSpeed;
+					vector transform[4];
+					projectile.GetWorldTransform(transform);
+					shot.m_Position = transform[3];
+				}
 			}
 		}
-
-		return outDir != vector.Zero;
+		s_aShots.Insert(shot);
+		return true;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -970,13 +1004,12 @@ class BER_MuzzleBlastDust
 
 		ParticleEffectEntitySpawnParams sheetParams = new ParticleEffectEntitySpawnParams();
 		sheetParams.UseFrameEvent = true;
-		sheetParams.PlayOnSpawn = false;
 		sheetParams.Transform[0] = vmat[0];
 		sheetParams.Transform[1] = vmat[1];
 		sheetParams.Transform[2] = vmat[2];
 		sheetParams.Transform[3] = Vector(center[0], deckY + 0.04, center[2]);
 
-		ParticleEffectEntity sheet = ParticleEffectEntity.SpawnParticleEffect(sheetRes, sheetParams);
+		ParticleEffectEntity sheet = BER_OwnedEffects.SpawnPaused(sheetRes, sheetParams);
 		if (!sheet)
 			return;
 
@@ -1072,7 +1105,6 @@ class BER_MuzzleBlastDust
 	{
 		ParticleEffectEntitySpawnParams spawnParams = new ParticleEffectEntitySpawnParams();
 		spawnParams.UseFrameEvent = true;
-		spawnParams.PlayOnSpawn = false;
 
 		vector up = surfaceNormal;
 		if (up == vector.Zero)
@@ -1102,7 +1134,7 @@ class BER_MuzzleBlastDust
 			SCR_EntityHelper.OrientUpToVector(up, spawnParams.Transform);
 		spawnParams.Transform[3] = pos;
 
-		ParticleEffectEntity pfx = ParticleEffectEntity.SpawnParticleEffect(blastRes, spawnParams);
+		ParticleEffectEntity pfx = BER_OwnedEffects.SpawnPaused(blastRes, spawnParams);
 		if (!pfx)
 			return null;
 
