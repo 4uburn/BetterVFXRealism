@@ -12,7 +12,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	[Attribute(defvalue: "", UIWidgets.ResourcePickerThumbnail, desc: "Explosion effect to spawn under BER control (vanilla reference must be blanked in the same prefab)", params: "ptc")]
 	protected ResourceName m_rTakeoverEffect;
 
-	[Attribute(defvalue: "0", desc: "Optional transient condensation for large outdoor blasts, 0 disables. Author only for suitably humid scenes; rain/wet soil is not humidity.", params: "0 1 0.05")]
+	[Attribute(defvalue: "0", desc: "Brief pale envelope on selected large outdoor blasts, 0 disables. Artistic approximation: atmospheric humidity is not exposed.", params: "0 1 0.05")]
 	protected float m_fCondensationStrength;
 	protected const ResourceName CONDENSATION = "{BA176BEE23D045AC}Particles/BER/BER_BlastCondensation.ptc";
 
@@ -97,6 +97,7 @@ class BER_EffectTuningComponent : ScriptComponent
 	protected float m_fElapsed;
 	protected float m_fScanAccum;
 	protected bool m_bTakeoverDone;
+	protected bool m_bCondensationDone;
 	protected bool m_bFragDone;
 	protected bool m_bHullKickupDone;
 	protected Vehicle m_KickupVehicle;
@@ -144,6 +145,11 @@ class BER_EffectTuningComponent : ScriptComponent
 		{
 			m_bTakeoverDone = true;
 			SpawnTakeoverEffect(owner);
+		}
+		if (!m_bCondensationDone && m_fCondensationStrength > 0)
+		{
+			m_bCondensationDone = true;
+			SpawnCondensation(owner);
 		}
 		if (!m_bFragDone && m_iBerFragImpacts > 0)
 		{
@@ -206,7 +212,6 @@ class BER_EffectTuningComponent : ScriptComponent
 		pfx.Play();
 
 		// Dust and smoke drift per particle through native drag; debris stays ballistic.
-		SpawnCondensation(owner);
 
 		if (m_fDebrisScale > 0.01)
 			SpawnImpactDebris();
@@ -520,10 +525,14 @@ class BER_EffectTuningComponent : ScriptComponent
 		pfx.Play();
 	}
 
-	//! Fully wired author opt-in: no inference of atmospheric humidity from ground wetness.
+	//! Enabled by explicit large-blast prefab settings, independent of takeover effects.
+	//! No inference of atmospheric humidity from ground wetness.
 	protected void SpawnCondensation(IEntity owner)
 	{
-		if (m_fCondensationStrength <= 0 || m_fDebrisScale < 2.5 || m_bIndoor)
+		if (m_fCondensationStrength <= 0)
+			return;
+		ComputeEnvironment(owner);
+		if (m_bIndoor)
 			return;
 		ParticleEffectEntitySpawnParams params = new ParticleEffectEntitySpawnParams();
 		params.UseFrameEvent = true;

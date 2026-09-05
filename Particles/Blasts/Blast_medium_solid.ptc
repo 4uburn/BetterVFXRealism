@@ -16,8 +16,8 @@ EffectDef {
    LodMax 2
    Material "{715B7782AE4DFAC6}Particles/_Materials/Gas/Smoke_Exhaust_Anim_Explosion.emat"
    StreakFullUV 0
-   SizeMultiplier 2.3058
-   SizeRND 1.0121
+   SizeMultiplier 3.4587
+   SizeRND 1.51815
    ScaleX 1
    ScaleY 1
    CenterY 0
@@ -50,7 +50,7 @@ EffectDef {
     0 0 1 0
    }
    Size {
-    0 0.904 1 1.5
+    0 0.602666667 1 1
    }
    EmittingTime 0.2
    Repeat 0
@@ -69,8 +69,8 @@ EffectDef {
    LodMax 2
    Material "{61247CAB58EF0D6D}Particles/_Materials/Gas/Smoke_Explosion_02.emat"
    StreakFullUV 0
-   SizeMultiplier 1.781
-   SizeRND 0.5623
+   SizeMultiplier 2.6715
+   SizeRND 0.84345
    ScaleX 1
    ScaleY 1
    CenterY 0
@@ -104,7 +104,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.904 1 1.5
+    0 0.602666667 1 1
    }
    EmittingTime 0.2
    Repeat 0
@@ -122,8 +122,8 @@ EffectDef {
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
    StretchMultiplier 1
    StreakFullUV 0
-   SizeMultiplier 2.9618
-   SizeRND 1.5744
+   SizeMultiplier 4.4427
+   SizeRND 2.3616
    RotMultiplier 3.5
    RandomRotDir 1
    VelAngle 0
@@ -153,7 +153,7 @@ EffectDef {
     0 1 1 0.196
    }
    Size {
-    0 0 0.014 0.733 1 1.5
+    0 0 0.014 0.488666667 1 1
    }
    EmittingTime 0.5
    Repeat 0
@@ -256,8 +256,8 @@ EffectDef {
    Material "{05F9716FDE73AE15}Particles/_Materials/Solid/Condebris_3x3.emat"
    Prefab "{D8D6114E2FD56B25}Prefabs/Particles/Explosion_Debris_Dirt.et"
    StretchMultiplier 1
-   SizeMultiplier 0.0125
-   SizeRND 0.1
+   SizeMultiplier 0.01875
+   SizeRND 0.15
    ScaleX 0.5
    RotMultiplier 800
    RotMultiplier_3D 600 600 0
@@ -293,7 +293,7 @@ EffectDef {
     0 1 1 1
    }
    Size {
-    0 1.5
+    0 1
    }
    EmittingTime 0.2
    Repeat 0

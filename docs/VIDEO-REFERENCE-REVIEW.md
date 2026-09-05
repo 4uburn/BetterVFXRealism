@@ -13,14 +13,14 @@ MINIMUM COMPONENTS NEEDED
 - Existing surface/tuning helpers for a bounded material-dependent debris count and speed/lifetime scaling; native particle gravity and collision perform motion.
 - Existing ground and wall-hit particles for short local puffs and a slower fine-dust tail.
 - Existing AP/HE particles for explicit brief flashes and gravity-driven metal sparks; retain sustained smoke-device emission.
-- One optional condensation particle resource and one author-controlled scalar on the existing effect component.
+- One condensation particle resource and one author-controlled scalar on the existing effect component.
 - This evidence record and regression checks in the existing validation tool.
 
 REJECTED/NEEDS CLARIFICATION BEFORE ACTION
 - No real fragmentation/damage model, explosive-energy calculation, trajectory targeting, copied footage/assets or new fluid solver.
 - No automatic identification of ammunition from footage. Video 1 shows a muzzle cloud, not a resolved downrange impact.
 - No fabricated heat-distortion shader: MCP knowledge, BI particle documentation and packed-asset searches did not establish a supported spatial refraction material/API.
-- Condensation needs atmospheric conditions the inspected API does not expose (notably humidity). It will be an explicitly authored opt-in visual, default off; wet soil is not a humidity measurement.
+- Condensation needs atmospheric conditions the inspected API does not expose (notably humidity). It is explicitly enabled on four selected large-blast prefabs, with strength 0 available to disable it; wet soil is not a humidity measurement.
 
 PRIMARY RISKS
 - Edited/slow-motion clips do not supply reliable metric distances, exposure or elapsed event time.
@@ -57,7 +57,7 @@ Local contact sheets were used for inspection and are not added to the repositor
 - **Grenade/contact dust:** four medium ground materials retain their dense initial burst and gain a slower static-frame fine tail (7–10 s authored; normal contact tuning extends it). Six existing wall-hit overrides gain at most three fine sprites each. The 17 fragment landing assets still contain only the primary 0.33-size wisp.
 - **Solid debris:** the two supplemental dirt/rock effects have consistent gravity, collisions, no wind advection, and at most 48 simultaneously active solid particles per effect. Their amount depends on material and artistic event strength. Existing contact-trigger trajectories are preserved.
 - **Smoke deployment:** reviewed separately from impact dust. The existing AN-M8 path, for example, emits for 120 s with a 22–30 s tail; it bypasses ground-dust scaling and retains native outdoor wind. Indoor variants keep the emitting source attached to the moving device while particles simulate in world space. This pass does not add or claim a particular vehicle smoke-launcher system, nor infer a full smoke lifetime from a clip ending early.
-- **Large-blast condensation:** a new short pale envelope can be enabled through `m_fCondensationStrength` on a takeover effect with `m_fDebrisScale >= 2.5`, outdoors. It defaults to **0/off** on every existing prefab. The particle lifetime is 0.32–0.38 s and its budget 12. This is an author-controlled visual approximation for a suitably humid scene.
+- **Large-blast condensation:** a new short pale envelope is enabled outdoors at `m_fCondensationStrength 0.65` on M821/O832DU HE mortar and M15/TM62M AT-mine warheads. A one-shot guard runs independently of takeover/debris settings. Other prefabs retain the 0/off default, and setting these four strengths to 0 disables the envelope. The particle lifetime is 0.32–0.38 s and its budget 12. This is an author-controlled visual approximation for a suitably humid scene.
 
 ## Visual debris mathematics
 
@@ -98,17 +98,59 @@ Fine particles use separate native drag/wind and lower effective settling, with 
 
 ## Vapour and heat boundaries
 
-Visible condensation is made of droplets, whereas water vapour itself is invisible. Cooling/saturation and atmospheric moisture matter; ground wetness cannot establish those conditions. This motivates the explicit author opt-in rather than automatic vapour on every large explosion. See [NASA's cloud explanation](https://gpm.nasa.gov/resources/faq/what-are-clouds-made-are-they-more-likely-form-polluted-air-or-pristine-air) and [ISCCP cloud formation](https://isccp.giss.nasa.gov/analysis/climanal8.html).
+Visible condensation is made of droplets, whereas water vapour itself is invisible. Cooling/saturation and atmospheric moisture matter; ground wetness cannot establish those conditions. This motivates the explicit prefab selection rather than treating every explosion as a condensation event. See [NASA's cloud explanation](https://gpm.nasa.gov/resources/faq/what-are-clouds-made-are-they-more-likely-form-polluted-air-or-pristine-air) and [ISCCP cloud formation](https://isccp.giss.nasa.gov/analysis/climanal8.html).
 
 Density gradients can bend light. A pale sprite is not heat shimmer or a rendered shockwave. MCP knowledge, the [BI Particle Editor documentation](https://community.bistudio.com/wiki/Arma_Reforger:Particle_Editor), and packed-material searches did not establish a supported spatial-refraction authoring path in this setup. **No heat-distortion implementation is claimed.** See [NASA's schlieren explanation](https://www.grc.nasa.gov/WWW/K-12/airplane/tunvschlrn.html).
 
 ## Validation and direct comparison
 
 - Final script compilation: Workbench MCP ValidateScripts, WORKBENCH configuration; passed with 14 existing base-game warnings and no addon errors.
-- Data contract: 524 emitters, 183 metadata identities, 17 exact 0.33 primary-wisp pairs and 60 palette assets. Added checks cover solid budgets/gravity, M242 scope naming/budget, brief AP/HE phases, condensation lifetime and wall-fines budget.
-- All 17 changed/new particle assets in this follow-up passed MCP structural inspection. Original pass inspected all 121; the current total is 124.
+- Data contract: 524 emitters, 183 metadata identities, 17 exact 0.33 primary-wisp pairs and 60 palette assets. Added checks cover solid budgets/gravity, M242 scope naming/budget, brief AP/HE phases, condensation lifetime, four enabled prefab connections, normalized curves and wall-fines budget.
+- All 17 changed/new particle assets in this follow-up passed MCP structural inspection. Original pass inspected all 121; the current total is 124. The completion pass structurally inspected all 48 curve-corrected assets.
 - Of 59 prefab emitters, the three supplemental solid emitters intentionally changed gravity/velocity/lifetime/counts. The other 56 retain the preceding review commit's travel and emission properties.
 - No runtime packages, media decoding dependencies, footage or contact sheets enter the addon.
 - No rendered candidate capture, packaging success, frame-time measurement, dedicated-server/remote-client/JIP or AI-visibility test is claimed.
 
-Direct verification should compare dry/wet metal AP strikes; isolated HE and grenade bursts; prolonged room fire; cannon gunner/exterior views; smoke deployment over dry and wet terrain; near/far LODs; and calm-to-windy transitions. Check surface holes separately from dust, spark falloff separately from smoke, and the small local puff separately from accumulated room haze. Enable condensation only in an authored comparison case and inspect its short lifetime independently.
+Direct verification should compare dry/wet metal AP strikes; isolated HE and grenade bursts; prolonged room fire; cannon gunner/exterior views; smoke deployment over dry and wet terrain; near/far LODs; and calm-to-windy transitions. Check surface holes separately from dust, spark falloff separately from smoke, and the small local puff separately from accumulated room haze. Compare the enabled M821/O832DU and M15/TM62M envelope with strength 0 and inspect its short lifetime independently, including an indoor suppression case.
+
+## Completion pass after the request to include all discussed effects
+
+REQUIREMENTS
+- Ensure the existing PR project actually includes every supported discussed effect.
+- Enable the authored large-blast pale envelope in normal testing, not only through a disabled attribute.
+- Verify native resource loading as well as script/data contracts; leave Workbench available for testing.
+
+MINIMUM COMPONENTS NEEDED
+- Existing condensation resource and tuning component with a one-shot guard, independent of takeover/debris settings.
+- Explicit enable values on the two HE mortar warheads and two large AT-mine warheads.
+- Extend the existing validator to verify those four live prefab connections.
+
+REJECTED/NEEDS CLARIFICATION BEFORE ACTION
+- Do not treat an arbitrary renderer parameter, an overall screen wobble, or a pale sprite as implemented local heat refraction.
+- Do not mutate a shared particle material's colour: it would recolour unrelated concurrent effects and still would not sample the struck terrain.
+- Do not infer actual relative humidity from ground wetness. The enabled envelope is an artistic approximation; prefab strength 0 remains the disable control.
+
+PRIMARY RISKS
+- The API does not expose the atmospheric humidity needed to decide when physical condensation forms.
+- A short visible envelope on the selected effects is a reviewable art decision; it is not a physical guarantee for dry air.
+- Engine-managed editor caches change while Workbench is running and must stay out of the PR.
+
+REQUEST INTERPRETATION
+- Keep working on the same contribution, with the review checkout already open.
+- Fill supported wiring gaps and record concrete engine limitations without claiming the entire request is physically exact.
+
+UNDERSTANDING OF THE OVERALL TASK IN A BRIEF SUMMARY
+Make the discussed effects usable in the review candidate, validate their connections, and distinguish implemented approximations from the two unfulfilled renderer-dependent requirements.
+
+### Native curve defect found during completion
+
+Native Particle Editor loading reported CurveCubicSpline range errors. The stable source sweep found 131 per-particle Size curves above 1 across 48 assets, including pre-existing authored effects and the follow-up's muzzle/condensation additions. The condensation control was normalized first; the native editor showed the updated size properties without increasing the error count.
+
+The minimum fix divides each affected Size curve's ordinates by its maximum and multiplies SizeMultiplier and SizeRND by the same maximum. This preserves the intended mathematical size product while keeping the curve in 0–1. No fragment primary-wisp size pairs are affected. Birth rates, lifetimes, travel and GUIDs are unchanged by this normalization. The existing validator now checks normalized curves, without a new tool or dependency. An independent comparison against commit 1a8bf92 passed for all 131 curves: control times are identical, intended size and random-size products agree within 1e-7 tolerance, and other particle fields are unchanged apart from trailing newlines. This preserves intended authored sizes; it does not promise the same appearance as the previously invalid/clamped data.
+
+
+### Completion validation and remaining engine limits
+
+Workbench remains open on `BetterVFXRealism-review/BetterEffectsRealism.gproj`. Current MCP script validation passes with 14 base-game warnings. All 48 corrected particle assets pass MCP structural inspection, and the data contract still passes for 524 emitters, 183 GUIDs, 17 exact fragment wisps and 60 palettes. Native Particle Editor loaded the addon condensation variant and showed the corrected SizeMultiplier 1.82 and SizeRND 0.42 without increasing its existing error count. No full-scene rendered acceptance or performance claim follows from that limited check. Further UI inspection was interrupted by user interaction and was not used as evidence of failure to load the mod.
+
+The installed generated `EmitterParam` and `Particles` APIs expose no per-particle colour parameter; `GenericTerrainEntity` exposes texture resource names and coordinates, not sampled RGB. `Material.SetParam` changes shared materials and would not provide isolated terrain-colour matching. The authored 1.33 palette remains an approximation. Weather APIs expose rain, fog and temperature but not the needed atmospheric humidity. Inspected particle/material/shader resources and BI documentation did not establish a supported local heat-refraction authoring path. Exact terrain RGB matching and true heat distortion remain unfulfilled requirements, not implemented features.

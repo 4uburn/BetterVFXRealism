@@ -130,8 +130,8 @@ EffectDef {
    LodMax 1
    Material "{05F9716FDE73AE15}Particles/_Materials/Solid/Condebris_3x3.emat"
    StretchMultiplier 1
-   SizeMultiplier 0.04
-   SizeRND 0.02
+   SizeMultiplier 0.06
+   SizeRND 0.03
    ScaleX 0.5
    RotMultiplier 800
    RandomRotDir 1
@@ -165,7 +165,7 @@ EffectDef {
     0 1 1 1
    }
    Size {
-    0 1.5
+    0 1
    }
    EmittingTime 0.1
    Repeat 0

@@ -62,7 +62,7 @@ The checked-in [reference fixture](vfx-contract.json.txt) records 17 original va
 
 The public API was checked through Enfusion MCP and the installed generated script sources: EmitterParam, Particles, World.CreateDecal, game-material hit effects, weather and contact components. MultParam applies against the authored original; repeated calls are not multiplicative accumulation. Emitter names are resolved at runtime because dedicated-server emitter filtering can change indices.
 
-The subsequent [video reference and debris mathematics pass](VIDEO-REFERENCE-REVIEW.md) records all six supplied clips, three YouTube references, cannon/AP/HE changes, fine-dust tails and the opt-in condensation boundary.
+The subsequent [video reference and debris mathematics pass](VIDEO-REFERENCE-REVIEW.md) records all six supplied clips, three YouTube references, cannon/AP/HE changes, fine-dust tails and the selected large-blast condensation effects and heat-refraction boundary.
 
 ## Whole-project review and changes
 
@@ -104,7 +104,9 @@ Validation was performed with installed Arma Reforger/Workbench 1.8.0.13 on Wind
 | --- | --- |
 | Workbench MCP ValidateScripts, configuration WORKBENCH | Passed, 14 existing base-game obsolete-API warnings; no addon errors. This includes Game and WorkbenchGame modules, not a live dedicated-server test. |
 | python tools/validate_vfx.py | Passed: 524 emitters, 183 resource GUIDs, 17 exact 0.33 size pairs, 60 surface-palette assets; local paths/GUIDs, numeric ranges, brace balance and dust classification checked. |
-| MCP particle inspection | Initial pass covered all 121 particle files. Follow-up inspected all 17 changed/new assets; current total 124. Structural parsing only, not rendering or a native runtime build. |
+| MCP particle inspection | Initial pass covered all 121 particle files. Follow-up inspected all 17 changed/new assets; the completion pass also inspected all 48 curve-corrected assets. Current total 124. Structural parsing only, not rendering or a native runtime build. |
+| Size-curve regression | Passed: 131 curves across 48 files preserve all control times and intended size/variation products within 1e-7 tolerance. Other particle fields are unchanged, apart from trailing newlines. Size/Alpha/Color curve values are now in 0–1. |
+| Native Particle Editor | Loaded the addon condensation resource and confirmed corrected size properties without new curve errors. This is a limited load check, not visual acceptance of all effects. |
 | Prefab-emitter regression comparison | 56 trigger/other prefab emitters retain preceding review travel/emission properties. Three supplemental solid emitters were intentionally retuned with the bounded debris model. |
 | git diff --check | Passed. |
 | Native data packaging | Not validated. The MCP build launcher missed base-game resolution; a direct hidden launch with the correct dependency path initialized and compiled the addon but did not produce a data build. Task-owned build processes were stopped. No package or Workshop release is claimed. |

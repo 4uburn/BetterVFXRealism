@@ -52,6 +52,10 @@ def main():
             errors.append(f'Unbalanced asset {ptc.relative_to(ROOT)}')
         for name, block, _, _ in emitters(text):
             total += 1
+            for curve in ('Size', 'Alpha', 'Color'):
+                match = re.search(r'\n   ' + curve + r' \{\s*([^{}]+)\s*\}', block)
+                if match and any(not 0 <= float(v) <= 1 for v in match.group(1).split()):
+                    errors.append(f'Curve outside native 0-1 range: {ptc.name}/{name}/{curve}')
             if name.startswith('ber_dust_'):
                 if value(block, 'ParticleType') == 'Prefab':
                     errors.append(f'Dust classification includes prefab: {ptc.name}/{name}')
@@ -116,6 +120,12 @@ def main():
     for _, b, _, _ in vapor:
         if float(value(b, 'Lifetime')) + float(value(b, 'LifetimeRND')) > 0.4:
             errors.append('Condensation must disappear within 0.4 seconds')
+    for warhead in ('Warhead_Shell_HE_M821', 'Warhead_Shell_HE_O832DU', 'Warhead_Mine_M15AT', 'Warhead_Mine_TM62M'):
+        prefab = (ROOT / f'Prefabs/Weapons/Warheads/{warhead}.et').read_text(encoding='utf-8')
+        component = re.search(r'BER_EffectTuningComponent[^\n]*\{([^}]+)', prefab)
+        setting = re.search(r'm_fCondensationStrength\s+([\d.]+)', component.group(1)) if component else None
+        if not setting or not 0 < float(setting.group(1)) <= 1:
+            errors.append(f'Large-blast condensation is not wired: {warhead}')
     for ptc in (ROOT / 'Particles/Enviroment').glob('Hit_*_enter_01.ptc'):
         for name, b, _, _ in emitters(ptc.read_text(encoding='utf-8')):
             if name == 'ber_dust_fines' and float(value(b, 'MaxNum')) > 3:

@@ -14,8 +14,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{17C4D872CCB15FDE}Particles/_Materials/Gas/Dirt_Wheel_Cloud_N_02.emat"
-   SizeMultiplier 9
-   SizeRND 4.5
+   SizeMultiplier 10.935
+   SizeRND 5.4675
    RotMultiplier 90
    RandomRotDir 1
    RandomAngle 1
@@ -44,7 +44,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.234 1 1.215
+    0 0.192592593 1 1
    }
    EmittingTime 0.1
   }

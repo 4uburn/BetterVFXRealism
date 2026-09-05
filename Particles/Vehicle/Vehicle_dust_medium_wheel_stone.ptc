@@ -14,8 +14,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{17C4D872CCB15FDE}Particles/_Materials/Gas/Dirt_Wheel_Cloud_N_02.emat"
-   SizeMultiplier 11.25
-   SizeRND 3
+   SizeMultiplier 11.561625
+   SizeRND 3.0831
    RotMultiplier 90
    RandomRotDir 1
    RandomAngle 1
@@ -44,7 +44,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.234 1 1.0277
+    0 0.227692906 1 1
    }
    EmittingTime 0.1
   }
@@ -154,8 +154,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{17C4D872CCB15FDE}Particles/_Materials/Gas/Dirt_Wheel_Cloud_N_02.emat"
-   SizeMultiplier 4.8
-   SizeRND 1.8
+   SizeMultiplier 5.28
+   SizeRND 1.98
    RotMultiplier 30
    RandomRotDir 1
    RandomAngle 1
@@ -182,7 +182,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.35 1 1.1
+    0 0.318181818 1 1
    }
    EmittingTime 0.1
    Repeat 1
@@ -198,8 +198,8 @@ EffectDef {
    LodMin 0
    LodMax 1
    Material "{17C4D872CCB15FDE}Particles/_Materials/Gas/Dirt_Wheel_Cloud_N_02.emat"
-   SizeMultiplier 3.9
-   SizeRND 1.5
+   SizeMultiplier 7.8
+   SizeRND 3
    RotMultiplier 45
    RandomRotDir 1
    RandomAngle 1
@@ -226,7 +226,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.4 1 2
+    0 0.2 1 1
    }
    EmittingTime 0.1
    Repeat 1

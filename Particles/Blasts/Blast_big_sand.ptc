@@ -69,8 +69,8 @@ EffectDef {
    LodMax 2
    Material "{61247CAB58EF0D6D}Particles/_Materials/Gas/Smoke_Explosion_02.emat"
    StreakFullUV 0
-   SizeMultiplier 4.2
-   SizeRND 2.25
+   SizeMultiplier 6.3
+   SizeRND 3.375
    ScaleX 1
    ScaleY 1
    CenterY 0
@@ -104,7 +104,7 @@ EffectDef {
     0 1 1 0
    }
    Size {
-    0 0.904 1 1.5
+    0 0.602666667 1 1
    }
    EmittingTime 0.2
    Repeat 0
@@ -124,8 +124,8 @@ EffectDef {
    LodMax 1
    Material "{106C63A94553E961}Particles/_Materials/Gas/Smoke_Exhaust_Anim.emat"
    StreakFullUV 0
-   SizeMultiplier 6.3
-   SizeRND 2.25
+   SizeMultiplier 9.45
+   SizeRND 3.375
    ScaleX 1
    ScaleY 1
    CenterY 0
@@ -158,7 +158,7 @@ EffectDef {
     0 0 1 0
    }
    Size {
-    0 0.904 1 1.5
+    0 0.602666667 1 1
    }
    EmittingTime 0.2
    Repeat 0
@@ -175,8 +175,8 @@ EffectDef {
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
    StretchMultiplier 1
    StreakFullUV 0
-   SizeMultiplier 5.25
-   SizeRND 2.25
+   SizeMultiplier 7.875
+   SizeRND 3.375
    RotMultiplier 50
    RandomRotDir 1
    VelAngle 0
@@ -207,7 +207,7 @@ EffectDef {
     0 1 0.029 1 0.064 0 1 0
    }
    Size {
-    0 0 0.014 0.733 1 1.5
+    0 0 0.014 0.488666667 1 1
    }
    EmittingTime 0.5
    Repeat 0
@@ -232,8 +232,8 @@ EffectDef {
    Material "{029D33C344E15DFB}Particles/_Materials/Gas/Smoke_loop_01.emat"
    StretchMultiplier 1
    StreakFullUV 0
-   SizeMultiplier 7.35
-   SizeRND 2.25
+   SizeMultiplier 11.025
+   SizeRND 3.375
    RotMultiplier 2.5
    RandomRotDir 1
    VelAngle 0
@@ -264,7 +264,7 @@ EffectDef {
     0 1 1 0.196
    }
    Size {
-    0 0 0.014 0.733 1 1.5
+    0 0 0.014 0.488666667 1 1
    }
    EmittingTime 0.5
    Repeat 0
